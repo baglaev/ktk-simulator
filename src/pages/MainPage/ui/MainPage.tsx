@@ -5,7 +5,7 @@ import { MainLayout } from '@/widgets/layouts/MainLayout/ui/MainLayout';
 export const MainPage = () => {
   return (
     <main>
-      <MainLayout></MainLayout>
+      <MainLayout>123</MainLayout>
     </main>
   );
 };
