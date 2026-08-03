@@ -1,0 +1,22 @@
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+/* 
+body {
+  background: var(--color-bg-default);
+  color: var(--color-typo-primary);
+}
+
+a {
+  color: var(--color-typo-link);
+} */

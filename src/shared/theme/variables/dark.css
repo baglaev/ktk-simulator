@@ -1,0 +1,6 @@
+:root.theme-dark {
+  --color-text: #fafafa;
+  --color-bg: #22272b;
+  --color-breadcrumbs: #fafafabb;
+  --color-breadcrumbs-active: #fafafa;
+}

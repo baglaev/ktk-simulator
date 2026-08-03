@@ -1,0 +1,17 @@
+/* body {
+  background: var(--color-bg-default);
+  color: var(--color-typo-primary);
+}
+
+a {
+  color: var(--color-typo-link);
+} */
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+a {
+  color: var(--color-text);
+}
