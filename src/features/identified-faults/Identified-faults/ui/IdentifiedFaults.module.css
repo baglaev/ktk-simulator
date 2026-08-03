@@ -1,0 +1,42 @@
+.badges {
+  display: flex;
+  gap: 8px;
+}
+
+.previewContainer {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+}
+
+.previewStats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 16px;
+}
+
+.statItem {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 16px;
+  grid-template-areas:
+    'left right-top'
+    'left right-bottom';
+}
+
+.iconItem {
+  grid-area: left;
+}
+
+.statTitle {
+  grid-area: right-top;
+}
+
+.statValue {
+  grid-area: right-bottom;
+}
+
+.nextButton {
+  margin-top: 16px;
+}
