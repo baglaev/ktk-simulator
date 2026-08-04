@@ -3,6 +3,7 @@ import { MainLayout } from '@/widgets/layouts/MainLayout/ui/MainLayout';
 import { Text } from '@consta/uikit/Text';
 
 import styles from './MainPage.module.css';
+import { OtherScenarios } from '@/features/identified-faults/OtherScenarios/ui/OtherScenarios';
 
 export const MainPage = () => {
   return (
@@ -13,6 +14,7 @@ export const MainPage = () => {
         </Text>
         <Text view="secondary">Выберите сценарий для прохождения тренировки</Text>
         <IdentifiedFaults />
+        <OtherScenarios />
       </MainLayout>
     </main>
   );

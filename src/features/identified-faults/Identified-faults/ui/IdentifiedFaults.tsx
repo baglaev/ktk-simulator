@@ -11,7 +11,7 @@ import { Text } from '@consta/uikit/Text';
 
 export const IdentifiedFaults = () => {
   return (
-    <div className={styles.container}>
+    <section className={styles.container}>
       <div className={styles.badges}>
         <Badge label="ДЕМО" />
         <Badge label="Доступен" status="success" />
@@ -57,7 +57,7 @@ export const IdentifiedFaults = () => {
           />
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

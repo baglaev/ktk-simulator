@@ -1,0 +1,26 @@
+.scenarioItem {
+  width: 100%;
+}
+
+.container {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 16px;
+  grid-template-areas:
+    'left right-top'
+    'left right-bottom';
+}
+
+.imageItem {
+  grid-area: left;
+}
+
+.titleItem {
+  grid-area: right-top;
+}
+
+.descriptionItem {
+  grid-area: right-bottom;
+}
