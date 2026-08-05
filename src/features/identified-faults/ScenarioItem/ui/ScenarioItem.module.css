@@ -1,5 +1,10 @@
 .scenarioItem {
   width: 100%;
+
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid var(--color-bg-border);
 }
 
 .container {

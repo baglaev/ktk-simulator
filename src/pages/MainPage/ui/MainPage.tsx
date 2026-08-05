@@ -12,7 +12,9 @@ export const MainPage = () => {
         <Text size="xl" className={styles.title}>
           Доступные сценарии
         </Text>
-        <Text view="secondary">Выберите сценарий для прохождения тренировки</Text>
+        <Text className={styles.description} view="secondary">
+          Выберите сценарий для прохождения тренировки
+        </Text>
         <IdentifiedFaults />
         <OtherScenarios />
       </MainLayout>

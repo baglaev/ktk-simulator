@@ -1,3 +1,11 @@
+.container {
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid var(--color-bg-border);
+  margin-top: 16px;
+}
+
 .badges {
   display: flex;
   gap: 8px;
@@ -23,6 +31,11 @@
   grid-template-areas:
     'left right-top'
     'left right-bottom';
+
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  padding: 8px;
+  border: 1px solid var(--color-bg-border);
 }
 
 .iconItem {
