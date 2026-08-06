@@ -18,9 +18,9 @@ export const HeaderSimulator = (props: Props) => {
   return (
     <header className={styles.header}>
       <div className={styles.titleContainer}>
-        <Text>КТК ЭЛОУ-АВТ</Text>
-        <Text>{pageName}</Text>
-        <Text>{descriptionPage}</Text>
+        <Text size="l">КТК ЭЛОУ-АВТ</Text>
+        <Text size="l">{pageName}</Text>
+        <Text size="l">{descriptionPage}</Text>
       </div>
       {simulatorEnabled && (
         <div className={styles.simulatorSection}>
@@ -33,13 +33,13 @@ export const HeaderSimulator = (props: Props) => {
             <Badge form="round" status="success" size="xs" />
             <Text>Сценарий активен</Text>
           </div>
-          <Button label="Завершить сценарий" form="round" />
+          <Button label="Завершить сценарий" view="secondary" />
         </div>
       )}
 
       {summaryEnabled && (
         <div className={styles.summarySection}>
-          <Badge title="Обучающий режим" view="stroked" status="disabled" />
+          <Badge label="Обучающий режим" view="stroked" size="l" />
           <User name="Демо-профиль" info="Обучаемый" size="l" />
         </div>
       )}

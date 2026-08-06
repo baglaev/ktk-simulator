@@ -1,0 +1,25 @@
+.header {
+  display: flex;
+  padding: 12px;
+  justify-content: space-between;
+}
+
+.titleContainer {
+  display: flex;
+  column-gap: 24px;
+  align-items: center;
+}
+
+.simulatorSection {
+  display: flex;
+  column-gap: 8px;
+  align-items: center;
+}
+
+.timeContainer,
+.statusContainer,
+.summarySection {
+  display: flex;
+  column-gap: 4px;
+  align-items: center;
+}
