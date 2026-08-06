@@ -10,7 +10,7 @@ import { ScenarioInfoItem } from '../../ScenarioInfoItem/ui/ScenarioInfoItem';
 export const ScenarioSection = () => {
   return (
     <section>
-      <Text size="xl" className={styles.title}>
+      <Text size="2xl" className={styles.title}>
         Подготовка к сценарию
       </Text>
       <div className={styles.descriptionSection}>
@@ -44,12 +44,7 @@ export const ScenarioSection = () => {
         />
         <ScenarioInfoItem title="Исходное состояние" descriptionWithStatus icon="2" />
         <ScenarioInfoItem title="Что учитывается при оценке" descriptionList icon="3" />
-        <ScenarioInfoItem
-          title="Выберите режим"
-          descriptionSelectedItems
-          description="Итоговая оценка и ИИ-разбор доступны в обоих режимах"
-          icon="4"
-        />
+        <ScenarioInfoItem title="Выберите режим" descriptionSelectedItems icon="4" />
       </div>
     </section>
   );

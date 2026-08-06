@@ -9,7 +9,7 @@ export const MainPage = () => {
   return (
     <main className={styles.main}>
       <MainLayout>
-        <Text size="xl" className={styles.title}>
+        <Text size="2xl" className={styles.title}>
           Доступные сценарии
         </Text>
         <Text className={styles.description} view="secondary">
