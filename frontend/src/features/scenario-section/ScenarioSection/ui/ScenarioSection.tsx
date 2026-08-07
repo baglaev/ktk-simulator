@@ -17,7 +17,7 @@ export const ScenarioSection = () => {
         <Badge size="l" label="Демо" />
         <div className={styles.descriptionContainer}>
           <Text className={styles.description} size="l">
-            Ранее выявление неисправности сырьевого насоса группы Н-1
+            Раннее выявление неисправности сырьевого насоса группы Н-1
           </Text>
           <div className={styles.descriptionIconSection}>
             <div className={styles.descriptionIconContainer}>
