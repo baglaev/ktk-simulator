@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 128" role="img" aria-labelledby="title desc">
+  <title id="title">Насос Н-1Б</title><desc id="desc">Отдельная карточка насоса Н-1Б.</desc>
+  <style>
+    .card,.body{stroke:#79D4E8;vector-effect:non-scaling-stroke}.card{fill:#0B2233;stroke-width:1.6}.body{fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+    .label{fill:#ECF7FA;font:600 24px 'IBM Plex Sans Condensed','Arial Narrow',Arial,sans-serif;text-anchor:middle;dominant-baseline:middle}
+  </style>
+  <g id="pump-h1b" data-object-id="pump-h1b">
+    <rect class="card" x="4" y="4" width="352" height="120" rx="12"/>
+    <path class="body" d="M24 34H102V88H24ZM36 41V81M48 41V81M60 41V81M72 41V81M84 41V81M102 51H122M102 71H122"/>
+    <circle class="body" cx="158" cy="61" r="31"/><circle class="body" cx="158" cy="61" r="13"/>
+    <path class="body" d="M139 36V22H177V36M148 22V13M168 22V13M142 13H174M22 94H197V109H22ZM189 43H211M189 79H211"/>
+    <text class="label" x="278" y="64">Н-1Б</text>
+  </g>
+</svg>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 26.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Слой_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 350 340" style="enable-background:new 0 0 350 340;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill-opacity:0;}
+	.st1{fill:none;stroke:#79D4E8;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+	.st2{fill:#0B2233;stroke:#79D4E8;stroke-width:2.4;}
+	.st3{fill:#0B2233;stroke:#79D4E8;stroke-width:1.4;}
+	.st4{fill:#ECF7FA;}
+	.st5{font-family:'ArialMT';}
+	.st6{font-size:12px;}
+</style>
+<desc  id="desc">
+	Единый кликабельный SVG-компонент двух соединённых ёмкостей сырья P-11 и P-12.
+	</desc>
+<g id="raw-feed-p11-p12">
+	<path class="st0" d="M16,4h318c6.6,0,12,5.4,12,12v308c0,6.6-5.4,12-12,12H16c-6.6,0-12-5.4-12-12V16C4,9.4,9.4,4,16,4z"/>
+	<path class="st1" d="M78,52V28h155v24"/>
+	<g>
+		<path class="st2" d="M30,91c0-26.5,21.5-48,48-48s48,21.5,48,48v159H30V91z"/>
+		<path class="st1" d="M43,76h70 M78,52v24 M67,52h22 M20,250h116v14H20V250z M44,264v45 M34,309h20 M112,264v45 M102,309h20"/>
+		<path class="st3" d="M48,150h60c3.9,0,7,3.1,7,7v26c0,3.9-3.1,7-7,7H48c-3.9,0-7-3.1-7-7v-26C41,153.1,44.1,150,48,150z"/>
+		<text transform="matrix(1 0 0 1 65.7715 170)" class="st4 st5 st6">P-11</text>
+	</g>
+	<g>
+		<path class="st2" d="M185,91c0-26.5,21.5-48,48-48s48,21.5,48,48v159h-96V91z"/>
+		<path class="st1" d="M198,76h70 M233,52v24 M222,52h22 M175,250h116v14H175V250z M199,264v45 M189,309h20 M267,264v45 M257,309h20
+			"/>
+		<path class="st3" d="M203,150h60c3.9,0,7,3.1,7,7v26c0,3.9-3.1,7-7,7h-60c-3.9,0-7-3.1-7-7v-26C196,153.1,199.1,150,203,150z"/>
+		<text transform="matrix(1 0 0 1 220.3262 170)" class="st4 st5 st6">P-12</text>
+	</g>
+</g>
+</svg>

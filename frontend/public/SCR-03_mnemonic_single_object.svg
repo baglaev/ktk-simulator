@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     viewBox="0 0 2100 590"
+     role="img"
+     aria-labelledby="ktk-title ktk-desc">
+  <title id="ktk-title">Единая мнемосхема КТК — технологический поток ЭЛОУ</title>
+  <desc id="ktk-desc">Самодостаточная SVG-схема: объединённые ёмкости P-11 и P-12, насосы Н-1, Н-1А, Н-1Б и Н-1В, теплообменный блок Т-1–Т-11, блок ЭЛОУ и ёмкость Е-15. PRA 351, FYQR 117 и LRCA 605 не включены.</desc>
+
+  <style>
+    .object-bg,
+    .equipment,
+    .label-card,
+    .elou-frame {
+      fill: #0B2233;
+      stroke: #79D4E8;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .object-bg { stroke-width: 1.6; }
+    .equipment { stroke-width: 2.4; }
+    .label-card { stroke-width: 1.4; }
+    .elou-frame { stroke-width: 2; stroke-dasharray: 9 8; }
+
+    .detail,
+    .pipe {
+      fill: none;
+      stroke: #79D4E8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .detail { stroke-width: 2.2; }
+    .pipe { stroke-width: 3; }
+
+    .label,
+    .stage,
+    .block-title {
+      fill: #ECF7FA;
+      font-family: 'IBM Plex Sans Condensed', 'Arial Narrow', Arial, sans-serif;
+      text-anchor: middle;
+    }
+
+    .label {
+      font-size: 20px;
+      font-weight: 600;
+      dominant-baseline: middle;
+    }
+
+    .pump-label { font-size: 24px; }
+    .stage { font-size: 21px; font-weight: 600; }
+    .block-title { font-size: 19px; font-weight: 600; }
+
+    .block-note {
+      fill: #A9C2CB;
+      font: 500 14px 'Roboto Mono', Consolas, monospace;
+      text-anchor: middle;
+    }
+
+    .object { cursor: pointer; outline: none; }
+  </style>
+
+  <defs>
+    <marker id="flow-arrow"
+            markerWidth="12"
+            markerHeight="12"
+            refX="10"
+            refY="6"
+            orient="auto"
+            markerUnits="userSpaceOnUse">
+      <path d="M0 1L11 6L0 11Z" fill="#79D4E8"/>
+    </marker>
+
+    <g id="pump-shape">
+      <rect class="object-bg" x="4" y="4" width="352" height="120" rx="12"/>
+      <path class="detail" d="M24 34H102V88H24ZM36 41V81M48 41V81M60 41V81M72 41V81M84 41V81M102 51H122M102 71H122"/>
+      <circle class="detail" cx="158" cy="61" r="31"/>
+      <circle class="detail" cx="158" cy="61" r="13"/>
+      <path class="detail" d="M139 36V22H177V36M148 22V13M168 22V13M142 13H174M22 94H197V109H22ZM189 43H211M189 79H211"/>
+    </g>
+
+    <g id="electrodehydrator">
+      <path class="equipment" d="M0 24A24 24 0 0 1 48 24V84A24 24 0 0 1 0 84Z"/>
+      <path class="detail" d="M8 54H40M24 0V-12M14-12H34M24 108V120"/>
+    </g>
+  </defs>
+
+  <!-- One self-contained SVG object; child IDs are retained for React event binding. -->
+  <g id="ktk-mnemonic" data-object-id="ktk-mnemonic" role="group" aria-label="Технологическая мнемосхема КТК">
+
+    <!-- P-11 and P-12: one clickable object. -->
+    <g id="raw-feed-p11-p12"
+       class="object"
+       data-object-id="raw-feed-p11-p12"
+       role="button"
+       tabindex="0"
+       transform="translate(20 135)">
+      <path class="pipe" d="M78 52V28H233V52"/>
+      <path class="pipe" d="M78 250V322H233V250M233 322H342"/>
+
+      <g aria-label="P-11">
+        <path class="equipment" d="M30 91A48 48 0 0 1 126 91V250H30Z"/>
+        <path class="detail" d="M43 76H113M78 52V76M67 52H89M20 250H136V264H20ZM44 264V309M34 309H54M112 264V309M102 309H122"/>
+        <rect class="label-card" x="41" y="150" width="74" height="40" rx="7"/>
+        <text class="label" x="78" y="170">P-11</text>
+      </g>
+
+      <g aria-label="P-12">
+        <path class="equipment" d="M185 91A48 48 0 0 1 281 91V250H185Z"/>
+        <path class="detail" d="M198 76H268M233 52V76M222 52H244M175 250H291V264H175ZM199 264V309M189 309H209M267 264V309M257 309H277"/>
+        <rect class="label-card" x="196" y="150" width="74" height="40" rx="7"/>
+        <text class="label" x="233" y="170">P-12</text>
+      </g>
+    </g>
+
+    <!-- Parallel inlet manifold for the four pumps. -->
+    <path class="pipe" d="M362 457H420M420 84V504M420 84H454M420 224H454M420 364H454M420 504H454"/>
+
+    <!-- Pump names remain inside their cards, not on the pump bodies. -->
+    <g id="pump-h1" class="object" data-object-id="pump-h1" role="button" tabindex="0" transform="translate(450 20)">
+      <use href="#pump-shape" xlink:href="#pump-shape"/>
+      <text class="label pump-label" x="278" y="64">Н-1</text>
+    </g>
+
+    <g id="pump-h1a" class="object" data-object-id="pump-h1a" role="button" tabindex="0" transform="translate(450 160)">
+      <use href="#pump-shape" xlink:href="#pump-shape"/>
+      <text class="label pump-label" x="278" y="64">Н-1А</text>
+    </g>
+
+    <g id="pump-h1b" class="object" data-object-id="pump-h1b" role="button" tabindex="0" transform="translate(450 300)">
+      <use href="#pump-shape" xlink:href="#pump-shape"/>
+      <text class="label pump-label" x="278" y="64">Н-1Б</text>
+    </g>
+
+    <g id="pump-h1v" class="object" data-object-id="pump-h1v" role="button" tabindex="0" transform="translate(450 440)">
+      <use href="#pump-shape" xlink:href="#pump-shape"/>
+      <text class="label pump-label" x="278" y="64">Н-1В</text>
+    </g>
+
+    <!-- Parallel outlet manifold and common process stream. -->
+    <path class="pipe" d="M806 84H850M806 224H850M806 364H850M806 504H850M850 84V504M850 315H969" marker-end="url(#flow-arrow)"/>
+
+    <!-- Enlarged heat-exchanger block. -->
+    <g id="heat-exchanger-t1-t11"
+       class="object"
+       data-object-id="heat-exchanger-t1-t11"
+       role="button"
+       tabindex="0"
+       transform="translate(930 140)">
+      <text class="block-title" x="130" y="28">Теплообменный блок</text>
+      <text class="block-note" x="130" y="50">Т-1–Т-11</text>
+      <path class="equipment" d="M55 78H205Q221 78 221 94V257Q221 273 205 273H55Q39 273 39 257V94Q39 78 55 78Z"/>
+      <path class="detail" d="M66 62V95M55 62H77M194 62V95M183 62H205M66 257V290M55 290H77M194 257V290M183 290H205"/>
+      <path class="detail" d="M74 116H170Q195 116 195 139T170 162H91Q66 162 66 185T91 208H170Q195 208 195 231T170 254H74"/>
+    </g>
+
+    <path class="pipe" d="M1151 315H1280" marker-end="url(#flow-arrow)"/>
+
+    <!-- ELOU: the dashed frame defines one clickable block. -->
+    <g id="elou-block"
+       class="object"
+       data-object-id="elou-block"
+       role="button"
+       tabindex="0"
+       transform="translate(1260 65)">
+      <rect class="elou-frame" x="10" y="10" width="500" height="480" rx="16"/>
+      <text class="stage" x="156" y="50">I ступень</text>
+      <text class="stage" x="364" y="50">II ступень</text>
+
+      <path class="pipe" d="M20 250H110M158 250H252M252 106V394M252 250H320M368 250H500"/>
+      <path class="pipe" d="M158 134H215V250M158 390H215V250M368 134H424V250M368 390H424V250"/>
+
+      <g transform="translate(110 78)">
+        <use href="#electrodehydrator" xlink:href="#electrodehydrator"/>
+        <rect class="label-card" x="60" y="35" width="58" height="38" rx="7"/>
+        <text class="label" x="89" y="54">Э-5</text>
+      </g>
+      <g transform="translate(110 206)">
+        <use href="#electrodehydrator" xlink:href="#electrodehydrator"/>
+        <rect class="label-card" x="60" y="35" width="58" height="38" rx="7"/>
+        <text class="label" x="89" y="54">Э-3</text>
+      </g>
+      <g transform="translate(110 334)">
+        <use href="#electrodehydrator" xlink:href="#electrodehydrator"/>
+        <rect class="label-card" x="60" y="35" width="58" height="38" rx="7"/>
+        <text class="label" x="89" y="54">Э-1</text>
+      </g>
+
+      <g transform="translate(320 78)">
+        <use href="#electrodehydrator" xlink:href="#electrodehydrator"/>
+        <rect class="label-card" x="60" y="35" width="58" height="38" rx="7"/>
+        <text class="label" x="89" y="54">Э-6</text>
+      </g>
+      <g transform="translate(320 206)">
+        <use href="#electrodehydrator" xlink:href="#electrodehydrator"/>
+        <rect class="label-card" x="60" y="35" width="58" height="38" rx="7"/>
+        <text class="label" x="89" y="54">Э-4</text>
+      </g>
+      <g transform="translate(320 334)">
+        <use href="#electrodehydrator" xlink:href="#electrodehydrator"/>
+        <rect class="label-card" x="60" y="35" width="58" height="38" rx="7"/>
+        <text class="label" x="89" y="54">Э-2</text>
+      </g>
+    </g>
+
+    <path class="pipe" d="M1760 315H1910" marker-end="url(#flow-arrow)"/>
+
+    <!-- E-15 without a separate LRCA 605 card. -->
+    <g id="e15"
+       class="object"
+       data-object-id="e15"
+       role="button"
+       tabindex="0"
+       transform="translate(1860 110)">
+      <text class="label pump-label" x="110" y="30">Е-15</text>
+      <path class="equipment" d="M50 103A60 60 0 0 1 170 103V301A60 60 0 0 1 50 301Z"/>
+      <path class="detail" d="M110 50V66M98 50H122M78 202H142M82 349V382M66 382H98M138 349V382M122 382H154"/>
+    </g>
+  </g>
+</svg>

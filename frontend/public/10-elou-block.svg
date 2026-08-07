@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 520 500" role="img" aria-labelledby="title desc">
+  <title id="title">Блок ЭЛОУ</title><desc id="desc">Единый кликабельный блок ЭЛОУ с двумя ступенями и электродегидраторами Э-1–Э-6.</desc>
+  <style>
+    .block,.equipment,.label-card{fill:#0B2233;stroke:#79D4E8;vector-effect:non-scaling-stroke}.block{stroke-width:2;stroke-dasharray:9 8}.equipment{stroke-width:2.3}.label-card{stroke-width:1.3}
+    .detail,.pipe{fill:none;stroke:#79D4E8;vector-effect:non-scaling-stroke}.detail{stroke-width:2}.pipe{stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+    .stage{fill:#ECF7FA;font:600 21px 'IBM Plex Sans Condensed','Arial Narrow',Arial,sans-serif;text-anchor:middle}.label{fill:#ECF7FA;font:600 18px 'IBM Plex Sans Condensed','Arial Narrow',Arial,sans-serif;text-anchor:middle;dominant-baseline:middle}
+  </style>
+  <defs>
+    <g id="electrodehydrator"><path class="equipment" d="M0 24A24 24 0 0 1 48 24V84A24 24 0 0 1 0 84Z"/><path class="detail" d="M8 54H40M24 0V-12M14-12H34M24 108V120"/></g>
+  </defs>
+  <g id="elou-block" data-object-id="elou-block">
+    <rect class="block" x="10" y="10" width="500" height="480" rx="16"/>
+    <text class="stage" x="156" y="50">I ступень</text><text class="stage" x="364" y="50">II ступень</text>
+    <path class="pipe" d="M20 250H110M158 250H252M252 106V394M252 250H320M368 250H500"/>
+    <path class="pipe" d="M158 134H215V250M158 390H215V250M368 134H424V250M368 390H424V250"/>
+    <g transform="translate(110 78)"><use href="#electrodehydrator" xlink:href="#electrodehydrator"/><rect class="label-card" x="60" y="35" width="58" height="38" rx="7"/><text class="label" x="89" y="54">Э-5</text></g>
+    <g transform="translate(110 206)"><use href="#electrodehydrator" xlink:href="#electrodehydrator"/><rect class="label-card" x="60" y="35" width="58" height="38" rx="7"/><text class="label" x="89" y="54">Э-3</text></g>
+    <g transform="translate(110 334)"><use href="#electrodehydrator" xlink:href="#electrodehydrator"/><rect class="label-card" x="60" y="35" width="58" height="38" rx="7"/><text class="label" x="89" y="54">Э-1</text></g>
+    <g transform="translate(320 78)"><use href="#electrodehydrator" xlink:href="#electrodehydrator"/><rect class="label-card" x="60" y="35" width="58" height="38" rx="7"/><text class="label" x="89" y="54">Э-6</text></g>
+    <g transform="translate(320 206)"><use href="#electrodehydrator" xlink:href="#electrodehydrator"/><rect class="label-card" x="60" y="35" width="58" height="38" rx="7"/><text class="label" x="89" y="54">Э-4</text></g>
+    <g transform="translate(320 334)"><use href="#electrodehydrator" xlink:href="#electrodehydrator"/><rect class="label-card" x="60" y="35" width="58" height="38" rx="7"/><text class="label" x="89" y="54">Э-2</text></g>
+  </g>
+</svg>
