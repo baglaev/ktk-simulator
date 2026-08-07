@@ -12,8 +12,10 @@ export const SimulatorMain = () => {
         descriptionPage="Раннее выявленные неисправности сырьевого насоса группы Н-1"
         simulatorEnabled
       />
-      <SimulatorSchema />
-      <SimulatorInfoPanel />
+      <div className={styles.simulatorSchemaContainer}>
+        <SimulatorSchema />
+        <SimulatorInfoPanel />
+      </div>
       <SimulatorEventLog />
     </section>
   );

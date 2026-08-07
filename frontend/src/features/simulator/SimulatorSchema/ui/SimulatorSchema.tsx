@@ -1,6 +1,9 @@
 import SchemeSvg from '@/shared/assets/scheme.svg?react';
+import { simulatorStore } from '../model/simulatorSchema.store';
 
 export const SimulatorSchema = () => {
+  const { setSelectedElement } = simulatorStore;
+
   const clickableIds = [
     'pump-h1',
     'pump-h1a',
@@ -28,6 +31,8 @@ export const SimulatorSchema = () => {
 
     if (clickableIds.includes(id)) {
       console.log('Нажат объект:', id);
+
+      setSelectedElement(id);
     }
   };
 
