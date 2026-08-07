@@ -72,6 +72,49 @@
   border-radius: 8px;
   padding: 8px;
   border: 1px solid var(--color-bg-border);
+}
+
+.parametrsContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.columnsSection {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 12px;
 
   margin-top: 12px;
+}
+
+.parametrsControlledContainer {
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  padding: 8px;
+  border: 1px solid var(--color-bg-border);
+}
+
+.recordedComments {
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  padding: 8px;
+  border: 1px solid var(--color-bg-border);
+
+  margin-top: 12px;
+}
+
+.commentsItem {
+  display: flex;
+  column-gap: 8px;
+  margin-top: 12px;
+}
+
+.buttonsContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  column-gap: 12px;
+  margin-top: 24px;
 }

@@ -5,6 +5,8 @@ import { IconCheck } from '@consta/icons/IconCheck';
 import { SummaryPoints } from './SummaryPoints';
 import { TasksDoneContainer } from './TasksDoneContainer';
 import { ParametrsControlled } from './ParametrsControlled';
+import { RecordedComments } from './RecordedComments';
+import { Button } from '@consta/uikit/Button';
 
 export const SimulatorSummary = () => {
   return (
@@ -26,6 +28,13 @@ export const SimulatorSummary = () => {
       <div className={styles.columnsSection}>
         <TasksDoneContainer />
         <ParametrsControlled />
+      </div>
+      <RecordedComments />
+
+      <div className={styles.buttonsContainer}>
+        <Button label="На главную" view="secondary" size="l" />
+        <Button label="Повторить сценарий" view="secondary" size="l" />
+        <Button label="Перейти к ИИ-разбору" size="l" />
       </div>
     </section>
   );
