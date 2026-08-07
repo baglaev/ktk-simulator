@@ -21,6 +21,7 @@ class SessionStatus(str, Enum):
 
 
 class EquipmentType(str, Enum):
+    PUMP_GROUP = "pump_group"
     TANK = "tank"
     PUMP = "pump"
     PIPELINE = "pipeline"

@@ -20,6 +20,13 @@ from app.domain.equipment import (
     EquipmentState,
 )
 from app.domain.sessions import TrainingSession
+from app.domain.scenarios import (
+    EducationalAssumption,
+    EquipmentConnection,
+    ScenarioConfig,
+    ScenarioSummary,
+    SourceReference,
+)
 from app.domain.signals import SignalDefinition, SignalValue
 from app.domain.telemetry import ModelEvent, ModelSnapshot, TelemetryDelta
 
@@ -27,21 +34,26 @@ __all__ = [
     "APIModel",
     "ActionType",
     "EquipmentDefinition",
+    "EquipmentConnection",
     "EquipmentParameterDefinition",
     "EquipmentState",
     "EquipmentStatus",
     "EquipmentType",
     "EventSeverity",
+    "EducationalAssumption",
     "MeasurementType",
     "ModelEvent",
     "ModelSnapshot",
     "OperatorAction",
     "ParameterOrigin",
     "Provenance",
+    "ScenarioConfig",
+    "ScenarioSummary",
     "SessionStatus",
     "SignalDefinition",
     "SignalQuality",
     "SignalValue",
+    "SourceReference",
     "TelemetryDelta",
     "TrainingMode",
     "TrainingSession",

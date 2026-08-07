@@ -22,6 +22,13 @@ uvicorn app.main:app --reload
 
 Проверка: <http://127.0.0.1:8000/health>
 
+## API сценариев
+
+- `GET /api/v1/scenarios` - каталог доступных сценариев.
+- `GET /api/v1/scenarios/MVP-SC-01/model-definition` - оборудование, связи,
+  сигналы, источники и учебные допущения сценария Н-1А.
+- `GET /docs` - интерактивная документация OpenAPI.
+
 ## Тесты
 
 ```bash

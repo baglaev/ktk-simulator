@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from app.api.routes import scenarios_router
 from app.config import get_settings
 
 
@@ -29,6 +30,8 @@ def create_app() -> FastAPI:
             service=settings.app_name,
             version=settings.app_version,
         )
+
+    application.include_router(scenarios_router)
 
     return application
 

@@ -17,7 +17,8 @@ class SignalDefinition(APIModel):
     equipment_id: str = Field(min_length=1)
     name: str = Field(min_length=1)
     measurement_type: MeasurementType
-    unit: str = Field(min_length=1)
+    unit: str | None = Field(default=None, min_length=1)
+    unit_provenance: Provenance | None = None
     precision: int | None = Field(default=None, ge=0, le=8)
     provenance: Provenance
 
