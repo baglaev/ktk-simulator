@@ -1,0 +1,187 @@
+{
+  "schemaVersion": "1.0",
+  "modelId": "n1a-deterministic-training-model",
+  "modelVersion": "0.1.0",
+  "scenarioId": "MVP-SC-01",
+  "tickMs": 1000,
+  "maxVirtualTimeMs": 120000,
+  "fault": {
+    "equipmentId": "eq-n1a",
+    "severityKeyframes": [
+      {"timeMs": 0, "value": 0.0},
+      {"timeMs": 10000, "value": 0.15},
+      {"timeMs": 25000, "value": 0.35},
+      {"timeMs": 45000, "value": 0.6},
+      {"timeMs": 75000, "value": 0.85},
+      {"timeMs": 110000, "value": 1.0},
+      {"timeMs": 120000, "value": 1.0}
+    ],
+    "statusKeyframes": [
+      {"timeMs": 0, "status": "normal"},
+      {"timeMs": 10000, "status": "warning"},
+      {"timeMs": 25000, "status": "critical"}
+    ],
+    "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}
+  },
+  "numericTrajectories": [
+    {
+      "signalId": "PRA351",
+      "keyframes": [
+        {"timeMs": 0, "value": 100}, {"timeMs": 10000, "value": 100},
+        {"timeMs": 25000, "value": 100}, {"timeMs": 40000, "value": 95},
+        {"timeMs": 55000, "value": 86}, {"timeMs": 70000, "value": 75},
+        {"timeMs": 80000, "value": 68}, {"timeMs": 110000, "value": 46},
+        {"timeMs": 120000, "value": 38}
+      ],
+      "provenance": {"origin": "educational_assumption", "assumptionId": "A-03"}
+    },
+    {
+      "signalId": "FYQR117",
+      "keyframes": [
+        {"timeMs": 0, "value": 100}, {"timeMs": 10000, "value": 100},
+        {"timeMs": 25000, "value": 100}, {"timeMs": 40000, "value": 93},
+        {"timeMs": 55000, "value": 82}, {"timeMs": 70000, "value": 70},
+        {"timeMs": 80000, "value": 62}, {"timeMs": 110000, "value": 41},
+        {"timeMs": 120000, "value": 34}
+      ],
+      "provenance": {"origin": "educational_assumption", "assumptionId": "A-03"}
+    },
+
+    {"signalId": "COMPAX.N1.TEMPERATURE", "keyframes": [{"timeMs": 0, "value": 58}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
+    {"signalId": "COMPAX.N1.VELOCITY", "keyframes": [{"timeMs": 0, "value": 2.4}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
+    {"signalId": "COMPAX.N1.ACCELERATION", "keyframes": [{"timeMs": 0, "value": 6}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
+    {"signalId": "COMPAX.N1.DISPLACEMENT", "keyframes": [{"timeMs": 0, "value": 35}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
+    {"signalId": "COMPAX.N1.CURRENT", "keyframes": [{"timeMs": 0, "value": 100}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
+
+    {
+      "signalId": "COMPAX.N1A.TEMPERATURE",
+      "keyframes": [
+        {"timeMs": 0, "value": 58}, {"timeMs": 10000, "value": 59},
+        {"timeMs": 25000, "value": 63}, {"timeMs": 45000, "value": 76},
+        {"timeMs": 75000, "value": 92}, {"timeMs": 110000, "value": 99}
+      ],
+      "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}
+    },
+    {
+      "signalId": "COMPAX.N1A.VELOCITY",
+      "keyframes": [
+        {"timeMs": 0, "value": 2.4}, {"timeMs": 10000, "value": 4.8},
+        {"timeMs": 25000, "value": 7.2}, {"timeMs": 45000, "value": 9.0},
+        {"timeMs": 75000, "value": 11.8}, {"timeMs": 110000, "value": 14.0}
+      ],
+      "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}
+    },
+    {
+      "signalId": "COMPAX.N1A.ACCELERATION",
+      "keyframes": [
+        {"timeMs": 0, "value": 6}, {"timeMs": 10000, "value": 8},
+        {"timeMs": 25000, "value": 15}, {"timeMs": 45000, "value": 24},
+        {"timeMs": 75000, "value": 36}, {"timeMs": 110000, "value": 45}
+      ],
+      "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}
+    },
+    {
+      "signalId": "COMPAX.N1A.DISPLACEMENT",
+      "keyframes": [
+        {"timeMs": 0, "value": 35}, {"timeMs": 10000, "value": 42},
+        {"timeMs": 25000, "value": 70}, {"timeMs": 45000, "value": 105},
+        {"timeMs": 75000, "value": 165}, {"timeMs": 110000, "value": 220}
+      ],
+      "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}
+    },
+    {
+      "signalId": "COMPAX.N1A.CURRENT",
+      "keyframes": [
+        {"timeMs": 0, "value": 100}, {"timeMs": 10000, "value": 100},
+        {"timeMs": 25000, "value": 102}, {"timeMs": 45000, "value": 108},
+        {"timeMs": 75000, "value": 116}, {"timeMs": 110000, "value": 125}
+      ],
+      "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}
+    },
+
+    {"signalId": "COMPAX.N1B.TEMPERATURE", "keyframes": [{"timeMs": 0, "value": 58}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
+    {"signalId": "COMPAX.N1B.VELOCITY", "keyframes": [{"timeMs": 0, "value": 2.4}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
+    {"signalId": "COMPAX.N1B.ACCELERATION", "keyframes": [{"timeMs": 0, "value": 6}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
+    {"signalId": "COMPAX.N1B.DISPLACEMENT", "keyframes": [{"timeMs": 0, "value": 35}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
+    {"signalId": "COMPAX.N1B.CURRENT", "keyframes": [{"timeMs": 0, "value": 100}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
+
+    {
+      "signalId": "LRCA641",
+      "keyframes": [{"timeMs": 0, "value": 100}, {"timeMs": 40000, "value": 100}, {"timeMs": 55000, "value": 98}, {"timeMs": 70000, "value": 92}, {"timeMs": 80000, "value": 88}, {"timeMs": 110000, "value": 77}, {"timeMs": 120000, "value": 72}],
+      "provenance": {"origin": "educational_assumption", "assumptionId": "A-11"}
+    },
+    {
+      "signalId": "LRCA640",
+      "keyframes": [{"timeMs": 0, "value": 100}, {"timeMs": 40000, "value": 100}, {"timeMs": 55000, "value": 98}, {"timeMs": 70000, "value": 92}, {"timeMs": 80000, "value": 88}, {"timeMs": 110000, "value": 77}, {"timeMs": 120000, "value": 72}],
+      "provenance": {"origin": "educational_assumption", "assumptionId": "A-11"}
+    },
+    {
+      "signalId": "LRCA639",
+      "keyframes": [{"timeMs": 0, "value": 100}, {"timeMs": 40000, "value": 100}, {"timeMs": 55000, "value": 98}, {"timeMs": 70000, "value": 92}, {"timeMs": 80000, "value": 88}, {"timeMs": 110000, "value": 77}, {"timeMs": 120000, "value": 72}],
+      "provenance": {"origin": "educational_assumption", "assumptionId": "A-11"}
+    },
+    {
+      "signalId": "LRCA644",
+      "keyframes": [{"timeMs": 0, "value": 100}, {"timeMs": 55000, "value": 100}, {"timeMs": 70000, "value": 98}, {"timeMs": 80000, "value": 94}, {"timeMs": 110000, "value": 86}, {"timeMs": 120000, "value": 81}],
+      "provenance": {"origin": "educational_assumption", "assumptionId": "A-11"}
+    },
+    {
+      "signalId": "LRCA643",
+      "keyframes": [{"timeMs": 0, "value": 100}, {"timeMs": 55000, "value": 100}, {"timeMs": 70000, "value": 98}, {"timeMs": 80000, "value": 94}, {"timeMs": 110000, "value": 86}, {"timeMs": 120000, "value": 81}],
+      "provenance": {"origin": "educational_assumption", "assumptionId": "A-11"}
+    },
+    {
+      "signalId": "LRCA642",
+      "keyframes": [{"timeMs": 0, "value": 100}, {"timeMs": 55000, "value": 100}, {"timeMs": 70000, "value": 98}, {"timeMs": 80000, "value": 94}, {"timeMs": 110000, "value": 86}, {"timeMs": 120000, "value": 81}],
+      "provenance": {"origin": "educational_assumption", "assumptionId": "A-11"}
+    },
+    {
+      "signalId": "LRCA605",
+      "keyframes": [{"timeMs": 0, "value": 65}, {"timeMs": 70000, "value": 65}, {"timeMs": 80000, "value": 62}, {"timeMs": 110000, "value": 30}, {"timeMs": 120000, "value": 20}],
+      "provenance": {"origin": "educational_assumption", "assumptionId": "A-04"}
+    }
+  ],
+  "discreteTrajectories": [
+    {"signalId": "LSA641A", "keyframes": [{"timeMs": 0, "value": false}, {"timeMs": 110000, "value": true}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-14"}},
+    {"signalId": "LSA640A", "keyframes": [{"timeMs": 0, "value": false}, {"timeMs": 110000, "value": true}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-14"}},
+    {"signalId": "LSA639A", "keyframes": [{"timeMs": 0, "value": false}, {"timeMs": 110000, "value": true}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-14"}},
+    {"signalId": "LS644A", "keyframes": [{"timeMs": 0, "value": false}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-14"}},
+    {"signalId": "LS643A", "keyframes": [{"timeMs": 0, "value": false}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-14"}},
+    {"signalId": "LS642A", "keyframes": [{"timeMs": 0, "value": false}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-14"}}
+  ],
+  "staticSignals": [
+    {"signalId": "PRA352", "value": null, "quality": "uncertain", "provenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO", "note": "Тег подтверждён, но траектория для MVP не задана."}},
+    {"signalId": "LRCA602", "value": null, "quality": "uncertain", "provenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO", "note": "Тег подтверждён, но численная кривая К-1 отсутствует."}}
+  ],
+  "equipmentStatuses": [
+    {"equipmentId": "eq-r11", "keyframes": [{"timeMs": 0, "status": "available"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-r12", "keyframes": [{"timeMs": 0, "status": "available"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-n1-group", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-n1", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-n1a", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-n1b", "keyframes": [{"timeMs": 0, "status": "stopped"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-n1v", "keyframes": [{"timeMs": 0, "status": "stopped"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-n1-discharge", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-t1-t11", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-elou", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-e1", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-e3", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-e5", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-e2", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-e4", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-e6", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-e15", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-n20-group", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-k1", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}}
+  ],
+  "scheduledEvents": [
+    {"eventKey": "scenario-initialized", "timeMs": 0, "eventType": "scenario_initialized", "severity": "info", "sourceId": "MVP-SC-01", "payload": {"modelVersion": "0.1.0"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"eventKey": "compax-warning", "timeMs": 10000, "eventType": "diagnostic_warning", "severity": "warning", "sourceId": "eq-n1a", "payload": {"diagnosticStatus": "warning"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
+    {"eventKey": "compax-critical", "timeMs": 25000, "eventType": "diagnostic_critical", "severity": "critical", "sourceId": "eq-n1a", "payload": {"diagnosticStatus": "critical"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
+    {"eventKey": "line-decline", "timeMs": 40000, "eventType": "feed_parameters_declining", "severity": "warning", "sourceId": "eq-n1-discharge", "payload": {}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-03"}},
+    {"eventKey": "elou-decline", "timeMs": 55000, "eventType": "elou_level_declining", "severity": "warning", "sourceId": "eq-elou", "payload": {}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-11"}},
+    {"eventKey": "e15-decline", "timeMs": 80000, "eventType": "e15_level_declining", "severity": "warning", "sourceId": "eq-e15", "payload": {}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-04"}},
+    {"eventKey": "elou-low-level", "timeMs": 110000, "eventType": "training_low_level_signal", "severity": "critical", "sourceId": "eq-elou", "payload": {"scope": "first_stage"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-14"}},
+    {"eventKey": "scenario-boundary", "timeMs": 120000, "eventType": "training_scenario_boundary_reached", "severity": "critical", "sourceId": "eq-e15", "payload": {"reason": "configured_training_boundary"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-04"}}
+  ]
+}

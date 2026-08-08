@@ -22,6 +22,10 @@ class ModelEvent(APIModel):
 
 class TelemetryEnvelope(APIModel):
     session_id: UUID
+    scenario_id: str = Field(min_length=1)
+    scenario_version: str = Field(min_length=1)
+    model_id: str = Field(min_length=1)
+    model_version: str = Field(min_length=1)
     sequence_no: int = Field(ge=0)
     state_version: int = Field(ge=0)
     virtual_time_ms: int = Field(ge=0)

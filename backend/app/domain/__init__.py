@@ -19,7 +19,11 @@ from app.domain.equipment import (
     EquipmentParameterDefinition,
     EquipmentState,
 )
-from app.domain.sessions import TrainingSession
+from app.domain.sessions import (
+    AdvanceSessionRequest,
+    CreateSessionRequest,
+    TrainingSession,
+)
 from app.domain.scenarios import (
     EducationalAssumption,
     EquipmentConnection,
@@ -32,7 +36,9 @@ from app.domain.telemetry import ModelEvent, ModelSnapshot, TelemetryDelta
 
 __all__ = [
     "APIModel",
+    "AdvanceSessionRequest",
     "ActionType",
+    "CreateSessionRequest",
     "EquipmentDefinition",
     "EquipmentConnection",
     "EquipmentParameterDefinition",

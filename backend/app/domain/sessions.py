@@ -33,3 +33,16 @@ class TrainingSession(APIModel):
         if self.completed_at and self.started_at and self.completed_at < self.started_at:
             raise ValueError("completedAt cannot be earlier than startedAt")
         return self
+
+
+class CreateSessionRequest(APIModel):
+    scenario_id: str = Field(min_length=1)
+    trainee_id: str = Field(min_length=1)
+    instructor_id: str | None = None
+    mode: TrainingMode
+
+
+class AdvanceSessionRequest(APIModel):
+    """Explicit virtual-clock step used by the deterministic MVP driver."""
+
+    dt_ms: int = Field(gt=0)

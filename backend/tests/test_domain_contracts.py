@@ -32,6 +32,10 @@ SESSION_ID = UUID("11111111-1111-1111-1111-111111111111")
 def test_snapshot_serializes_to_frontend_camel_case() -> None:
     snapshot = ModelSnapshot(
         session_id=SESSION_ID,
+        scenario_id="MVP-SC-01",
+        scenario_version="0.1.0",
+        model_id="n1a-deterministic-training-model",
+        model_version="0.1.0",
         sequence_no=15,
         state_version=8,
         virtual_time_ms=120_000,
@@ -165,6 +169,10 @@ def test_empty_telemetry_delta_is_rejected() -> None:
     with pytest.raises(ValidationError, match="at least one change"):
         TelemetryDelta(
             session_id=SESSION_ID,
+            scenario_id="MVP-SC-01",
+            scenario_version="0.1.0",
+            model_id="n1a-deterministic-training-model",
+            model_version="0.1.0",
             sequence_no=2,
             state_version=2,
             virtual_time_ms=1_000,

@@ -91,6 +91,21 @@
       "assumptionId": "A-12",
       "description": "Для параметров Компакс используются синтетические идентификаторы сигналов.",
       "rationale": "Состав параметров подтверждён, но реальные индивидуальные теги датчиков в источнике не приведены."
+    },
+    {
+      "assumptionId": "A-13",
+      "description": "Ток двигателя в модели отображается как процент от исходного значения, а не в амперах.",
+      "rationale": "Макет и таблица траектории используют разные единицы; нормализация не выдаёт неподтверждённый абсолютный ток за факт."
+    },
+    {
+      "assumptionId": "A-14",
+      "description": "Моменты изменения учебных сигнализаторов уровня задаются демонстрационным профилем.",
+      "rationale": "Связь нормализованного процента с подтверждённым уровнем 3500 мм без исходной геометрии аппарата не определена."
+    },
+    {
+      "assumptionId": "A-15",
+      "description": "Начальные состояния оборудования для демонстрационной сессии задаются конфигурацией модели.",
+      "rationale": "Источники описывают состав оборудования, но не фактическую комбинацию работающих и резервных агрегатов для демо-запуска."
     }
   ],
   "equipment": [
@@ -545,19 +560,19 @@
     {"signalId": "COMPAX.N1.VELOCITY", "tag": "COMPAX.N1.VELOCITY", "equipmentId": "eq-n1", "name": "Виброскорость Н-1", "measurementType": "vibration_velocity", "unit": "mm/s", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
     {"signalId": "COMPAX.N1.ACCELERATION", "tag": "COMPAX.N1.ACCELERATION", "equipmentId": "eq-n1", "name": "Виброускорение Н-1", "measurementType": "vibration_acceleration", "unit": "m/s2", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
     {"signalId": "COMPAX.N1.DISPLACEMENT", "tag": "COMPAX.N1.DISPLACEMENT", "equipmentId": "eq-n1", "name": "Виброперемещение подшипников Н-1", "measurementType": "vibration_displacement", "unit": "um", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
-    {"signalId": "COMPAX.N1.CURRENT", "tag": "COMPAX.N1.CURRENT", "equipmentId": "eq-n1", "name": "Сила тока электродвигателя Н-1", "measurementType": "electric_current", "unit": "A", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
+    {"signalId": "COMPAX.N1.CURRENT", "tag": "COMPAX.N1.CURRENT", "equipmentId": "eq-n1", "name": "Сила тока электродвигателя Н-1", "measurementType": "electric_current", "unit": "percent_of_baseline", "unitProvenance": {"origin": "educational_assumption", "assumptionId": "A-13"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
 
     {"signalId": "COMPAX.N1A.TEMPERATURE", "tag": "COMPAX.N1A.TEMPERATURE", "equipmentId": "eq-n1a", "name": "Температура подшипников Н-1А", "measurementType": "temperature", "unit": "degC", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
     {"signalId": "COMPAX.N1A.VELOCITY", "tag": "COMPAX.N1A.VELOCITY", "equipmentId": "eq-n1a", "name": "Виброскорость Н-1А", "measurementType": "vibration_velocity", "unit": "mm/s", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
     {"signalId": "COMPAX.N1A.ACCELERATION", "tag": "COMPAX.N1A.ACCELERATION", "equipmentId": "eq-n1a", "name": "Виброускорение Н-1А", "measurementType": "vibration_acceleration", "unit": "m/s2", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
     {"signalId": "COMPAX.N1A.DISPLACEMENT", "tag": "COMPAX.N1A.DISPLACEMENT", "equipmentId": "eq-n1a", "name": "Виброперемещение подшипников Н-1А", "measurementType": "vibration_displacement", "unit": "um", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
-    {"signalId": "COMPAX.N1A.CURRENT", "tag": "COMPAX.N1A.CURRENT", "equipmentId": "eq-n1a", "name": "Сила тока электродвигателя Н-1А", "measurementType": "electric_current", "unit": "A", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
+    {"signalId": "COMPAX.N1A.CURRENT", "tag": "COMPAX.N1A.CURRENT", "equipmentId": "eq-n1a", "name": "Сила тока электродвигателя Н-1А", "measurementType": "electric_current", "unit": "percent_of_baseline", "unitProvenance": {"origin": "educational_assumption", "assumptionId": "A-13"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
 
     {"signalId": "COMPAX.N1B.TEMPERATURE", "tag": "COMPAX.N1B.TEMPERATURE", "equipmentId": "eq-n1b", "name": "Температура подшипников Н-1Б", "measurementType": "temperature", "unit": "degC", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
     {"signalId": "COMPAX.N1B.VELOCITY", "tag": "COMPAX.N1B.VELOCITY", "equipmentId": "eq-n1b", "name": "Виброскорость Н-1Б", "measurementType": "vibration_velocity", "unit": "mm/s", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
     {"signalId": "COMPAX.N1B.ACCELERATION", "tag": "COMPAX.N1B.ACCELERATION", "equipmentId": "eq-n1b", "name": "Виброускорение Н-1Б", "measurementType": "vibration_acceleration", "unit": "m/s2", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
     {"signalId": "COMPAX.N1B.DISPLACEMENT", "tag": "COMPAX.N1B.DISPLACEMENT", "equipmentId": "eq-n1b", "name": "Виброперемещение подшипников Н-1Б", "measurementType": "vibration_displacement", "unit": "um", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
-    {"signalId": "COMPAX.N1B.CURRENT", "tag": "COMPAX.N1B.CURRENT", "equipmentId": "eq-n1b", "name": "Сила тока электродвигателя Н-1Б", "measurementType": "electric_current", "unit": "A", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
+    {"signalId": "COMPAX.N1B.CURRENT", "tag": "COMPAX.N1B.CURRENT", "equipmentId": "eq-n1b", "name": "Сила тока электродвигателя Н-1Б", "measurementType": "electric_current", "unit": "percent_of_baseline", "unitProvenance": {"origin": "educational_assumption", "assumptionId": "A-13"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
 
     {"signalId": "LRCA641", "tag": "LRCA 641", "equipmentId": "eq-e1", "name": "Уровень раздела фаз Э-1", "measurementType": "level", "unit": "percent_of_baseline", "unitProvenance": {"origin": "educational_assumption", "assumptionId": "A-11"}, "precision": 1, "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
     {"signalId": "LRCA640", "tag": "LRCA 640", "equipmentId": "eq-e3", "name": "Уровень раздела фаз Э-3", "measurementType": "level", "unit": "percent_of_baseline", "unitProvenance": {"origin": "educational_assumption", "assumptionId": "A-11"}, "precision": 1, "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
