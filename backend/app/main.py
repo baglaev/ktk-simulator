@@ -6,7 +6,7 @@ from app.api.errors import (
     session_conflict_handler,
     session_not_found_handler,
 )
-from app.api.routes import scenarios_router, sessions_router
+from app.api.routes import scenarios_router, sessions_router, websocket_router
 from app.config import get_settings
 from app.services import (
     InvalidSessionTransitionError,
@@ -43,6 +43,7 @@ def create_app() -> FastAPI:
 
     application.include_router(scenarios_router)
     application.include_router(sessions_router)
+    application.include_router(websocket_router)
     application.add_exception_handler(
         SessionNotFoundError,
         session_not_found_handler,

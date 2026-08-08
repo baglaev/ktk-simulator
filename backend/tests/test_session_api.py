@@ -4,7 +4,7 @@ from uuid import UUID
 import pytest
 from fastapi.testclient import TestClient
 
-from app.api.dependencies import get_session_manager
+from app.api.dependencies import get_session_broker, get_session_manager
 from app.main import app
 
 
@@ -14,8 +14,10 @@ client = TestClient(app)
 @pytest.fixture(autouse=True)
 def reset_session_manager():
     get_session_manager.cache_clear()
+    get_session_broker.cache_clear()
     yield
     get_session_manager.cache_clear()
+    get_session_broker.cache_clear()
 
 
 def create_session(trainee_id: str = "trainee-001") -> dict:

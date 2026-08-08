@@ -45,11 +45,15 @@ class SessionManager:
         self,
         clock: Callable[[], datetime] = utc_now,
         id_factory: Callable[[], UUID] = uuid4,
+        snapshot_publisher: Callable[[UUID, ModelSnapshot], None] | None = None,
     ) -> None:
         self._clock = clock
         self._id_factory = id_factory
         self._scenario = load_n1a_scenario()
         self._profile: ModelProfile = load_n1a_model_profile()
+        self._snapshot_publisher = snapshot_publisher or (
+            lambda _id, _snapshot: None
+        )
         self._sessions: dict[UUID, TrainingSession] = {}
         self._models: dict[UUID, N1AProcessModel] = {}
         self._processed_actions: dict[UUID, dict[str, UUID]] = {}
@@ -95,6 +99,7 @@ class SessionManager:
                 }
             )
             self._sessions[session_id] = updated
+            self._snapshot_publisher(session_id, snapshot)
             return updated.model_copy(deep=True)
 
     def pause_session(self, session_id: UUID) -> TrainingSession:
@@ -134,6 +139,7 @@ class SessionManager:
             except SimulationCompletedError as error:
                 raise InvalidSessionTransitionError(str(error)) from error
             self._sync_model_state(session, snapshot)
+            self._snapshot_publisher(session_id, snapshot)
             return snapshot
 
     def apply_action(
@@ -161,6 +167,7 @@ class SessionManager:
                 raise SessionConflictError(str(error)) from error
             processed[action.idempotency_key] = action.action_id
             self._sync_model_state(session, snapshot)
+            self._snapshot_publisher(session_id, snapshot)
             return snapshot
 
     def get_snapshot(self, session_id: UUID) -> ModelSnapshot:
