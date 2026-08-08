@@ -77,6 +77,16 @@ export const SimulatorSchema = () => {
             <Text size="xs">От исходного</Text>
           </div>
         </div>
+
+        <div className={`${styles.valueItem} ${styles.lrca}`}>
+          <Text>LRCA 605</Text>
+          <div className={styles.procentContainer}>
+            <Text size="m" weight="bold">
+              80%
+            </Text>
+            <Badge status="success" form="round" size="xs" />
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -35,3 +35,9 @@
   column-gap: 4px;
   align-items: center;
 }
+
+.lrca {
+  right: 2.4%;
+  position: absolute;
+  bottom: -3%;
+}
