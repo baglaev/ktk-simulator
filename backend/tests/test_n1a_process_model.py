@@ -3,7 +3,7 @@ from uuid import UUID
 
 import pytest
 
-from app.domain import ActionType, OperatorAction, SignalQuality
+from app.domain import ActionType, GeneralStatus, OperatorAction
 from app.scenarios import load_n1a_scenario
 from app.simulation import (
     ModelNotInitializedError,
@@ -24,8 +24,16 @@ def create_model() -> N1AProcessModel:
     )
 
 
-def signal_map(snapshot):
-    return {item.signal_id: item for item in snapshot.signals}
+def component_map(snapshot):
+    return {item.component_id: item for item in snapshot.components}
+
+
+def parameter_map(snapshot):
+    return {
+        parameter.parameter_id: parameter
+        for component in snapshot.components
+        for parameter in component.parameters
+    }
 
 
 def test_model_requires_initialization() -> None:
@@ -35,22 +43,28 @@ def test_model_requires_initialization() -> None:
 
 def test_initial_snapshot_contains_complete_model_state() -> None:
     snapshot = create_model().initialize(SESSION_ID)
-    signals = signal_map(snapshot)
-    n1a = next(item for item in snapshot.equipment if item.equipment_id == "eq-n1a")
+    parameters = parameter_map(snapshot)
+    n1a = component_map(snapshot)["eq-n1a"]
 
     assert snapshot.sequence_no == 0
     assert snapshot.state_version == 0
-    assert snapshot.virtual_time_ms == 0
-    assert snapshot.scenario_version == "0.1.0"
-    assert snapshot.model_version == "0.1.0"
-    assert len(snapshot.equipment) == 22
-    assert len(snapshot.signals) == 32
-    assert signals["PRA351"].value == 100
-    assert signals["FYQR117"].value == 100
-    assert signals["LRCA602"].value is None
-    assert signals["LRCA602"].quality is SignalQuality.UNCERTAIN
-    assert n1a.state == {"faultSeverity": 0.0, "diagnosticStatus": "normal"}
-    assert [item.event_type for item in snapshot.events] == ["scenario_initialized"]
+    assert snapshot.timing.elapsed_ms == 0
+    assert snapshot.timing.total_ms == 120_000
+    assert snapshot.scenario_version == "0.2.0"
+    assert snapshot.model_version == "0.2.0"
+    assert len(snapshot.components) == 8
+    assert len(parameters) == 27
+    assert parameters["PRA351"].value_percent == 100
+    assert parameters["FYQR117"].value_percent == 100
+    assert parameters["COMPAX.N1V.VELOCITY"].value_percent == 100
+    assert parameters["LRCA605"].value_percent == 65
+    assert component_map(snapshot)["eq-n1v"].operating_state.value == "running"
+    assert component_map(snapshot)["eq-n1b"].operating_state.value == "stopped"
+    assert n1a.status is GeneralStatus.SUCCESS
+    assert n1a.state == {"faultSeverityPercent": 0.0}
+    assert [item.description for item in snapshot.journal] == [
+        "Сценарий запущен"
+    ]
 
 
 def test_model_interpolates_between_keyframes() -> None:
@@ -58,12 +72,13 @@ def test_model_interpolates_between_keyframes() -> None:
     model.initialize(SESSION_ID)
 
     snapshot = model.step(32_500)
-    signals = signal_map(snapshot)
+    parameters = parameter_map(snapshot)
 
-    assert signals["PRA351"].value == 97.5
-    assert signals["FYQR117"].value == 96.5
-    assert signals["COMPAX.N1A.VELOCITY"].value == 7.9
-    assert signals["COMPAX.N1.VELOCITY"].value == 2.4
+    assert parameters["PRA351"].value_percent == 97.5
+    assert parameters["FYQR117"].value_percent == 96.5
+    assert parameters["COMPAX.N1A.VELOCITY"].value_percent == 328.1
+    assert parameters["COMPAX.N1.VELOCITY"].value_percent == 100
+    assert component_map(snapshot)["eq-n1a"].status is GeneralStatus.ALERT
 
 
 def test_model_emits_events_crossed_by_large_step() -> None:
@@ -72,12 +87,12 @@ def test_model_emits_events_crossed_by_large_step() -> None:
 
     snapshot = model.step(55_000)
 
-    assert [item.event_type for item in snapshot.events] == [
-        "scenario_initialized",
-        "diagnostic_warning",
-        "diagnostic_critical",
-        "feed_parameters_declining",
-        "elou_level_declining",
+    assert [item.time for item in snapshot.journal] == [
+        "00:00",
+        "00:10",
+        "00:25",
+        "00:40",
+        "00:55",
     ]
 
 
@@ -100,21 +115,23 @@ def test_terminal_snapshot_uses_training_boundaries() -> None:
     model.initialize(SESSION_ID)
 
     snapshot = model.step(120_000)
-    signals = signal_map(snapshot)
+    parameters = parameter_map(snapshot)
 
-    assert snapshot.virtual_time_ms == 120_000
-    assert signals["PRA351"].value == 38
-    assert signals["FYQR117"].value == 34
-    assert signals["LRCA605"].value == 20
-    assert signals["LSA641A"].value is True
-    assert signals["LS644A"].value is False
-    assert snapshot.events[-1].event_type == "training_scenario_boundary_reached"
+    assert snapshot.timing.elapsed_ms == 120_000
+    assert snapshot.timing.remaining_ms == 0
+    assert snapshot.timing.progress_percent == 100
+    assert parameters["PRA351"].value_percent == 38
+    assert parameters["FYQR117"].value_percent == 34
+    assert parameters["LRCA605"].value_percent == 20
+    assert parameters["ELOU.STAGE1.LEVEL"].value_percent == 72
+    assert parameters["ELOU.STAGE2.LEVEL"].value_percent == 81
+    assert snapshot.journal[-1].description == "Общее время сценария завершено"
 
     with pytest.raises(SimulationCompletedError):
         model.step(1_000)
 
 
-def test_action_is_recorded_without_changing_virtual_time() -> None:
+def test_action_is_recorded_without_changing_elapsed_time() -> None:
     model = create_model()
     model.initialize(SESSION_ID)
     action = OperatorAction(
@@ -129,11 +146,11 @@ def test_action_is_recorded_without_changing_virtual_time() -> None:
 
     snapshot = model.apply_action(action)
 
-    assert snapshot.virtual_time_ms == 0
+    assert snapshot.timing.elapsed_ms == 0
     assert snapshot.sequence_no == 1
     assert snapshot.state_version == 1
-    assert snapshot.events[-1].event_type == "operator_action_recorded"
-    assert snapshot.events[-1].payload["actionType"] == "view_signal"
+    assert snapshot.journal[-1].time == "00:00"
+    assert snapshot.journal[-1].description == "Просмотрен параметр PRA 351"
 
 
 def test_action_rejects_stale_state_version() -> None:
@@ -160,5 +177,7 @@ def test_snapshot_serializes_model_metadata_in_camel_case() -> None:
 
     assert payload["sequenceNo"] == 0
     assert payload["stateVersion"] == 0
-    assert payload["virtualTimeMs"] == 0
-    assert payload["equipment"][0]["equipmentId"]
+    assert payload["timing"]["mode"] == "live"
+    assert payload["timing"]["elapsedMs"] == 0
+    assert payload["components"][0]["componentId"]
+    assert "signals" not in payload

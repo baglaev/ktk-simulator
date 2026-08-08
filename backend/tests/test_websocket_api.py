@@ -37,7 +37,7 @@ def create_session(*, start: bool = True) -> str:
     return session_id
 
 
-def test_websocket_sends_snapshot_then_delta() -> None:
+def test_websocket_sends_snapshot_then_full_update() -> None:
     session_id = create_session()
 
     with client.websocket_connect(
@@ -48,17 +48,20 @@ def test_websocket_sends_snapshot_then_delta() -> None:
             f"/api/v1/sessions/{session_id}/advance",
             json={"dtMs": 10_000},
         )
-        delta = websocket.receive_json()
+        update = websocket.receive_json()
 
     assert advanced.status_code == 200
     assert snapshot["type"] == "telemetry.snapshot"
     assert snapshot["sequenceNo"] == 0
-    assert delta["type"] == "telemetry.delta"
-    assert delta["sequenceNo"] == 1
-    assert delta["stateVersion"] == 1
-    assert delta["virtualTimeMs"] == 10_000
-    assert delta["signals"]
-    assert len(delta["signals"]) < len(snapshot["signals"])
+    assert update["type"] == "telemetry.update"
+    assert update["sequenceNo"] == 1
+    assert update["stateVersion"] == 1
+    assert update["timing"]["elapsedMs"] == 10_000
+    assert len(update["components"]) == 8
+    assert [item["componentId"] for item in update["components"]] == [
+        item["componentId"] for item in snapshot["components"]
+    ]
+    assert all("parameters" in item for item in update["components"])
 
 
 def test_two_websocket_clients_receive_the_same_delta() -> None:
@@ -82,7 +85,7 @@ def test_two_websocket_clients_receive_the_same_delta() -> None:
     assert first_delta == second_delta
 
 
-def test_operator_action_is_streamed_as_event_delta() -> None:
+def test_operator_action_is_streamed_in_journal() -> None:
     session_id = create_session()
     action = {
         "actionId": "22222222-2222-2222-2222-222222222222",
@@ -102,14 +105,17 @@ def test_operator_action_is_streamed_as_event_delta() -> None:
             f"/api/v1/sessions/{session_id}/actions",
             json=action,
         )
-        delta = websocket.receive_json()
+        update = websocket.receive_json()
 
     assert response.status_code == 200
-    assert delta["type"] == "telemetry.delta"
-    assert delta["sequenceNo"] == 1
-    assert delta["stateVersion"] == 1
-    assert len(delta["events"]) == 1
-    assert delta["events"][0]["eventType"] == "operator_action_recorded"
+    assert update["type"] == "telemetry.update"
+    assert update["sequenceNo"] == 1
+    assert update["stateVersion"] == 1
+    assert update["journal"][-1] == {
+        "entryId": "22222222-2222-2222-2222-222222222222",
+        "time": "00:00",
+        "description": "Запущена диагностика компонента Н-1А",
+    }
 
 
 def test_unknown_session_is_closed_with_4404() -> None:

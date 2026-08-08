@@ -38,7 +38,9 @@ def test_full_session_lifecycle() -> None:
     session_id = created["sessionId"]
 
     assert created["status"] == "created"
-    assert created["virtualTimeMs"] == 0
+    assert created["timeMode"] == "live"
+    assert created["elapsedTimeMs"] == 0
+    assert created["totalDurationMs"] == 120_000
 
     started = client.post(f"/api/v1/sessions/{session_id}/start")
     assert started.status_code == 200
@@ -49,7 +51,7 @@ def test_full_session_lifecycle() -> None:
         json={"dtMs": 10_000},
     )
     assert advanced.status_code == 200
-    assert advanced.json()["virtualTimeMs"] == 10_000
+    assert advanced.json()["timing"]["elapsedMs"] == 10_000
     assert advanced.json()["stateVersion"] == 1
 
     paused = client.post(f"/api/v1/sessions/{session_id}/pause")
@@ -106,8 +108,8 @@ def test_two_sessions_have_isolated_model_state() -> None:
         f"/api/v1/sessions/{second_id}/snapshot"
     ).json()
 
-    assert first_snapshot["virtualTimeMs"] == 25_000
-    assert second_snapshot["virtualTimeMs"] == 0
+    assert first_snapshot["timing"]["elapsedMs"] == 25_000
+    assert second_snapshot["timing"]["elapsedMs"] == 0
     assert first_snapshot["stateVersion"] == 1
     assert second_snapshot["stateVersion"] == 0
 
@@ -139,7 +141,7 @@ def test_action_is_idempotent() -> None:
     assert second.status_code == 200
     assert first.json()["stateVersion"] == 1
     assert second.json()["stateVersion"] == 1
-    assert len(first.json()["events"]) == len(second.json()["events"])
+    assert len(first.json()["journal"]) == len(second.json()["journal"])
 
 
 def test_reusing_idempotency_key_for_another_action_returns_conflict() -> None:

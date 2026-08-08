@@ -30,19 +30,19 @@ def test_runtime_advances_only_running_sessions() -> None:
     )
 
     runtime.tick_once()
-    assert manager.get_session(session_id).virtual_time_ms == 1_000
+    assert manager.get_session(session_id).elapsed_time_ms == 1_000
 
     manager.pause_session(session_id)
     runtime.tick_once()
-    assert manager.get_session(session_id).virtual_time_ms == 1_000
+    assert manager.get_session(session_id).elapsed_time_ms == 1_000
 
     manager.resume_session(session_id)
     runtime.tick_once()
-    assert manager.get_session(session_id).virtual_time_ms == 2_000
+    assert manager.get_session(session_id).elapsed_time_ms == 2_000
 
     manager.complete_session(session_id)
     runtime.tick_once()
-    assert manager.get_session(session_id).virtual_time_ms == 2_000
+    assert manager.get_session(session_id).elapsed_time_ms == 2_000
 
 
 def test_runtime_completes_session_at_scenario_boundary() -> None:
@@ -56,7 +56,7 @@ def test_runtime_completes_session_at_scenario_boundary() -> None:
     runtime.tick_once()
     session = manager.get_session(session_id)
 
-    assert session.virtual_time_ms == 120_000
+    assert session.elapsed_time_ms == 120_000
     assert session.status is SessionStatus.COMPLETED
     assert session.completed_at is not None
     assert manager.running_session_ids() == ()
@@ -74,17 +74,17 @@ def test_background_runtime_starts_and_stops_cleanly() -> None:
         await runtime.start()
         assert runtime.is_running
         for _ in range(20):
-            if manager.get_session(session_id).virtual_time_ms > 0:
+            if manager.get_session(session_id).elapsed_time_ms > 0:
                 break
             await asyncio.sleep(0.005)
 
-        assert manager.get_session(session_id).virtual_time_ms > 0
+        assert manager.get_session(session_id).elapsed_time_ms > 0
         await runtime.stop()
-        stopped_at = manager.get_session(session_id).virtual_time_ms
+        stopped_at = manager.get_session(session_id).elapsed_time_ms
         assert not runtime.is_running
 
         await asyncio.sleep(0.015)
-        assert manager.get_session(session_id).virtual_time_ms == stopped_at
+        assert manager.get_session(session_id).elapsed_time_ms == stopped_at
 
     asyncio.run(exercise())
 

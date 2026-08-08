@@ -7,17 +7,17 @@ from app.domain.enums import (
     EquipmentStatus,
     EquipmentType,
     EventSeverity,
+    GeneralStatus,
     MeasurementType,
     ParameterOrigin,
     SessionStatus,
-    SignalQuality,
     TrainingMode,
     UserRole,
 )
 from app.domain.equipment import (
+    ComponentState,
     EquipmentDefinition,
     EquipmentParameterDefinition,
-    EquipmentState,
 )
 from app.domain.sessions import (
     AdvanceSessionRequest,
@@ -31,24 +31,31 @@ from app.domain.scenarios import (
     ScenarioSummary,
     SourceReference,
 )
-from app.domain.signals import SignalDefinition, SignalValue
-from app.domain.telemetry import ModelEvent, ModelSnapshot, TelemetryDelta
+from app.domain.signals import ComponentParameterValue, SignalDefinition
+from app.domain.telemetry import (
+    JournalEntry,
+    ModelSnapshot,
+    ScenarioTiming,
+    TelemetryUpdate,
+)
 
 __all__ = [
     "APIModel",
     "AdvanceSessionRequest",
     "ActionType",
     "CreateSessionRequest",
+    "ComponentParameterValue",
+    "ComponentState",
     "EquipmentDefinition",
     "EquipmentConnection",
     "EquipmentParameterDefinition",
-    "EquipmentState",
     "EquipmentStatus",
     "EquipmentType",
     "EventSeverity",
+    "GeneralStatus",
     "EducationalAssumption",
     "MeasurementType",
-    "ModelEvent",
+    "JournalEntry",
     "ModelSnapshot",
     "OperatorAction",
     "ParameterOrigin",
@@ -57,10 +64,9 @@ __all__ = [
     "ScenarioSummary",
     "SessionStatus",
     "SignalDefinition",
-    "SignalQuality",
-    "SignalValue",
     "SourceReference",
-    "TelemetryDelta",
+    "ScenarioTiming",
+    "TelemetryUpdate",
     "TrainingMode",
     "TrainingSession",
     "UserRole",

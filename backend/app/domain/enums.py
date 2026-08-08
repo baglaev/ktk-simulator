@@ -56,10 +56,12 @@ class MeasurementType(str, Enum):
     STATE = "state"
 
 
-class SignalQuality(str, Enum):
-    GOOD = "good"
-    UNCERTAIN = "uncertain"
-    BAD = "bad"
+class GeneralStatus(str, Enum):
+    """Common traffic-light status used by every frontend component."""
+
+    SUCCESS = "success"
+    WARNING = "warning"
+    ALERT = "alert"
 
 
 class ParameterOrigin(str, Enum):

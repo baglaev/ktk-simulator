@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Literal
 from uuid import UUID
 
 from pydantic import AwareDatetime, Field, model_validator
@@ -18,7 +19,9 @@ class TrainingSession(APIModel):
     instructor_id: str | None = None
     mode: TrainingMode
     status: SessionStatus = SessionStatus.CREATED
-    virtual_time_ms: int = Field(default=0, ge=0)
+    time_mode: Literal["live"] = "live"
+    elapsed_time_ms: int = Field(default=0, ge=0)
+    total_duration_ms: int = Field(gt=0)
     state_version: int = Field(default=0, ge=0)
     created_at: AwareDatetime
     started_at: AwareDatetime | None = None
@@ -43,6 +46,6 @@ class CreateSessionRequest(APIModel):
 
 
 class AdvanceSessionRequest(APIModel):
-    """Explicit virtual-clock step used by the deterministic MVP driver."""
+    """Explicit elapsed-time step used only by tests and manual debugging."""
 
     dt_ms: int = Field(gt=0)
