@@ -1,0 +1,594 @@
+{
+  "schemaVersion": "1.0",
+  "scenarioId": "MVP-SC-01",
+  "scenarioVersion": "0.1.0",
+  "name": "Раннее выявление неисправности сырьевого насоса Н-1А",
+  "description": "Учебный сценарий локализации развивающейся неисправности Н-1А и контроля последствий по технологической цепочке до К-1.",
+  "sources": [
+    {
+      "sourceRefId": "SRC-PROCESS-3.2",
+      "origin": "source",
+      "fileName": "03_технологические_источники/01_описание_технологического_процесса.pdf",
+      "section": "3.2 Подогрев сырой нефти перед ЭЛОУ",
+      "pages": "PDF с. 2-3",
+      "note": "Насосы Н-1, линия, теги PRA 351 и FYQR 117, теплообменники Т-1-Т-11."
+    },
+    {
+      "sourceRefId": "SRC-PROCESS-3.3",
+      "origin": "source",
+      "fileName": "03_технологические_источники/01_описание_технологического_процесса.pdf",
+      "section": "3.3 Блок ЭЛОУ",
+      "pages": "PDF с. 5-6",
+      "note": "Э-1-Э-6, сигнализаторы уровня, Е-15, LRCA 605 и насосы Н-20."
+    },
+    {
+      "sourceRefId": "SRC-PROCESS-3.5",
+      "origin": "source",
+      "fileName": "03_технологические_источники/01_описание_технологического_процесса.pdf",
+      "section": "3.5 Колонна К-1",
+      "pages": "PDF с. 9",
+      "note": "Колонна К-1 и уровнемер LRCA 602."
+    },
+    {
+      "sourceRefId": "SRC-PROCESS-3.11",
+      "origin": "source",
+      "fileName": "03_технологические_источники/01_описание_технологического_процесса.pdf",
+      "section": "3.11 Система автоматического диагностирования Компакс",
+      "pages": "PDF с. 36",
+      "note": "Состав диагностируемых насосов и параметров Компакс."
+    },
+    {
+      "sourceRefId": "SRC-PUMPS-T17",
+      "origin": "source",
+      "fileName": "03_технологические_источники/03_насосное_оборудование.pdf",
+      "section": "9.1.3, таблица 17",
+      "pages": "PDF с. 1 и 5",
+      "note": "Паспортные характеристики насосов Н-1 и Н-20."
+    },
+    {
+      "sourceRefId": "SRC-SAFETY-7.9.1",
+      "origin": "source",
+      "fileName": "04_безопасность/02_меры_безопасности.pdf",
+      "section": "7.9.1",
+      "pages": "PDF с. 6",
+      "note": "Последовательность снижения уровней: ЭЛОУ, Е-15, К-1."
+    },
+    {
+      "sourceRefId": "TEAM-MVP-SCENARIO",
+      "origin": "team",
+      "fileName": "02_проектное_решение/02_MVP_сценарий_Н1_ЭЛОУ_АВТ.docx",
+      "section": "Сценарий MVP-СЦ-01 и мнемосхема",
+      "note": "Проектная агрегация блоков, экранные обозначения и учебные допущения."
+    }
+  ],
+  "assumptions": [
+    {
+      "assumptionId": "A-01",
+      "description": "Н-1А выбран работающим неисправным агрегатом фиксированной демонстрационной конфигурации.",
+      "rationale": "Обеспечивает воспроизводимость сценария и не описывает фактический режим установки."
+    },
+    {
+      "assumptionId": "A-02",
+      "description": "Профиль развития диагностических параметров Компакс задаётся учебной моделью.",
+      "rationale": "Источники подтверждают состав измерений, но не конкретную картину дефекта."
+    },
+    {
+      "assumptionId": "A-03",
+      "description": "PRA 351 и FYQR 117 передаются в MVP как проценты от исходного значения.",
+      "rationale": "Теги подтверждены, но режимный лист и временные кривые отсутствуют."
+    },
+    {
+      "assumptionId": "A-04",
+      "description": "Начальные уровни Е-15 и К-1, скорости изменения и задержки задаются моделью.",
+      "rationale": "Сохраняется подтверждённая последовательность последствий без заявления полного физического баланса."
+    },
+    {
+      "assumptionId": "A-11",
+      "description": "Уровни электродегидраторов в интерфейсе MVP отображаются как проценты от исходного значения.",
+      "rationale": "Это учебное представление, не заменяющее реальные показания уровнемеров."
+    },
+    {
+      "assumptionId": "A-12",
+      "description": "Для параметров Компакс используются синтетические идентификаторы сигналов.",
+      "rationale": "Состав параметров подтверждён, но реальные индивидуальные теги датчиков в источнике не приведены."
+    },
+    {
+      "assumptionId": "A-13",
+      "description": "Ток двигателя в модели отображается как процент от исходного значения, а не в амперах.",
+      "rationale": "Макет и таблица траектории используют разные единицы; нормализация не выдаёт неподтверждённый абсолютный ток за факт."
+    },
+    {
+      "assumptionId": "A-14",
+      "description": "Моменты изменения учебных сигнализаторов уровня задаются демонстрационным профилем.",
+      "rationale": "Связь нормализованного процента с подтверждённым уровнем 3500 мм без исходной геометрии аппарата не определена."
+    },
+    {
+      "assumptionId": "A-15",
+      "description": "Начальные состояния оборудования для демонстрационной сессии задаются конфигурацией модели.",
+      "rationale": "Источники описывают состав оборудования, но не фактическую комбинацию работающих и резервных агрегатов для демо-запуска."
+    }
+  ],
+  "equipment": [
+    {
+      "equipmentId": "eq-r11",
+      "tag": "Р-11",
+      "name": "Сырьевой резервуар Р-11",
+      "equipmentType": "tank",
+      "specifications": [],
+      "provenance": {
+        "origin": "team",
+        "sourceRefId": "TEAM-MVP-SCENARIO",
+        "note": "Назначение на мнемосхеме является проектной позицией команды."
+      }
+    },
+    {
+      "equipmentId": "eq-r12",
+      "tag": "Р-12",
+      "name": "Сырьевой резервуар Р-12",
+      "equipmentType": "tank",
+      "specifications": [],
+      "provenance": {
+        "origin": "team",
+        "sourceRefId": "TEAM-MVP-SCENARIO",
+        "note": "Назначение на мнемосхеме является проектной позицией команды."
+      }
+    },
+    {
+      "equipmentId": "eq-n1-group",
+      "tag": "Н-1 группа",
+      "name": "Группа сырьевых насосов Н-1",
+      "equipmentType": "pump_group",
+      "specifications": [],
+      "provenance": {
+        "origin": "source",
+        "sourceRefId": "SRC-PROCESS-3.2"
+      }
+    },
+    {
+      "equipmentId": "eq-n1",
+      "tag": "Н-1",
+      "name": "Сырьевой насос Н-1",
+      "equipmentType": "pump",
+      "parentId": "eq-n1-group",
+      "specifications": [
+        {
+          "parameterId": "rated-capacity",
+          "name": "Номинальная производительность",
+          "value": 450,
+          "unit": "m3/h",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}
+        },
+        {
+          "parameterId": "discharge-pressure",
+          "name": "Давление на выкиде",
+          "value": 19.5,
+          "unit": "kgf/cm2",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}
+        },
+        {
+          "parameterId": "motor-power",
+          "name": "Мощность электродвигателя",
+          "value": 400,
+          "unit": "kW",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}
+        },
+        {
+          "parameterId": "rotation-frequency",
+          "name": "Частота вращения",
+          "value": 2980,
+          "unit": "rpm",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}
+        }
+      ],
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.2"}
+    },
+    {
+      "equipmentId": "eq-n1a",
+      "tag": "Н-1А",
+      "name": "Сырьевой насос Н-1А",
+      "equipmentType": "pump",
+      "parentId": "eq-n1-group",
+      "specifications": [
+        {
+          "parameterId": "rated-capacity",
+          "name": "Номинальная производительность",
+          "value": 450,
+          "unit": "m3/h",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}
+        },
+        {
+          "parameterId": "discharge-pressure",
+          "name": "Давление на выкиде",
+          "value": 19.5,
+          "unit": "kgf/cm2",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}
+        },
+        {
+          "parameterId": "motor-power",
+          "name": "Мощность электродвигателя",
+          "value": 400,
+          "unit": "kW",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}
+        },
+        {
+          "parameterId": "rotation-frequency",
+          "name": "Частота вращения",
+          "value": 2980,
+          "unit": "rpm",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}
+        }
+      ],
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.2"}
+    },
+    {
+      "equipmentId": "eq-n1b",
+      "tag": "Н-1Б",
+      "name": "Сырьевой насос Н-1Б",
+      "equipmentType": "pump",
+      "parentId": "eq-n1-group",
+      "specifications": [
+        {
+          "parameterId": "rated-capacity",
+          "name": "Номинальная производительность",
+          "value": 450,
+          "unit": "m3/h",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}
+        },
+        {
+          "parameterId": "discharge-pressure",
+          "name": "Давление на выкиде",
+          "value": 19.5,
+          "unit": "kgf/cm2",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}
+        },
+        {
+          "parameterId": "motor-power",
+          "name": "Мощность электродвигателя",
+          "value": 400,
+          "unit": "kW",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}
+        },
+        {
+          "parameterId": "rotation-frequency",
+          "name": "Частота вращения",
+          "value": 2980,
+          "unit": "rpm",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}
+        }
+      ],
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.2"}
+    },
+    {
+      "equipmentId": "eq-n1v",
+      "tag": "Н-1В",
+      "name": "Сырьевой насос Н-1В",
+      "equipmentType": "pump",
+      "parentId": "eq-n1-group",
+      "specifications": [
+        {
+          "parameterId": "rated-capacity",
+          "name": "Номинальная производительность",
+          "value": 145,
+          "unit": "m3/h",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}
+        },
+        {
+          "parameterId": "discharge-pressure",
+          "name": "Давление на выкиде",
+          "value": 17.0,
+          "unit": "kgf/cm2",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}
+        },
+        {
+          "parameterId": "motor-power",
+          "name": "Мощность электродвигателя",
+          "value": 132,
+          "unit": "kW",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}
+        },
+        {
+          "parameterId": "rotation-frequency",
+          "name": "Частота вращения",
+          "value": 2958,
+          "unit": "rpm",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}
+        }
+      ],
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.2"}
+    },
+    {
+      "equipmentId": "eq-n1-discharge",
+      "tag": "Линия Н-1-ЭЛОУ",
+      "name": "Общая линия после группы Н-1",
+      "equipmentType": "pipeline",
+      "specifications": [],
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.2"}
+    },
+    {
+      "equipmentId": "eq-t1-t11",
+      "tag": "Т-1-Т-11",
+      "name": "Укрупнённый теплообменный блок Т-1-Т-11",
+      "equipmentType": "heat_exchanger",
+      "specifications": [
+        {
+          "parameterId": "maximum-feed-temperature",
+          "name": "Максимальная температура нагрева сырой нефти",
+          "value": 140,
+          "unit": "degC",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.2"}
+        }
+      ],
+      "provenance": {
+        "origin": "team",
+        "sourceRefId": "TEAM-MVP-SCENARIO",
+        "note": "Т-1-Т-11 объединены в один экранный объект; состав оборудования подтверждён SRC-PROCESS-3.2."
+      }
+    },
+    {
+      "equipmentId": "eq-elou",
+      "tag": "ЭЛОУ",
+      "name": "Укрупнённый блок ЭЛОУ",
+      "equipmentType": "desalter",
+      "specifications": [],
+      "provenance": {
+        "origin": "team",
+        "sourceRefId": "TEAM-MVP-SCENARIO",
+        "note": "Группа из шести подтверждённых электродегидраторов."
+      }
+    },
+    {
+      "equipmentId": "eq-e1",
+      "tag": "Э-1",
+      "name": "Электродегидратор Э-1, I ступень",
+      "equipmentType": "desalter",
+      "parentId": "eq-elou",
+      "specifications": [
+        {
+          "parameterId": "low-level-interlock",
+          "name": "Уровень срабатывания блокировки подачи напряжения",
+          "value": 3500,
+          "unit": "mm",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}
+        }
+      ],
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}
+    },
+    {
+      "equipmentId": "eq-e3",
+      "tag": "Э-3",
+      "name": "Электродегидратор Э-3, I ступень",
+      "equipmentType": "desalter",
+      "parentId": "eq-elou",
+      "specifications": [
+        {
+          "parameterId": "low-level-interlock",
+          "name": "Уровень срабатывания блокировки подачи напряжения",
+          "value": 3500,
+          "unit": "mm",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}
+        }
+      ],
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}
+    },
+    {
+      "equipmentId": "eq-e5",
+      "tag": "Э-5",
+      "name": "Электродегидратор Э-5, I ступень",
+      "equipmentType": "desalter",
+      "parentId": "eq-elou",
+      "specifications": [
+        {
+          "parameterId": "low-level-interlock",
+          "name": "Уровень срабатывания блокировки подачи напряжения",
+          "value": 3500,
+          "unit": "mm",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}
+        }
+      ],
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}
+    },
+    {
+      "equipmentId": "eq-e2",
+      "tag": "Э-2",
+      "name": "Электродегидратор Э-2, II ступень",
+      "equipmentType": "desalter",
+      "parentId": "eq-elou",
+      "specifications": [
+        {
+          "parameterId": "low-level-interlock",
+          "name": "Уровень срабатывания блокировки подачи напряжения",
+          "value": 3500,
+          "unit": "mm",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}
+        }
+      ],
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}
+    },
+    {
+      "equipmentId": "eq-e4",
+      "tag": "Э-4",
+      "name": "Электродегидратор Э-4, II ступень",
+      "equipmentType": "desalter",
+      "parentId": "eq-elou",
+      "specifications": [
+        {
+          "parameterId": "low-level-interlock",
+          "name": "Уровень срабатывания блокировки подачи напряжения",
+          "value": 3500,
+          "unit": "mm",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}
+        }
+      ],
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}
+    },
+    {
+      "equipmentId": "eq-e6",
+      "tag": "Э-6",
+      "name": "Электродегидратор Э-6, II ступень",
+      "equipmentType": "desalter",
+      "parentId": "eq-elou",
+      "specifications": [
+        {
+          "parameterId": "low-level-interlock",
+          "name": "Уровень срабатывания блокировки подачи напряжения",
+          "value": 3500,
+          "unit": "mm",
+          "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}
+        }
+      ],
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}
+    },
+    {
+      "equipmentId": "eq-e15",
+      "tag": "Е-15",
+      "name": "Технологическая ёмкость Е-15",
+      "equipmentType": "vessel",
+      "specifications": [],
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}
+    },
+    {
+      "equipmentId": "eq-n20-group",
+      "tag": "Н-20 группа",
+      "name": "Группа насосов подачи обессоленной нефти в К-1",
+      "equipmentType": "pump_group",
+      "specifications": [],
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}
+    },
+    {
+      "equipmentId": "eq-n20",
+      "tag": "Н-20",
+      "name": "Насос Н-20",
+      "equipmentType": "pump",
+      "parentId": "eq-n20-group",
+      "specifications": [
+        {"parameterId": "rated-capacity", "name": "Номинальная производительность", "value": 400, "unit": "m3/h", "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}},
+        {"parameterId": "discharge-pressure", "name": "Давление на выкиде", "value": 11.6, "unit": "kgf/cm2", "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}},
+        {"parameterId": "motor-power", "name": "Мощность электродвигателя", "value": 200, "unit": "kW", "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}},
+        {"parameterId": "rotation-frequency", "name": "Частота вращения", "value": 2970, "unit": "rpm", "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}}
+      ],
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}
+    },
+    {
+      "equipmentId": "eq-n20a",
+      "tag": "Н-20А",
+      "name": "Насос Н-20А",
+      "equipmentType": "pump",
+      "parentId": "eq-n20-group",
+      "specifications": [
+        {"parameterId": "rated-capacity", "name": "Номинальная производительность", "value": 400, "unit": "m3/h", "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}},
+        {"parameterId": "discharge-pressure", "name": "Давление на выкиде", "value": 11.6, "unit": "kgf/cm2", "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}},
+        {"parameterId": "motor-power", "name": "Мощность электродвигателя", "value": 200, "unit": "kW", "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}},
+        {"parameterId": "rotation-frequency", "name": "Частота вращения", "value": 2970, "unit": "rpm", "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}}
+      ],
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}
+    },
+    {
+      "equipmentId": "eq-n20b",
+      "tag": "Н-20Б",
+      "name": "Насос Н-20Б",
+      "equipmentType": "pump",
+      "parentId": "eq-n20-group",
+      "specifications": [
+        {"parameterId": "rated-capacity", "name": "Номинальная производительность", "value": 560, "unit": "m3/h", "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}},
+        {"parameterId": "discharge-pressure", "name": "Давление на выкиде", "value": 11.6, "unit": "kgf/cm2", "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}},
+        {"parameterId": "motor-power", "name": "Мощность электродвигателя", "value": 400, "unit": "kW", "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}},
+        {"parameterId": "rotation-frequency", "name": "Частота вращения", "value": 2950, "unit": "rpm", "provenance": {"origin": "source", "sourceRefId": "SRC-PUMPS-T17"}}
+      ],
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}
+    },
+    {
+      "equipmentId": "eq-k1",
+      "tag": "К-1",
+      "name": "Колонна К-1",
+      "equipmentType": "column",
+      "specifications": [],
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.5"}
+    }
+  ],
+  "connections": [
+    {"connectionId": "conn-r11-n1", "sourceEquipmentId": "eq-r11", "targetEquipmentId": "eq-n1-group", "streamCode": "raw-oil-feed", "description": "Подача сырой нефти к насосной группе", "provenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}},
+    {"connectionId": "conn-r12-n1", "sourceEquipmentId": "eq-r12", "targetEquipmentId": "eq-n1-group", "streamCode": "raw-oil-feed", "description": "Подача сырой нефти к насосной группе", "provenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}},
+    {"connectionId": "conn-n1-line", "sourceEquipmentId": "eq-n1-group", "targetEquipmentId": "eq-n1-discharge", "streamCode": "raw-oil", "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.2"}},
+    {"connectionId": "conn-line-hx", "sourceEquipmentId": "eq-n1-discharge", "targetEquipmentId": "eq-t1-t11", "streamCode": "raw-oil", "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.2"}},
+    {"connectionId": "conn-hx-e1", "sourceEquipmentId": "eq-t1-t11", "targetEquipmentId": "eq-e1", "streamCode": "raw-oil-flow-1", "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.2"}},
+    {"connectionId": "conn-hx-e3", "sourceEquipmentId": "eq-t1-t11", "targetEquipmentId": "eq-e3", "streamCode": "raw-oil-flow-2", "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.2"}},
+    {"connectionId": "conn-hx-e5", "sourceEquipmentId": "eq-t1-t11", "targetEquipmentId": "eq-e5", "streamCode": "raw-oil-flow-3", "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.2"}},
+    {"connectionId": "conn-e1-e2", "sourceEquipmentId": "eq-e1", "targetEquipmentId": "eq-e2", "streamCode": "desalted-oil-flow-1", "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+    {"connectionId": "conn-e3-e4", "sourceEquipmentId": "eq-e3", "targetEquipmentId": "eq-e4", "streamCode": "desalted-oil-flow-2", "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+    {"connectionId": "conn-e5-e6", "sourceEquipmentId": "eq-e5", "targetEquipmentId": "eq-e6", "streamCode": "desalted-oil-flow-3", "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+    {"connectionId": "conn-e2-e15", "sourceEquipmentId": "eq-e2", "targetEquipmentId": "eq-e15", "streamCode": "desalted-oil", "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+    {"connectionId": "conn-e4-e15", "sourceEquipmentId": "eq-e4", "targetEquipmentId": "eq-e15", "streamCode": "desalted-oil", "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+    {"connectionId": "conn-e6-e15", "sourceEquipmentId": "eq-e6", "targetEquipmentId": "eq-e15", "streamCode": "desalted-oil", "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+    {"connectionId": "conn-e15-n20", "sourceEquipmentId": "eq-e15", "targetEquipmentId": "eq-n20-group", "streamCode": "desalted-oil", "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+    {"connectionId": "conn-n20-k1", "sourceEquipmentId": "eq-n20-group", "targetEquipmentId": "eq-k1", "streamCode": "desalted-oil", "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}}
+  ],
+  "signals": [
+    {
+      "signalId": "PRA351",
+      "tag": "PRA 351",
+      "equipmentId": "eq-n1-discharge",
+      "name": "Давление сырой нефти на выкиде группы Н-1",
+      "measurementType": "pressure",
+      "unit": "percent_of_baseline",
+      "unitProvenance": {"origin": "educational_assumption", "assumptionId": "A-03"},
+      "precision": 1,
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.2"}
+    },
+    {
+      "signalId": "FYQR117",
+      "tag": "FYQR 117",
+      "equipmentId": "eq-n1-discharge",
+      "name": "Суммарный расход сырой нефти после группы Н-1",
+      "measurementType": "flow_rate",
+      "unit": "percent_of_baseline",
+      "unitProvenance": {"origin": "educational_assumption", "assumptionId": "A-03"},
+      "precision": 1,
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.2"}
+    },
+    {
+      "signalId": "PRA352",
+      "tag": "PRA 352",
+      "equipmentId": "eq-n20-group",
+      "name": "Давление после группы насосов Н-20",
+      "measurementType": "pressure",
+      "unit": null,
+      "precision": null,
+      "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}
+    },
+
+    {"signalId": "COMPAX.N1.TEMPERATURE", "tag": "COMPAX.N1.TEMPERATURE", "equipmentId": "eq-n1", "name": "Температура подшипников Н-1", "measurementType": "temperature", "unit": "degC", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12", "note": "Синтетический ID; состав измерений подтверждён SRC-PROCESS-3.11."}},
+    {"signalId": "COMPAX.N1.VELOCITY", "tag": "COMPAX.N1.VELOCITY", "equipmentId": "eq-n1", "name": "Виброскорость Н-1", "measurementType": "vibration_velocity", "unit": "mm/s", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
+    {"signalId": "COMPAX.N1.ACCELERATION", "tag": "COMPAX.N1.ACCELERATION", "equipmentId": "eq-n1", "name": "Виброускорение Н-1", "measurementType": "vibration_acceleration", "unit": "m/s2", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
+    {"signalId": "COMPAX.N1.DISPLACEMENT", "tag": "COMPAX.N1.DISPLACEMENT", "equipmentId": "eq-n1", "name": "Виброперемещение подшипников Н-1", "measurementType": "vibration_displacement", "unit": "um", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
+    {"signalId": "COMPAX.N1.CURRENT", "tag": "COMPAX.N1.CURRENT", "equipmentId": "eq-n1", "name": "Сила тока электродвигателя Н-1", "measurementType": "electric_current", "unit": "percent_of_baseline", "unitProvenance": {"origin": "educational_assumption", "assumptionId": "A-13"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
+
+    {"signalId": "COMPAX.N1A.TEMPERATURE", "tag": "COMPAX.N1A.TEMPERATURE", "equipmentId": "eq-n1a", "name": "Температура подшипников Н-1А", "measurementType": "temperature", "unit": "degC", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
+    {"signalId": "COMPAX.N1A.VELOCITY", "tag": "COMPAX.N1A.VELOCITY", "equipmentId": "eq-n1a", "name": "Виброскорость Н-1А", "measurementType": "vibration_velocity", "unit": "mm/s", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
+    {"signalId": "COMPAX.N1A.ACCELERATION", "tag": "COMPAX.N1A.ACCELERATION", "equipmentId": "eq-n1a", "name": "Виброускорение Н-1А", "measurementType": "vibration_acceleration", "unit": "m/s2", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
+    {"signalId": "COMPAX.N1A.DISPLACEMENT", "tag": "COMPAX.N1A.DISPLACEMENT", "equipmentId": "eq-n1a", "name": "Виброперемещение подшипников Н-1А", "measurementType": "vibration_displacement", "unit": "um", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
+    {"signalId": "COMPAX.N1A.CURRENT", "tag": "COMPAX.N1A.CURRENT", "equipmentId": "eq-n1a", "name": "Сила тока электродвигателя Н-1А", "measurementType": "electric_current", "unit": "percent_of_baseline", "unitProvenance": {"origin": "educational_assumption", "assumptionId": "A-13"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
+
+    {"signalId": "COMPAX.N1B.TEMPERATURE", "tag": "COMPAX.N1B.TEMPERATURE", "equipmentId": "eq-n1b", "name": "Температура подшипников Н-1Б", "measurementType": "temperature", "unit": "degC", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
+    {"signalId": "COMPAX.N1B.VELOCITY", "tag": "COMPAX.N1B.VELOCITY", "equipmentId": "eq-n1b", "name": "Виброскорость Н-1Б", "measurementType": "vibration_velocity", "unit": "mm/s", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
+    {"signalId": "COMPAX.N1B.ACCELERATION", "tag": "COMPAX.N1B.ACCELERATION", "equipmentId": "eq-n1b", "name": "Виброускорение Н-1Б", "measurementType": "vibration_acceleration", "unit": "m/s2", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
+    {"signalId": "COMPAX.N1B.DISPLACEMENT", "tag": "COMPAX.N1B.DISPLACEMENT", "equipmentId": "eq-n1b", "name": "Виброперемещение подшипников Н-1Б", "measurementType": "vibration_displacement", "unit": "um", "unitProvenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
+    {"signalId": "COMPAX.N1B.CURRENT", "tag": "COMPAX.N1B.CURRENT", "equipmentId": "eq-n1b", "name": "Сила тока электродвигателя Н-1Б", "measurementType": "electric_current", "unit": "percent_of_baseline", "unitProvenance": {"origin": "educational_assumption", "assumptionId": "A-13"}, "precision": 1, "provenance": {"origin": "educational_assumption", "assumptionId": "A-12"}},
+
+    {"signalId": "LRCA641", "tag": "LRCA 641", "equipmentId": "eq-e1", "name": "Уровень раздела фаз Э-1", "measurementType": "level", "unit": "percent_of_baseline", "unitProvenance": {"origin": "educational_assumption", "assumptionId": "A-11"}, "precision": 1, "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+    {"signalId": "LRCA640", "tag": "LRCA 640", "equipmentId": "eq-e3", "name": "Уровень раздела фаз Э-3", "measurementType": "level", "unit": "percent_of_baseline", "unitProvenance": {"origin": "educational_assumption", "assumptionId": "A-11"}, "precision": 1, "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+    {"signalId": "LRCA639", "tag": "LRCA 639", "equipmentId": "eq-e5", "name": "Уровень раздела фаз Э-5", "measurementType": "level", "unit": "percent_of_baseline", "unitProvenance": {"origin": "educational_assumption", "assumptionId": "A-11"}, "precision": 1, "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+    {"signalId": "LRCA644", "tag": "LRCA 644", "equipmentId": "eq-e2", "name": "Уровень раздела фаз Э-2", "measurementType": "level", "unit": "percent_of_baseline", "unitProvenance": {"origin": "educational_assumption", "assumptionId": "A-11"}, "precision": 1, "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+    {"signalId": "LRCA643", "tag": "LRCA 643", "equipmentId": "eq-e4", "name": "Уровень раздела фаз Э-4", "measurementType": "level", "unit": "percent_of_baseline", "unitProvenance": {"origin": "educational_assumption", "assumptionId": "A-11"}, "precision": 1, "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+    {"signalId": "LRCA642", "tag": "LRCA 642", "equipmentId": "eq-e6", "name": "Уровень раздела фаз Э-6", "measurementType": "level", "unit": "percent_of_baseline", "unitProvenance": {"origin": "educational_assumption", "assumptionId": "A-11"}, "precision": 1, "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+
+    {"signalId": "LSA641A", "tag": "LSA 641А", "equipmentId": "eq-e1", "name": "Сигнализатор низкого уровня Э-1", "measurementType": "state", "unit": null, "precision": null, "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+    {"signalId": "LSA640A", "tag": "LSA 640А", "equipmentId": "eq-e3", "name": "Сигнализатор низкого уровня Э-3", "measurementType": "state", "unit": null, "precision": null, "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+    {"signalId": "LSA639A", "tag": "LSA 639А", "equipmentId": "eq-e5", "name": "Сигнализатор низкого уровня Э-5", "measurementType": "state", "unit": null, "precision": null, "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+    {"signalId": "LS644A", "tag": "LS 644А", "equipmentId": "eq-e2", "name": "Сигнализатор низкого уровня Э-2", "measurementType": "state", "unit": null, "precision": null, "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+    {"signalId": "LS643A", "tag": "LS 643А", "equipmentId": "eq-e4", "name": "Сигнализатор низкого уровня Э-4", "measurementType": "state", "unit": null, "precision": null, "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+    {"signalId": "LS642A", "tag": "LS 642А", "equipmentId": "eq-e6", "name": "Сигнализатор низкого уровня Э-6", "measurementType": "state", "unit": null, "precision": null, "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+
+    {"signalId": "LRCA605", "tag": "LRCA 605", "equipmentId": "eq-e15", "name": "Уровень в ёмкости Е-15", "measurementType": "level", "unit": "percent_of_baseline", "unitProvenance": {"origin": "educational_assumption", "assumptionId": "A-04"}, "precision": 1, "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.3"}},
+    {"signalId": "LRCA602", "tag": "LRCA 602", "equipmentId": "eq-k1", "name": "Уровень в колонне К-1", "measurementType": "level", "unit": "percent_of_baseline", "unitProvenance": {"origin": "educational_assumption", "assumptionId": "A-04"}, "precision": 1, "provenance": {"origin": "source", "sourceRefId": "SRC-PROCESS-3.5"}}
+  ]
+}
