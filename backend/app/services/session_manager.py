@@ -86,6 +86,14 @@ class SessionManager:
         with self._lock:
             return self._require_session(session_id).model_copy(deep=True)
 
+    def running_session_ids(self) -> tuple[UUID, ...]:
+        with self._lock:
+            return tuple(
+                session_id
+                for session_id, session in self._sessions.items()
+                if session.status is SessionStatus.RUNNING
+            )
+
     def start_session(self, session_id: UUID) -> TrainingSession:
         with self._lock:
             session = self._require_status(session_id, {SessionStatus.CREATED})
@@ -187,12 +195,18 @@ class SessionManager:
         session: TrainingSession,
         snapshot: ModelSnapshot,
     ) -> None:
-        self._sessions[session.session_id] = session.model_copy(
-            update={
-                "virtual_time_ms": snapshot.virtual_time_ms,
-                "state_version": snapshot.state_version,
-            }
-        )
+        update: dict[str, object] = {
+            "virtual_time_ms": snapshot.virtual_time_ms,
+            "state_version": snapshot.state_version,
+        }
+        if snapshot.virtual_time_ms >= self._profile.max_virtual_time_ms:
+            update.update(
+                {
+                    "status": SessionStatus.COMPLETED,
+                    "completed_at": self._clock(),
+                }
+            )
+        self._sessions[session.session_id] = session.model_copy(update=update)
 
     def _require_session(self, session_id: UUID) -> TrainingSession:
         try:
