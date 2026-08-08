@@ -1,5 +1,7 @@
 import SchemeSvg from '@/shared/assets/scheme.svg?react';
 import { simulatorStore } from '../model/simulatorSchema.store';
+import styles from './SimulatorSchema.module.css';
+// import { Text } from '@consta/uikit/Text';
 
 export const SimulatorSchema = () => {
   const { setSelectedElement } = simulatorStore;
@@ -37,7 +39,15 @@ export const SimulatorSchema = () => {
   };
 
   return (
-    <div>
+    <div className={styles.simulatorSchema}>
+      {/* <div className={styles.schemaNamingComponents}>
+        <Text className={styles.itemF}>1. Ёмкости сырья</Text>
+        <Text>2. Насосная группа Н-1</Text>
+        <Text>3. Параметры на линии</Text>
+        <Text>4. Теплообменный блок Т-1-Т-11</Text>
+        <Text>5. Блок ЭЛОУ</Text>
+        <Text>6. Е-15</Text>
+      </div> */}
       <SchemeSvg onClick={handleSchemeClick} />
     </div>
   );

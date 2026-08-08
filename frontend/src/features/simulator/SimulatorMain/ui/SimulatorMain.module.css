@@ -1,4 +1,9 @@
 .simulatorSchemaContainer {
   display: grid;
   grid-template-columns: 3fr 1fr;
+  margin-top: 24px;
+}
+
+.simulatorMain {
+  padding: 12px;
 }

@@ -1,5 +1,6 @@
 import { Text } from '@consta/uikit/Text';
 import { Table, type TableColumn } from '@consta/table/Table';
+import styles from './SimulatorEventLog.module.css';
 
 type Row = { time: string; description: string };
 
@@ -29,7 +30,9 @@ export const SimulatorEventLog = () => {
 
   return (
     <section>
-      <Text>Журнал событий</Text>
+      <Text className={styles.titleComments} size="l">
+        Журнал событий
+      </Text>
       <Table columns={columns} rows={rows} />
     </section>
   );
