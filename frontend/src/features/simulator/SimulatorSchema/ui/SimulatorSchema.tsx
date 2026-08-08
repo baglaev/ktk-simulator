@@ -1,7 +1,8 @@
 import SchemeSvg from '@/shared/assets/scheme.svg?react';
 import { simulatorStore } from '../model/simulatorSchema.store';
 import styles from './SimulatorSchema.module.css';
-// import { Text } from '@consta/uikit/Text';
+import { Text } from '@consta/uikit/Text';
+import { Badge } from '@consta/uikit/Badge';
 
 export const SimulatorSchema = () => {
   const { setSelectedElement } = simulatorStore;
@@ -48,7 +49,35 @@ export const SimulatorSchema = () => {
         <Text>5. Блок ЭЛОУ</Text>
         <Text>6. Е-15</Text>
       </div> */}
-      <SchemeSvg onClick={handleSchemeClick} />
+      <div className={styles.schemeSvgContainer}>
+        <SchemeSvg onClick={handleSchemeClick} className={styles.schemeSvg} />
+
+        <div className={styles.valueContainer}>
+          <div className={`${styles.valueItem} ${styles.pra}`}>
+            <Text>PRA 351</Text>
+            <div className={styles.procentContainer}>
+              <Text size="m" weight="bold">
+                100%
+              </Text>
+              <Badge status="success" form="round" size="xs" />
+            </div>
+
+            <Text size="xs">От исходного</Text>
+          </div>
+
+          <div className={`${styles.valueItem} ${styles.fyqr}`}>
+            <Text>FYQR 117</Text>
+            <div className={styles.procentContainer}>
+              <Text size="m" weight="bold">
+                100%
+              </Text>
+              <Badge status="success" form="round" size="xs" />
+            </div>
+
+            <Text size="xs">От исходного</Text>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

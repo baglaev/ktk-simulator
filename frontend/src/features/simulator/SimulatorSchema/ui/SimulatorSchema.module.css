@@ -2,3 +2,36 @@
   display: flex;
   /* column-gap: 50px; */
 }
+
+.schemeSvgContainer {
+  position: relative;
+}
+
+.valueItem {
+  display: flex;
+  flex-direction: column;
+  row-gap: 4px;
+
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  padding: 8px;
+  border: 1px solid var(--color-bg-border);
+
+  width: fit-content;
+  align-items: center;
+}
+
+.valueContainer {
+  position: absolute;
+  top: 6%;
+  left: 42.5%;
+
+  display: flex;
+  column-gap: 4px;
+}
+
+.procentContainer {
+  display: flex;
+  column-gap: 4px;
+  align-items: center;
+}

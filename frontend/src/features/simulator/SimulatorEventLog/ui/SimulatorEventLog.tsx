@@ -29,7 +29,7 @@ export const SimulatorEventLog = () => {
   ];
 
   return (
-    <section>
+    <section className={styles.eventLog}>
       <Text className={styles.titleComments} size="l">
         Журнал событий
       </Text>
