@@ -24,6 +24,12 @@ async def stream_session_telemetry(
 ) -> None:
     """Send one full snapshot followed by ordered telemetry deltas."""
 
+    origin = websocket.headers.get("origin")
+    allowed_origins = websocket.app.state.settings.cors_allowed_origins
+    if origin and "*" not in allowed_origins and origin not in allowed_origins:
+        await websocket.close(code=4403, reason="Origin is not allowed")
+        return
+
     queue = broker.subscribe(session_id)
     try:
         try:
