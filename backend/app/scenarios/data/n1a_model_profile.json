@@ -1,10 +1,14 @@
 {
   "schemaVersion": "1.0",
   "modelId": "n1a-deterministic-training-model",
-  "modelVersion": "0.1.0",
+  "modelVersion": "0.2.0",
   "scenarioId": "MVP-SC-01",
+  "componentIds": [
+    "eq-n1", "eq-n1a", "eq-n1b", "eq-n1v",
+    "eq-n1-discharge", "eq-t1-t11", "eq-elou", "eq-e15"
+  ],
   "tickMs": 1000,
-  "maxVirtualTimeMs": 120000,
+  "totalDurationMs": 120000,
   "fault": {
     "equipmentId": "eq-n1a",
     "severityKeyframes": [
@@ -105,6 +109,17 @@
     {"signalId": "COMPAX.N1B.DISPLACEMENT", "keyframes": [{"timeMs": 0, "value": 35}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
     {"signalId": "COMPAX.N1B.CURRENT", "keyframes": [{"timeMs": 0, "value": 100}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
 
+    {"signalId": "COMPAX.N1V.TEMPERATURE", "keyframes": [{"timeMs": 0, "value": 58}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
+    {"signalId": "COMPAX.N1V.VELOCITY", "keyframes": [{"timeMs": 0, "value": 2.4}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
+    {"signalId": "COMPAX.N1V.ACCELERATION", "keyframes": [{"timeMs": 0, "value": 6}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
+    {"signalId": "COMPAX.N1V.DISPLACEMENT", "keyframes": [{"timeMs": 0, "value": 35}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
+    {"signalId": "COMPAX.N1V.CURRENT", "keyframes": [{"timeMs": 0, "value": 100}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
+
+    {"signalId": "T1T11.FLOW", "keyframes": [{"timeMs": 0, "value": 100}, {"timeMs": 40000, "value": 93}, {"timeMs": 80000, "value": 62}, {"timeMs": 120000, "value": 34}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
+    {"signalId": "T1T11.TEMPERATURE", "keyframes": [{"timeMs": 0, "value": 100}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
+    {"signalId": "ELOU.STAGE1.LEVEL", "keyframes": [{"timeMs": 0, "value": 100}, {"timeMs": 55000, "value": 98}, {"timeMs": 80000, "value": 88}, {"timeMs": 110000, "value": 77}, {"timeMs": 120000, "value": 72}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
+    {"signalId": "ELOU.STAGE2.LEVEL", "keyframes": [{"timeMs": 0, "value": 100}, {"timeMs": 70000, "value": 98}, {"timeMs": 80000, "value": 94}, {"timeMs": 110000, "value": 86}, {"timeMs": 120000, "value": 81}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
+
     {
       "signalId": "LRCA641",
       "keyframes": [{"timeMs": 0, "value": 100}, {"timeMs": 40000, "value": 100}, {"timeMs": 55000, "value": 98}, {"timeMs": 70000, "value": 92}, {"timeMs": 80000, "value": 88}, {"timeMs": 110000, "value": 77}, {"timeMs": 120000, "value": 72}],
@@ -150,8 +165,8 @@
     {"signalId": "LS642A", "keyframes": [{"timeMs": 0, "value": false}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-14"}}
   ],
   "staticSignals": [
-    {"signalId": "PRA352", "value": null, "quality": "uncertain", "provenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO", "note": "Тег подтверждён, но траектория для MVP не задана."}},
-    {"signalId": "LRCA602", "value": null, "quality": "uncertain", "provenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO", "note": "Тег подтверждён, но численная кривая К-1 отсутствует."}}
+    {"signalId": "PRA352", "value": null, "status": "warning", "provenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO", "note": "Тег подтверждён, но траектория для MVP не задана."}},
+    {"signalId": "LRCA602", "value": null, "status": "warning", "provenance": {"origin": "team", "sourceRefId": "TEAM-MVP-SCENARIO", "note": "Тег подтверждён, но численная кривая К-1 отсутствует."}}
   ],
   "equipmentStatuses": [
     {"equipmentId": "eq-r11", "keyframes": [{"timeMs": 0, "status": "available"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
@@ -160,7 +175,7 @@
     {"equipmentId": "eq-n1", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
     {"equipmentId": "eq-n1a", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
     {"equipmentId": "eq-n1b", "keyframes": [{"timeMs": 0, "status": "stopped"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
-    {"equipmentId": "eq-n1v", "keyframes": [{"timeMs": 0, "status": "stopped"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"equipmentId": "eq-n1v", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
     {"equipmentId": "eq-n1-discharge", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
     {"equipmentId": "eq-t1-t11", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
     {"equipmentId": "eq-elou", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
@@ -174,14 +189,24 @@
     {"equipmentId": "eq-n20-group", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
     {"equipmentId": "eq-k1", "keyframes": [{"timeMs": 0, "status": "running"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}}
   ],
+  "componentStatuses": [
+    {"componentId": "eq-n1", "keyframes": [{"timeMs": 0, "status": "success"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"componentId": "eq-n1a", "keyframes": [{"timeMs": 0, "status": "success"}, {"timeMs": 10000, "status": "warning"}, {"timeMs": 25000, "status": "alert"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
+    {"componentId": "eq-n1b", "keyframes": [{"timeMs": 0, "status": "success"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"componentId": "eq-n1v", "keyframes": [{"timeMs": 0, "status": "success"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
+    {"componentId": "eq-n1-discharge", "keyframes": [{"timeMs": 0, "status": "success"}, {"timeMs": 40000, "status": "warning"}, {"timeMs": 80000, "status": "alert"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-03"}},
+    {"componentId": "eq-t1-t11", "keyframes": [{"timeMs": 0, "status": "success"}, {"timeMs": 40000, "status": "warning"}, {"timeMs": 80000, "status": "alert"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
+    {"componentId": "eq-elou", "keyframes": [{"timeMs": 0, "status": "success"}, {"timeMs": 55000, "status": "warning"}, {"timeMs": 110000, "status": "alert"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
+    {"componentId": "eq-e15", "keyframes": [{"timeMs": 0, "status": "success"}, {"timeMs": 80000, "status": "warning"}, {"timeMs": 110000, "status": "alert"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-04"}}
+  ],
   "scheduledEvents": [
-    {"eventKey": "scenario-initialized", "timeMs": 0, "eventType": "scenario_initialized", "severity": "info", "sourceId": "MVP-SC-01", "payload": {"modelVersion": "0.1.0"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
-    {"eventKey": "compax-warning", "timeMs": 10000, "eventType": "diagnostic_warning", "severity": "warning", "sourceId": "eq-n1a", "payload": {"diagnosticStatus": "warning"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
-    {"eventKey": "compax-critical", "timeMs": 25000, "eventType": "diagnostic_critical", "severity": "critical", "sourceId": "eq-n1a", "payload": {"diagnosticStatus": "critical"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
-    {"eventKey": "line-decline", "timeMs": 40000, "eventType": "feed_parameters_declining", "severity": "warning", "sourceId": "eq-n1-discharge", "payload": {}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-03"}},
-    {"eventKey": "elou-decline", "timeMs": 55000, "eventType": "elou_level_declining", "severity": "warning", "sourceId": "eq-elou", "payload": {}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-11"}},
-    {"eventKey": "e15-decline", "timeMs": 80000, "eventType": "e15_level_declining", "severity": "warning", "sourceId": "eq-e15", "payload": {}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-04"}},
-    {"eventKey": "elou-low-level", "timeMs": 110000, "eventType": "training_low_level_signal", "severity": "critical", "sourceId": "eq-elou", "payload": {"scope": "first_stage"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-14"}},
-    {"eventKey": "scenario-boundary", "timeMs": 120000, "eventType": "training_scenario_boundary_reached", "severity": "critical", "sourceId": "eq-e15", "payload": {"reason": "configured_training_boundary"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-04"}}
+    {"eventKey": "scenario-initialized", "timeMs": 0, "eventType": "scenario_initialized", "severity": "info", "sourceId": "MVP-SC-01", "description": "Сценарий запущен", "payload": {"modelVersion": "0.2.0"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"eventKey": "compax-warning", "timeMs": 10000, "eventType": "diagnostic_warning", "severity": "warning", "sourceId": "eq-n1a", "description": "Параметры диагностики Н-1А перешли в состояние warning", "payload": {"diagnosticStatus": "warning"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
+    {"eventKey": "compax-critical", "timeMs": 25000, "eventType": "diagnostic_critical", "severity": "critical", "sourceId": "eq-n1a", "description": "Параметры диагностики Н-1А перешли в состояние alert", "payload": {"diagnosticStatus": "alert"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
+    {"eventKey": "line-decline", "timeMs": 40000, "eventType": "feed_parameters_declining", "severity": "warning", "sourceId": "eq-n1-discharge", "description": "Снижаются PRA 351 и FYQR 117", "payload": {}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-03"}},
+    {"eventKey": "elou-decline", "timeMs": 55000, "eventType": "elou_level_declining", "severity": "warning", "sourceId": "eq-elou", "description": "Снижается уровень I ступени ЭЛОУ", "payload": {}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-11"}},
+    {"eventKey": "e15-decline", "timeMs": 80000, "eventType": "e15_level_declining", "severity": "warning", "sourceId": "eq-e15", "description": "Снижается уровень LRCA 605 в Е-15", "payload": {}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-04"}},
+    {"eventKey": "elou-low-level", "timeMs": 110000, "eventType": "training_low_level_signal", "severity": "critical", "sourceId": "eq-elou", "description": "Достигнута учебная граница низкого уровня I ступени ЭЛОУ", "payload": {"scope": "first_stage"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-14"}},
+    {"eventKey": "scenario-boundary", "timeMs": 120000, "eventType": "training_scenario_boundary_reached", "severity": "critical", "sourceId": "eq-e15", "description": "Общее время сценария завершено", "payload": {"reason": "configured_training_boundary"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-04"}}
   ]
 }

@@ -75,6 +75,7 @@ class SessionManager:
                 instructor_id=request.instructor_id,
                 mode=request.mode,
                 status=SessionStatus.CREATED,
+                total_duration_ms=self._profile.total_duration_ms,
                 created_at=self._clock(),
             )
             self._sessions[session_id] = session
@@ -102,7 +103,7 @@ class SessionManager:
                 update={
                     "status": SessionStatus.RUNNING,
                     "started_at": self._clock(),
-                    "virtual_time_ms": snapshot.virtual_time_ms,
+                    "elapsed_time_ms": snapshot.timing.elapsed_ms,
                     "state_version": snapshot.state_version,
                 }
             )
@@ -196,10 +197,10 @@ class SessionManager:
         snapshot: ModelSnapshot,
     ) -> None:
         update: dict[str, object] = {
-            "virtual_time_ms": snapshot.virtual_time_ms,
+            "elapsed_time_ms": snapshot.timing.elapsed_ms,
             "state_version": snapshot.state_version,
         }
-        if snapshot.virtual_time_ms >= self._profile.max_virtual_time_ms:
+        if snapshot.timing.elapsed_ms >= self._profile.total_duration_ms:
             update.update(
                 {
                     "status": SessionStatus.COMPLETED,

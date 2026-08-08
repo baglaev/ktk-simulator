@@ -1,143 +1,134 @@
-# Контракт интеграции frontend с backend
+# Контракт интеграции frontend с backend v2
 
-## Адреса для локальной разработки
+## Локальные адреса
 
 - REST API: `http://127.0.0.1:8000`
-- OpenAPI: `http://127.0.0.1:8000/docs`
+- Swagger: `http://127.0.0.1:8000/docs`
 - WebSocket: `ws://127.0.0.1:8000/ws/v1/sessions/{sessionId}`
-- Frontend Origin: `http://localhost:5173` или `http://127.0.0.1:5173`
 
-Другие Origin необходимо добавить в `KTK_CORS_ALLOWED_ORIGINS`.
+Разрешённые Origin по умолчанию: `http://localhost:5173` и
+`http://127.0.0.1:5173`.
 
-## Последовательность запуска
+## Последовательность подключения
 
-### 1. Получить определение модели
+1. `GET /api/v1/scenarios/MVP-SC-01/model-definition` — статическая модель,
+   источники и учебные допущения.
+2. `POST /api/v1/sessions` — создать сессию и сохранить `sessionId`.
+3. `POST /api/v1/sessions/{sessionId}/start` — запустить live-сценарий.
+4. Подключиться к `WS /ws/v1/sessions/{sessionId}`.
+5. Действия пользователя отправлять через REST
+   `POST /api/v1/sessions/{sessionId}/actions`.
 
-```http
-GET /api/v1/scenarios/MVP-SC-01/model-definition
-```
+Тело создания сессии:
 
-Ответ содержит статические описания оборудования, сигналов, единиц измерения,
-связей, источников и учебных допущений. Его не нужно запрашивать на каждом
-WebSocket-сообщении.
-
-### 2. Создать сессию
-
-```http
-POST /api/v1/sessions
-Content-Type: application/json
-
+```json
 {
   "scenarioId": "MVP-SC-01",
   "traineeId": "trainee-001",
+  "instructorId": "instructor-001",
   "mode": "training"
 }
 ```
 
-Из ответа необходимо сохранить `sessionId`.
+Сессия работает в live-режиме: одна секунда сценария соответствует одной
+реальной секунде. Общая длительность текущего учебного профиля — 120 000 мс
+(02:00). Это **учебное допущение**, а не производственный норматив.
 
-### 3. Запустить сессию
+## WebSocket-сообщения
 
-```http
-POST /api/v1/sessions/{sessionId}/start
-```
+Первое сообщение — `telemetry.snapshot`, следующие — `telemetry.update`.
+Оба типа содержат полный массив `components` в одном и том же порядке.
+Frontend может целиком заменять `timing`, `components` и `journal`.
 
-### 4. Подключить WebSocket
-
-```text
-ws://127.0.0.1:8000/ws/v1/sessions/{sessionId}
-```
-
-Первое сообщение всегда имеет тип `telemetry.snapshot` и содержит полное
-состояние. Затем backend автоматически отправляет `telemetry.delta`.
-Frontend не должен запускать таймер расчёта и регулярно вызывать `/advance`.
-
-Сокращённый пример snapshot:
+Сокращённый пример:
 
 ```json
 {
-  "type": "telemetry.snapshot",
+  "type": "telemetry.update",
   "sessionId": "11111111-1111-1111-1111-111111111111",
   "scenarioId": "MVP-SC-01",
-  "scenarioVersion": "0.1.0",
+  "scenarioVersion": "0.2.0",
   "modelId": "n1a-deterministic-training-model",
-  "modelVersion": "0.1.0",
-  "sequenceNo": 0,
-  "stateVersion": 0,
-  "virtualTimeMs": 0,
-  "equipment": [
+  "modelVersion": "0.2.0",
+  "sequenceNo": 25,
+  "stateVersion": 25,
+  "timing": {
+    "mode": "live",
+    "elapsedMs": 25000,
+    "totalMs": 120000,
+    "remainingMs": 95000,
+    "progressPercent": 20.8
+  },
+  "components": [
     {
-      "equipmentId": "eq-n1a",
-      "status": "running",
-      "state": {"faultSeverity": 0.0, "diagnosticStatus": "normal"}
+      "componentId": "eq-n1a",
+      "uiId": "pump-h1a",
+      "tag": "Н-1А",
+      "name": "Сырьевой насос Н-1А",
+      "componentType": "pump",
+      "status": "alert",
+      "operatingState": "running",
+      "parameters": [
+        {
+          "parameterId": "COMPAX.N1A.VELOCITY",
+          "tag": "COMPAX.N1A.VELOCITY",
+          "name": "Виброскорость Н-1А",
+          "valuePercent": 300.0,
+          "status": "alert"
+        }
+      ],
+      "state": {"faultSeverityPercent": 35.0}
     }
   ],
-  "signals": [
+  "journal": [
     {
-      "signalId": "PRA351",
-      "value": 100.0,
-      "quality": "good",
-      "virtualTimeMs": 0
+      "entryId": "22222222-2222-2222-2222-222222222222",
+      "time": "00:25",
+      "description": "Параметры диагностики Н-1А перешли в состояние alert"
     }
-  ],
-  "events": []
+  ]
 }
 ```
 
-Delta имеет тот же envelope, но массивы содержат только изменившиеся элементы:
+Числа траекторий модели — **учебные допущения**. WebSocket не передаёт
+физические единицы: каждый динамический показатель называется
+`valuePercent`. Паспортные значения и их исходные единицы остаются только в
+статическом `model-definition` для прослеживаемости.
 
-```json
-{
-  "type": "telemetry.delta",
-  "sessionId": "11111111-1111-1111-1111-111111111111",
-  "scenarioId": "MVP-SC-01",
-  "scenarioVersion": "0.1.0",
-  "modelId": "n1a-deterministic-training-model",
-  "modelVersion": "0.1.0",
-  "sequenceNo": 1,
-  "stateVersion": 1,
-  "virtualTimeMs": 1000,
-  "equipment": [],
-  "signals": [
-    {
-      "signalId": "COMPAX.N1A.TEMPERATURE",
-      "value": 61.0,
-      "quality": "good",
-      "virtualTimeMs": 1000
-    }
-  ],
-  "events": []
-}
-```
+## Постоянный список компонентов
 
-Числа в примерах — **учебное допущение** для демонстрации формата контракта.
-Фактические значения необходимо брать только из полученного сообщения.
+В каждом snapshot/update всегда присутствуют восемь экранных компонентов:
 
-## Обработка телеметрии
+| `componentId` | `uiId` | Параметры |
+|---|---|---|
+| `eq-n1` | `pump-h1` | 5 параметров диагностики |
+| `eq-n1a` | `pump-h1a` | 5 параметров диагностики |
+| `eq-n1b` | `pump-h1b` | 5 параметров диагностики |
+| `eq-n1v` | `pump-h1v` | 5 параметров диагностики |
+| `eq-n1-discharge` | `line-n1-elou` | PRA 351, FYQR 117 |
+| `eq-t1-t11` | `heat-exchanger-t1-t11` | расход, температура |
+| `eq-elou` | `elou-block` | уровни I и II ступени |
+| `eq-e15` | `e15` | LRCA 605 |
 
-Ключи коллекций:
+Допустимый UI-статус компонента и каждого параметра: `success`, `warning` или
+`alert`. Поле `operatingState` отдельно сообщает режим оборудования
+(`running`, `stopped` и т. п.); оно не используется как цвет Badge.
 
-- оборудование — `equipmentId`;
-- сигналы — `signalId`;
-- события — `eventId`.
+## Обработка на frontend
 
-Алгоритм frontend:
+1. Применять сообщение, только если `sequenceNo` больше уже обработанного.
+2. Для `telemetry.snapshot` и `telemetry.update` полностью заменять
+   `components`, `timing` и `journal`.
+3. На мнемосхеме искать компонент по `uiId`.
+4. Badge брать из `status`, число — из `valuePercent` и добавлять `%` в UI.
+5. Таймер строить из `timing.elapsedMs` или `timing.remainingMs`.
+6. Журнал выводить колонками `time` и `description`; ключ строки — `entryId`.
+7. После переподключения принять новый полный `telemetry.snapshot`.
 
-1. На `telemetry.snapshot` полностью заменить локальное состояние.
-2. На `telemetry.delta` заменить только переданные элементы оборудования и
-   сигналов по их идентификаторам.
-3. Новые события добавить в журнал без дубликатов по `eventId`.
-4. Сохранить последние `sequenceNo`, `stateVersion` и `virtualTimeMs`.
-5. Применять сообщение только если его `sequenceNo` больше последнего
-   применённого. Пропуск номеров допустим: backend может объединить несколько
-   промежуточных состояний в одну актуальную delta для медленного клиента.
-6. После разрыва соединения переподключить WebSocket: новым первым сообщением
-   будет полный актуальный snapshot.
+`stateVersion` из последнего сообщения необходимо передавать как
+`expectedStateVersion` при действии пользователя.
 
-`virtualTimeMs` — время учебной модели. Оно не является серверным timestamp.
-`stateVersion` необходимо передавать как `expectedStateVersion` в действии.
-
-## Действия обучаемого
+## Действия пользователя
 
 ```http
 POST /api/v1/sessions/{sessionId}/actions
@@ -148,46 +139,30 @@ Content-Type: application/json
   "sessionId": "{sessionId}",
   "actionType": "run_diagnostics",
   "targetId": "eq-n1a",
-  "expectedStateVersion": 12,
+  "expectedStateVersion": 25,
   "idempotencyKey": "diagnostics-n1a-1",
   "submittedAt": "2026-08-08T09:00:00+03:00"
 }
 ```
 
-`actionId` должен быть UUID, `idempotencyKey` — уникальным для логического
-действия. При `409 Conflict` из-за устаревшей версии следует получить актуальное
-состояние и попросить пользователя повторить действие, если оно всё ещё нужно.
-
 Допустимые `actionType`: `open_equipment_card`, `view_signal`,
-`run_diagnostics`, `submit_decision`, `acknowledge_event`.
+`run_diagnostics`, `submit_decision`, `acknowledge_event`. Успешное действие
+появляется в `journal` следующего WebSocket-сообщения.
 
-## Управление сессией
+## Управление и ошибки
 
-```text
-POST /api/v1/sessions/{sessionId}/pause
-POST /api/v1/sessions/{sessionId}/resume
-POST /api/v1/sessions/{sessionId}/complete
-GET  /api/v1/sessions/{sessionId}
-GET  /api/v1/sessions/{sessionId}/snapshot
-```
+- `POST /api/v1/sessions/{sessionId}/pause`
+- `POST /api/v1/sessions/{sessionId}/resume`
+- `POST /api/v1/sessions/{sessionId}/complete`
+- `GET /api/v1/sessions/{sessionId}`
+- `GET /api/v1/sessions/{sessionId}/snapshot`
 
-`pause` прекращает продвижение виртуального времени, `resume` продолжает его.
-Сессия автоматически получает статус `completed` при достижении границы
-учебного сценария.
+REST: `404` — объект не найден, `409` — конфликт состояния, `422` — неверное
+тело. WebSocket: `4403` — Origin запрещён, `4404` — сессия не найдена,
+`4409` — сессия ещё не запущена.
 
-## Ошибки
+`POST /advance` является только служебным методом тестирования. Frontend его
+не вызывает: live-таймер и расчёт выполняет backend автоматически.
 
-- REST `404` — сценарий или сессия не найдены.
-- REST `409` — недопустимый lifecycle-переход или конфликт версии состояния.
-- REST `422` — тело запроса не соответствует контракту.
-- WebSocket `4403` — Browser Origin не разрешён.
-- WebSocket `4404` — сессия не найдена.
-- WebSocket `4409` — сессия ещё не запущена.
-
-## Ограничения текущего MVP
-
-- Активные сессии хранятся в памяти и теряются при перезапуске backend.
-- Backend необходимо запускать с одним worker.
-- Коэффициент виртуального времени и траектории модели являются учебными
-  допущениями, описанными в версии сценария.
-- Redis и Kafka не требуются для однопроцессного MVP.
+Активные сессии MVP хранятся в памяти, поэтому backend запускается с одним
+worker. Redis и Kafka для этого однопроцессного этапа не требуются.

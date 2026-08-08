@@ -18,7 +18,7 @@ def test_n1a_scenario_catalog_is_valid_and_complete_for_mvp() -> None:
     assert scenario.scenario_id == "MVP-SC-01"
     assert len(scenario.equipment) == 22
     assert len(scenario.connections) == 15
-    assert len(scenario.signals) == 32
+    assert len(scenario.signals) == 41
 
     equipment_tags = {item.tag for item in scenario.equipment}
     assert {
@@ -41,7 +41,14 @@ def test_n1a_scenario_catalog_is_valid_and_complete_for_mvp() -> None:
 
     signal_ids = {item.signal_id for item in scenario.signals}
     assert {"PRA351", "FYQR117", "LRCA605", "LRCA602"}.issubset(signal_ids)
-    assert not any(item.startswith("COMPAX.N1V") for item in signal_ids)
+    assert {
+        "COMPAX.N1V.TEMPERATURE",
+        "COMPAX.N1V.VELOCITY",
+        "T1T11.FLOW",
+        "T1T11.TEMPERATURE",
+        "ELOU.STAGE1.LEVEL",
+        "ELOU.STAGE2.LEVEL",
+    }.issubset(signal_ids)
 
 
 def test_n1a_passport_values_are_source_backed() -> None:

@@ -34,7 +34,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         runtime = SimulationRuntime(
             manager=get_session_manager(),
             tick_interval_ms=resolved_settings.simulation_tick_interval_ms,
-            step_ms=resolved_settings.simulation_step_ms,
         )
         application.state.simulation_runtime = runtime
         if resolved_settings.simulation_auto_run:

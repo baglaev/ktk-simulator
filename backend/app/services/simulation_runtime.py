@@ -20,15 +20,17 @@ class SimulationRuntime:
         self,
         manager: SessionManager,
         tick_interval_ms: int,
-        step_ms: int,
+        step_ms: int | None = None,
     ) -> None:
         if tick_interval_ms <= 0:
             raise ValueError("tickIntervalMs must be greater than zero")
-        if step_ms <= 0:
+        if step_ms is not None and step_ms <= 0:
             raise ValueError("stepMs must be greater than zero")
         self._manager = manager
         self._tick_interval_seconds = tick_interval_ms / 1_000
-        self._step_ms = step_ms
+        # Production uses a 1:1 live clock. An explicit step is retained only
+        # for deterministic accelerated tests and manual debugging.
+        self._step_ms = step_ms or tick_interval_ms
         self._task: asyncio.Task[None] | None = None
 
     @property

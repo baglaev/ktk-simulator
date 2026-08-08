@@ -3,7 +3,8 @@ from __future__ import annotations
 from pydantic import Field, JsonValue
 
 from app.domain.base import APIModel, Provenance
-from app.domain.enums import EquipmentStatus, EquipmentType
+from app.domain.enums import EquipmentStatus, EquipmentType, GeneralStatus
+from app.domain.signals import ComponentParameterValue
 
 
 class EquipmentParameterDefinition(APIModel):
@@ -28,9 +29,15 @@ class EquipmentDefinition(APIModel):
     provenance: Provenance
 
 
-class EquipmentState(APIModel):
-    """Calculated state of equipment at a point in virtual time."""
+class ComponentState(APIModel):
+    """Complete frontend state of one stable mnemonic-scheme component."""
 
-    equipment_id: str = Field(min_length=1)
-    status: EquipmentStatus
+    component_id: str = Field(min_length=1)
+    ui_id: str = Field(min_length=1)
+    tag: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    component_type: EquipmentType
+    status: GeneralStatus
+    operating_state: EquipmentStatus
+    parameters: list[ComponentParameterValue] = Field(min_length=1)
     state: dict[str, JsonValue] = Field(default_factory=dict)

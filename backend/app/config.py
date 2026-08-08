@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     app_name: str = "KTK ELOU-AVT Backend"
-    app_version: str = "0.1.0"
+    app_version: str = "0.2.0"
     environment: str = "development"
     cors_allowed_origins: list[str] = Field(
         default_factory=lambda: [
@@ -18,7 +18,6 @@ class Settings(BaseSettings):
     )
     simulation_auto_run: bool = True
     simulation_tick_interval_ms: int = Field(default=1_000, gt=0)
-    simulation_step_ms: int = Field(default=1_000, gt=0)
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -6,21 +6,22 @@ from pydantic import ValidationError
 
 from app.domain import (
     ActionType,
+    ComponentParameterValue,
+    ComponentState,
     EquipmentDefinition,
     EquipmentParameterDefinition,
-    EquipmentState,
     EquipmentStatus,
     EquipmentType,
+    GeneralStatus,
     MeasurementType,
     ModelSnapshot,
     OperatorAction,
     ParameterOrigin,
     Provenance,
+    ScenarioTiming,
     SessionStatus,
     SignalDefinition,
-    SignalQuality,
-    SignalValue,
-    TelemetryDelta,
+    TelemetryUpdate,
     TrainingMode,
     TrainingSession,
 )
@@ -38,20 +39,30 @@ def test_snapshot_serializes_to_frontend_camel_case() -> None:
         model_version="0.1.0",
         sequence_no=15,
         state_version=8,
-        virtual_time_ms=120_000,
-        equipment=[
-            EquipmentState(
-                equipment_id="N-1A",
-                status=EquipmentStatus.RUNNING,
-                state={"faultSeverity": 0.2},
-            )
-        ],
-        signals=[
-            SignalValue(
-                signal_id="PRA351",
-                value=86.0,
-                quality=SignalQuality.GOOD,
-                virtual_time_ms=120_000,
+        timing=ScenarioTiming(
+            elapsed_ms=120_000,
+            total_ms=120_000,
+            remaining_ms=0,
+            progress_percent=100,
+        ),
+        components=[
+            ComponentState(
+                component_id="eq-n1a",
+                ui_id="pump-h1a",
+                tag="Н-1А",
+                name="Сырьевой насос Н-1А",
+                component_type=EquipmentType.PUMP,
+                status=GeneralStatus.ALERT,
+                operating_state=EquipmentStatus.RUNNING,
+                parameters=[
+                    ComponentParameterValue(
+                        parameter_id="COMPAX.N1A.VELOCITY",
+                        tag="COMPAX.N1A.VELOCITY",
+                        name="Виброскорость Н-1А",
+                        value_percent=491.7,
+                        status=GeneralStatus.ALERT,
+                    )
+                ],
             )
         ],
     )
@@ -62,33 +73,36 @@ def test_snapshot_serializes_to_frontend_camel_case() -> None:
     assert payload["sessionId"] == str(SESSION_ID)
     assert payload["sequenceNo"] == 15
     assert payload["stateVersion"] == 8
-    assert payload["virtualTimeMs"] == 120_000
-    assert payload["equipment"][0]["equipmentId"] == "N-1A"
-    assert payload["signals"][0]["signalId"] == "PRA351"
+    assert payload["timing"]["mode"] == "live"
+    assert payload["timing"]["elapsedMs"] == 120_000
+    assert payload["components"][0]["componentId"] == "eq-n1a"
+    assert payload["components"][0]["parameters"][0]["valuePercent"] == 491.7
 
 
 def test_contract_accepts_camel_case_input() -> None:
-    signal = SignalValue.model_validate(
+    parameter = ComponentParameterValue.model_validate(
         {
-            "signalId": "FYQR117",
-            "value": 90.0,
-            "quality": "good",
-            "virtualTimeMs": 1_000,
+            "parameterId": "FYQR117",
+            "tag": "FYQR 117",
+            "name": "Расход",
+            "valuePercent": 90.0,
+            "status": "warning",
         }
     )
 
-    assert signal.signal_id == "FYQR117"
-    assert signal.virtual_time_ms == 1_000
+    assert parameter.parameter_id == "FYQR117"
+    assert parameter.status is GeneralStatus.WARNING
 
 
 def test_contract_rejects_unknown_fields() -> None:
     with pytest.raises(ValidationError):
-        SignalValue.model_validate(
+        ComponentParameterValue.model_validate(
             {
-                "signalId": "PRA351",
-                "value": 86.0,
-                "quality": "good",
-                "virtualTimeMs": 0,
+                "parameterId": "PRA351",
+                "tag": "PRA 351",
+                "name": "Давление",
+                "valuePercent": 86.0,
+                "status": "success",
                 "unexpected": True,
             }
         )
@@ -149,6 +163,7 @@ def test_training_session_and_operator_action_contracts() -> None:
         trainee_id="trainee-001",
         mode=TrainingMode.TRAINING,
         status=SessionStatus.CREATED,
+        total_duration_ms=120_000,
         created_at=now,
     )
     action = OperatorAction(
@@ -165,9 +180,9 @@ def test_training_session_and_operator_action_contracts() -> None:
     assert action.action_type is ActionType.VIEW_SIGNAL
 
 
-def test_empty_telemetry_delta_is_rejected() -> None:
-    with pytest.raises(ValidationError, match="at least one change"):
-        TelemetryDelta(
+def test_telemetry_update_without_components_is_rejected() -> None:
+    with pytest.raises(ValidationError, match="components"):
+        TelemetryUpdate(
             session_id=SESSION_ID,
             scenario_id="MVP-SC-01",
             scenario_version="0.1.0",
@@ -175,5 +190,10 @@ def test_empty_telemetry_delta_is_rejected() -> None:
             model_version="0.1.0",
             sequence_no=2,
             state_version=2,
-            virtual_time_ms=1_000,
+            timing=ScenarioTiming(
+                elapsed_ms=1_000,
+                total_ms=120_000,
+                remaining_ms=119_000,
+                progress_percent=0.8,
+            ),
         )

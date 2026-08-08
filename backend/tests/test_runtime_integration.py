@@ -21,7 +21,6 @@ def reset_backend_state():
 def runtime_settings(**overrides) -> Settings:
     return Settings(
         simulation_tick_interval_ms=20,
-        simulation_step_ms=1_000,
         cors_allowed_origins=["http://localhost:5173"],
         **overrides,
     )
@@ -55,30 +54,30 @@ def test_started_session_streams_deltas_without_manual_advance() -> None:
             delta = websocket.receive_json()
 
     assert snapshot["type"] == "telemetry.snapshot"
-    assert delta["type"] == "telemetry.delta"
+    assert delta["type"] == "telemetry.update"
     assert delta["sequenceNo"] > snapshot["sequenceNo"]
     assert delta["stateVersion"] > snapshot["stateVersion"]
-    assert delta["virtualTimeMs"] > snapshot["virtualTimeMs"]
+    assert delta["timing"]["elapsedMs"] > snapshot["timing"]["elapsedMs"]
 
 
-def test_pause_freezes_and_resume_continues_virtual_time() -> None:
+def test_pause_freezes_and_resume_continues_live_time() -> None:
     application = create_app(runtime_settings())
 
     with TestClient(application) as client:
         session_id = create_session(client)
         time.sleep(0.05)
         paused = client.post(f"/api/v1/sessions/{session_id}/pause")
-        paused_at = paused.json()["virtualTimeMs"]
+        paused_at = paused.json()["elapsedTimeMs"]
 
         time.sleep(0.06)
         still_paused = client.get(f"/api/v1/sessions/{session_id}").json()
-        assert still_paused["virtualTimeMs"] == paused_at
+        assert still_paused["elapsedTimeMs"] == paused_at
 
         resumed = client.post(f"/api/v1/sessions/{session_id}/resume")
         assert resumed.status_code == 200
         time.sleep(0.05)
         running = client.get(f"/api/v1/sessions/{session_id}").json()
-        assert running["virtualTimeMs"] > paused_at
+        assert running["elapsedTimeMs"] > paused_at
 
 
 def test_lifespan_stops_runtime() -> None:

@@ -1,7 +1,7 @@
 from asyncio import Queue
 from uuid import UUID
 
-from app.realtime import SessionSnapshotBroker, build_telemetry_delta
+from app.realtime import SessionSnapshotBroker, build_telemetry_update
 from app.simulation import N1AProcessModel, load_n1a_model_profile
 from app.scenarios import load_n1a_scenario
 
@@ -12,38 +12,29 @@ def initialized_model() -> N1AProcessModel:
     return model
 
 
-def test_delta_contains_only_changed_signals() -> None:
+def test_update_contains_complete_stable_component_list() -> None:
     model = initialized_model()
     previous = model.get_snapshot()
     current = model.step(10_000)
 
-    delta = build_telemetry_delta(previous, current)
+    update = build_telemetry_update(previous, current)
 
-    assert delta is not None
-    assert delta.type == "telemetry.delta"
-    assert delta.sequence_no == current.sequence_no
-    assert delta.virtual_time_ms == 10_000
-    assert 0 < len(delta.signals) < len(current.signals)
-    assert {item.signal_id for item in delta.signals} == {
-        item.signal_id
-        for item in current.signals
-        if item.value
-        != next(
-            old.value
-            for old in previous.signals
-            if old.signal_id == item.signal_id
-        )
-    }
+    assert update is not None
+    assert update.type == "telemetry.update"
+    assert update.sequence_no == current.sequence_no
+    assert update.timing.elapsed_ms == 10_000
+    assert [item.component_id for item in update.components] == [
+        item.component_id for item in previous.components
+    ]
+    assert len(update.components) == 8
 
 
-def test_delta_is_empty_when_only_envelope_metadata_changes() -> None:
+def test_update_is_empty_for_non_increasing_sequence() -> None:
     model = initialized_model()
     previous = model.get_snapshot()
-    current = previous.model_copy(
-        update={"sequence_no": 1, "state_version": 1, "virtual_time_ms": 1}
-    )
+    current = previous.model_copy(update={"state_version": 1})
 
-    assert build_telemetry_delta(previous, current) is None
+    assert build_telemetry_update(previous, current) is None
 
 
 def test_broker_fans_out_to_all_subscribers() -> None:

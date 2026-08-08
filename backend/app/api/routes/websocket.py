@@ -4,7 +4,7 @@ import anyio
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 
 from app.api.dependencies import get_session_broker, get_session_manager
-from app.realtime import SessionSnapshotBroker, build_telemetry_delta
+from app.realtime import SessionSnapshotBroker, build_telemetry_update
 from app.services import (
     InvalidSessionTransitionError,
     SessionManager,
@@ -22,7 +22,7 @@ async def stream_session_telemetry(
     manager: SessionManager = Depends(get_session_manager),
     broker: SessionSnapshotBroker = Depends(get_session_broker),
 ) -> None:
-    """Send one full snapshot followed by ordered telemetry deltas."""
+    """Send one snapshot followed by full ordered live telemetry updates."""
 
     origin = websocket.headers.get("origin")
     allowed_origins = websocket.app.state.settings.cors_allowed_origins
@@ -53,11 +53,11 @@ async def stream_session_telemetry(
                 if current.sequence_no <= previous.sequence_no:
                     continue
 
-                delta = build_telemetry_delta(previous, current)
+                update = build_telemetry_update(previous, current)
                 previous = current
-                if delta is not None:
+                if update is not None:
                     await websocket.send_json(
-                        delta.model_dump(mode="json", by_alias=True)
+                        update.model_dump(mode="json", by_alias=True)
                     )
 
         async def wait_for_disconnect(

@@ -3,7 +3,7 @@ from __future__ import annotations
 from pydantic import Field
 
 from app.domain.base import APIModel, Provenance
-from app.domain.enums import MeasurementType, SignalQuality
+from app.domain.enums import GeneralStatus, MeasurementType
 
 
 SignalScalar = float | int | bool | str | None
@@ -23,10 +23,11 @@ class SignalDefinition(APIModel):
     provenance: Provenance
 
 
-class SignalValue(APIModel):
-    """Value produced by the model for a specific virtual time."""
+class ComponentParameterValue(APIModel):
+    """Frontend-ready component parameter normalized to percent."""
 
-    signal_id: str = Field(min_length=1)
-    value: SignalScalar
-    quality: SignalQuality = SignalQuality.GOOD
-    virtual_time_ms: int = Field(ge=0)
+    parameter_id: str = Field(min_length=1)
+    tag: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    value_percent: float
+    status: GeneralStatus
