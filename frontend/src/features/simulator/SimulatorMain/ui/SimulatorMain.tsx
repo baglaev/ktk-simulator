@@ -5,14 +5,17 @@ import { SimulatorInfoPanel } from '../../SimulatorInfoPanel/ui/SimulatorInfoPan
 import { SimulatorSchema } from '../../SimulatorSchema/ui/SimulatorSchema';
 import styles from './SimulatorMain.module.css';
 import { Button } from '@consta/uikit/Button';
+import { observer } from 'mobx-react-lite';
+import { scenarioStore } from '@/pages/ScenarioPreparation/model/scenario.store';
 
-export const SimulatorMain = () => {
+export const SimulatorMain = observer(() => {
   const wsRef = useRef<WebSocket | null>(null);
+  const { sessionId } = scenarioStore;
 
   // ws mock
 
   useEffect(() => {
-    const sessionId = '526a8b08-31b9-4234-9678-d0f2f5eaed34';
+    // const sessionId = '5c7ee7d9-a049-4f19-9ae8-feb7cd41df05';
 
     const ws = new WebSocket(`ws://localhost:8000/ws/v1/sessions/${sessionId}`);
 
@@ -38,7 +41,7 @@ export const SimulatorMain = () => {
       ws.close();
       wsRef.current = null;
     };
-  }, []);
+  }, [sessionId]);
 
   const handleSendMessage = () => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -66,6 +69,6 @@ export const SimulatorMain = () => {
       <SimulatorEventLog />
     </section>
   );
-};
+});
 
 SimulatorMain.displayName = 'SimulatorMain';
