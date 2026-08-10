@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Literal
 from uuid import UUID
 
 from pydantic import AwareDatetime, Field, JsonValue, model_validator
@@ -11,6 +12,45 @@ from app.domain.enums import (
     DiagnosisConclusion,
     DiagnosisReason,
 )
+
+
+class ScenarioActionRequest(APIModel):
+    """Minimal action payload received from frontend over WebSocket."""
+
+    action_type: ActionType
+    target_id: str | None = None
+    parameters: dict[str, JsonValue] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_action_payload(self) -> ScenarioActionRequest:
+        _validate_action_payload(
+            self.action_type,
+            self.target_id,
+            self.parameters,
+        )
+        return self
+
+
+class ActionAcceptedMessage(APIModel):
+    """Acknowledgement sent after an action has been applied and persisted."""
+
+    type: Literal["action.result"] = "action.result"
+    status: Literal["accepted"] = "accepted"
+    action_id: UUID
+    state_version: int = Field(ge=0)
+
+
+class ActionErrorDetail(APIModel):
+    code: str = Field(min_length=1)
+    message: str = Field(min_length=1)
+
+
+class ActionRejectedMessage(APIModel):
+    """Stable WebSocket error envelope for an invalid or rejected action."""
+
+    type: Literal["action.result"] = "action.result"
+    status: Literal["rejected"] = "rejected"
+    error: ActionErrorDetail
 
 
 class OperatorAction(APIModel):
@@ -27,19 +67,11 @@ class OperatorAction(APIModel):
 
     @model_validator(mode="after")
     def validate_action_payload(self) -> OperatorAction:
-        if self.action_type is ActionType.SUBMIT_DIAGNOSIS:
-            if not self.target_id:
-                raise ValueError("targetId is required for submit_diagnosis")
-            try:
-                DiagnosisConclusion(self.parameters.get("conclusion"))
-                DiagnosisReason(self.parameters.get("reason"))
-            except (TypeError, ValueError) as error:
-                raise ValueError(
-                    "submit_diagnosis requires valid conclusion and reason"
-                ) from error
-        if self.action_type in {ActionType.START_PUMP, ActionType.STOP_PUMP}:
-            if not self.target_id:
-                raise ValueError("targetId is required for a pump command")
+        _validate_action_payload(
+            self.action_type,
+            self.target_id,
+            self.parameters,
+        )
         return self
 
 
@@ -56,3 +88,23 @@ class RecordedAction(APIModel):
     description: str = Field(min_length=1)
     error_codes: list[ActionErrorCode] = Field(default_factory=list)
     submitted_at: AwareDatetime
+
+
+def _validate_action_payload(
+    action_type: ActionType,
+    target_id: str | None,
+    parameters: dict[str, JsonValue],
+) -> None:
+    if action_type is ActionType.SUBMIT_DIAGNOSIS:
+        if not target_id:
+            raise ValueError("targetId is required for submit_diagnosis")
+        try:
+            DiagnosisConclusion(parameters.get("conclusion"))
+            DiagnosisReason(parameters.get("reason"))
+        except (TypeError, ValueError) as error:
+            raise ValueError(
+                "submit_diagnosis requires valid conclusion and reason"
+            ) from error
+    if action_type in {ActionType.START_PUMP, ActionType.STOP_PUMP}:
+        if not target_id:
+            raise ValueError("targetId is required for a pump command")

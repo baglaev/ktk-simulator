@@ -144,7 +144,6 @@ alembic upgrade head
 - `POST /api/v1/sessions` — создать сессию;
 - `POST /api/v1/sessions/{id}/start` — запустить live-модель;
 - `POST /api/v1/sessions/{id}/pause` / `resume` — пауза / продолжение;
-- `POST /api/v1/sessions/{id}/actions` — действие обучаемого;
 - `GET /api/v1/sessions/{id}/actions` — сохранённый аудит действий;
 - `GET /api/v1/sessions/{id}/snapshot` — текущий полный снимок;
 - `POST /api/v1/sessions/{id}/complete` — завершить прохождение;
@@ -157,12 +156,13 @@ Frontend не вызывает `/advance`: в обычном запуске вр
 
 Адрес: `WS /ws/v1/sessions/{sessionId}`.
 
-Первое сообщение — `telemetry.snapshot`, последующие — `telemetry.update`.
-Каждое сообщение содержит полный упорядоченный массив восьми компонентов,
-вложенные параметры, live-время и журнал вида `time` / `description`.
+WebSocket двунаправленный. Frontend отправляет минимальное действие из
+`actionType`, условного `targetId` и условных `parameters`; служебные поля
+backend формирует сам. Backend отвечает `action.result`, затем рассылает
+`telemetry.update`. Первое сообщение после подключения — `telemetry.snapshot`.
+Телеметрия содержит полный упорядоченный массив восьми компонентов, вложенные
+параметры, live-время и журнал вида `time` / `description`.
 
-Команды пользователя идут через REST `/actions`. WebSocket используется в
-обратном направлении — для отправки актуального состояния backend → frontend.
 WebSocket-маршрут не отображается в Swagger/OpenAPI; полный контракт находится
 в [FRONTEND_INTEGRATION.md](FRONTEND_INTEGRATION.md).
 

@@ -1,4 +1,4 @@
-# Контракт frontend ↔ backend v3
+# Контракт frontend ↔ backend v4
 
 ## Адреса
 
@@ -6,8 +6,13 @@
 - Swagger REST: `http://127.0.0.1:8000/docs`
 - WebSocket: `ws://127.0.0.1:8000/ws/v1/sessions/{sessionId}`
 
-WebSocket не входит в OpenAPI и поэтому не показывается в Swagger. Его формат
-зафиксирован в этом документе и Pydantic-моделях `app/domain/telemetry.py`.
+REST используется для жизненного цикла сессии и получения результата.
+Действия пользователя внутри запущенного сценария и вся актуальная телеметрия
+передаются через один двунаправленный WebSocket.
+
+WebSocket не входит в OpenAPI и поэтому не показывается в Swagger. Его контракт
+зафиксирован в этом документе и Pydantic-моделях `app/domain/actions.py` и
+`app/domain/telemetry.py`.
 
 ## Последовательность работы frontend
 
@@ -16,10 +21,11 @@ WebSocket не входит в OpenAPI и поэтому не показывае
 3. `POST /api/v1/sessions/{sessionId}/start`.
 4. Подключить WebSocket с полученным `sessionId`.
 5. Применить первый `telemetry.snapshot`.
-6. Кнопки отправляют REST-действия в `/actions`.
-7. Состояние экрана обновлять из следующих `telemetry.update`.
-8. Когда статус сессии `ready_to_complete`, разрешить «Завершить».
-9. Вызвать `/complete`, затем получить `/result`.
+6. Кнопки отправляют минимальные JSON-действия в открытый WebSocket.
+7. На `action.result` показать результат выполнения действия.
+8. Состояние экрана обновлять из следующих `telemetry.update`.
+9. Когда статус сессии `ready_to_complete`, разрешить «Завершить».
+10. Вызвать REST `/complete`, затем получить REST `/result`.
 
 Создание сессии:
 
@@ -34,31 +40,50 @@ WebSocket не входит в OpenAPI и поэтому не показывае
 
 ## Действия пользователя
 
-Все действия отправляются в:
+Frontend отправляет действие текстовым JSON-сообщением в уже открытый
+WebSocket:
 
-```http
-POST /api/v1/sessions/{sessionId}/actions
-Content-Type: application/json
+```text
+ws://127.0.0.1:8000/ws/v1/sessions/{sessionId}
 ```
 
-Общие поля:
+Минимальное сообщение содержит только действие и его цель:
 
 ```json
 {
-  "actionId": "новый UUID",
-  "sessionId": "UUID из POST /sessions",
   "actionType": "view_signal",
-  "targetId": "PRA351",
-  "parameters": {},
-  "expectedStateVersion": 17,
-  "idempotencyKey": "уникальная строка для одного клика",
-  "submittedAt": "2026-08-10T12:00:00+03:00"
+  "targetId": "PRA351"
 }
 ```
 
-`expectedStateVersion` брать из последнего WebSocket-сообщения или REST-ответа.
-Успешный `/actions` возвращает новый полный snapshot и одновременно публикует
-его в WebSocket. При устаревшей версии backend возвращает `409`.
+Поля входного сообщения:
+
+| Поле | Обязательность | Назначение |
+|---|---|---|
+| `actionType` | всегда | тип действия из списка ниже |
+| `targetId` | для действий над объектом | идентификатор прибора или компонента |
+| `parameters` | только когда нужны данные | дополнительные значения, например диагноз |
+
+Frontend не передаёт `actionId`, `sessionId`, время, `stateVersion` и
+`idempotencyKey`. Backend получает `sessionId` из WebSocket URL, берёт текущее
+состояние модели, самостоятельно создаёт UUID и серверное время, а затем
+сохраняет полную запись действия в БД.
+
+Пример отправки из JavaScript:
+
+```javascript
+function sendScenarioAction(actionType, targetId, parameters) {
+  const message = { actionType };
+
+  if (targetId !== undefined) message.targetId = targetId;
+  if (parameters !== undefined) message.parameters = parameters;
+
+  socket.send(JSON.stringify(message));
+}
+
+sendScenarioAction("view_signal", "PRA351");
+sendScenarioAction("start_pump", "eq-n1b");
+```
 
 ### Просмотр
 
@@ -92,8 +117,7 @@ Content-Type: application/json
 ```json
 {
   "actionType": "start_pump",
-  "targetId": "eq-n1b",
-  "parameters": {}
+  "targetId": "eq-n1b"
 }
 ```
 
@@ -102,8 +126,7 @@ Content-Type: application/json
 ```json
 {
   "actionType": "stop_pump",
-  "targetId": "eq-n1a",
-  "parameters": {}
+  "targetId": "eq-n1a"
 }
 ```
 
@@ -111,7 +134,59 @@ Content-Type: application/json
 `eq-n1v`. Диалог подтверждения реализует frontend. Если пользователь нажал
 «Отмена», запрос не отправляется — ошибки и штрафа нет.
 
-## WebSocket-сообщение
+### Все допустимые `actionType`
+
+| `actionType` | Ожидаемый `targetId` |
+|---|---|
+| `open_equipment_card` | компонент, например `eq-n1a` |
+| `view_signal` | параметр: `PRA351`, `FYQR117` или `LRCA605` |
+| `run_diagnostics` | диагностируемый компонент |
+| `submit_decision` | объект принятого решения |
+| `acknowledge_event` | подтверждаемое событие |
+| `submit_diagnosis` | компонент; диагноз передаётся в `parameters` |
+| `start_pump` | один из учебных насосов |
+| `stop_pump` | один из учебных насосов |
+
+## Что backend возвращает по WebSocket
+
+### Подтверждение действия
+
+Сначала отправителю возвращается результат обработки:
+
+```json
+{
+  "type": "action.result",
+  "status": "accepted",
+  "actionId": "22222222-2222-2222-2222-222222222222",
+  "stateVersion": 18
+}
+```
+
+`actionId` и `stateVersion` генерирует backend. После подтверждения backend
+отправляет новое `telemetry.update` всем клиентам этой сессии.
+
+Если сообщение невалидно или действие нельзя выполнить:
+
+```json
+{
+  "type": "action.result",
+  "status": "rejected",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action must contain a valid actionType, targetId and optional parameters"
+  }
+}
+```
+
+Коды ошибок действий:
+
+- `invalid_message` — пришло не текстовое JSON-сообщение;
+- `invalid_action` — отсутствуют или невалидны поля действия;
+- `session_not_found` — сессия больше недоступна;
+- `session_not_running` — сессия не находится в статусе `running`;
+- `action_rejected` — неизвестная цель или действие противоречит модели.
+
+### Телеметрия
 
 ```json
 {
@@ -223,13 +298,18 @@ GET  /api/v1/sessions/{sessionId}/actions
 
 ## Правила применения сообщений
 
-1. Игнорировать сообщение, если `sequenceNo` не больше уже применённого.
-2. Полностью заменять `components`, `timing` и `journal`.
-3. Искать визуальный объект по `uiId`.
-4. Число брать из `valuePercent`, цвет — из `status`.
-5. Журнал показывать колонками `time` и `description`.
-6. После reconnect принять новый полный `telemetry.snapshot`.
+1. Сначала проверить `type`: отдельно обрабатывать `action.result`,
+   `telemetry.snapshot` и `telemetry.update`.
+2. Проверять `sequenceNo` только у телеметрии; старые обновления игнорировать.
+3. Полностью заменять `components`, `timing` и `journal` из телеметрии.
+4. Искать визуальный объект по `uiId`.
+5. Число брать из `valuePercent`, цвет — из `status`.
+6. Журнал показывать колонками `time` и `description`.
+7. Не отправлять действия, если `socket.readyState !== WebSocket.OPEN`.
+8. После reconnect принять новый полный `telemetry.snapshot`.
 
-REST-ошибки: `404` — не найдено, `409` — конфликт lifecycle/stateVersion,
-`422` — невалидное тело. WebSocket: `4403` — Origin запрещён, `4404` — сессия
-не найдена, `4409` — сессия не запущена.
+REST-ошибки lifecycle и отчёта: `404` — не найдено, `409` — недопустимый
+переход состояния, `422` — невалидное тело. WebSocket закрывается с кодом
+`4403`, если Origin запрещён, `4404`, если сессия не найдена, и `4409`, если
+сессия не запущена. Ошибка отдельного действия не закрывает соединение, а
+возвращается сообщением `action.result` со статусом `rejected`.

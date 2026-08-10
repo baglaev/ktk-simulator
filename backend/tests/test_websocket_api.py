@@ -88,34 +88,57 @@ def test_two_websocket_clients_receive_the_same_delta() -> None:
 def test_operator_action_is_streamed_in_journal() -> None:
     session_id = create_session()
     action = {
-        "actionId": "22222222-2222-2222-2222-222222222222",
-        "sessionId": session_id,
         "actionType": "run_diagnostics",
         "targetId": "eq-n1a",
-        "expectedStateVersion": 0,
-        "idempotencyKey": "diagnostics-n1a-1",
-        "submittedAt": "2026-08-08T09:00:00+03:00",
     }
 
     with client.websocket_connect(
         f"/ws/v1/sessions/{session_id}"
     ) as websocket:
         websocket.receive_json()
-        response = client.post(
-            f"/api/v1/sessions/{session_id}/actions",
-            json=action,
-        )
+        websocket.send_json(action)
+        response = websocket.receive_json()
         update = websocket.receive_json()
 
-    assert response.status_code == 200
+    assert response["type"] == "action.result"
+    assert response["status"] == "accepted"
+    assert UUID(response["actionId"])
+    assert response["stateVersion"] == 1
     assert update["type"] == "telemetry.update"
     assert update["sequenceNo"] == 1
     assert update["stateVersion"] == 1
-    assert update["journal"][-1] == {
-        "entryId": "22222222-2222-2222-2222-222222222222",
-        "time": "00:00",
-        "description": "Запущена диагностика компонента Н-1А",
+    assert update["journal"][-1]["entryId"] == response["actionId"]
+    assert update["journal"][-1]["time"] == "00:00"
+    assert update["journal"][-1]["description"] == (
+        "Запущена диагностика компонента Н-1А"
+    )
+
+
+def test_invalid_websocket_action_is_rejected_without_state_change() -> None:
+    session_id = create_session()
+
+    with client.websocket_connect(
+        f"/ws/v1/sessions/{session_id}"
+    ) as websocket:
+        snapshot = websocket.receive_json()
+        websocket.send_json({"targetId": "eq-n1a"})
+        response = websocket.receive_json()
+
+    assert response == {
+        "type": "action.result",
+        "status": "rejected",
+        "error": {
+            "code": "invalid_action",
+            "message": (
+                "Action must contain a valid actionType, targetId "
+                "and optional parameters"
+            ),
+        },
     }
+    current = client.get(
+        f"/api/v1/sessions/{session_id}/snapshot"
+    ).json()
+    assert current["stateVersion"] == snapshot["stateVersion"]
 
 
 def test_unknown_session_is_closed_with_4404() -> None:

@@ -10,6 +10,7 @@ from app.domain import (
     ModelSnapshot,
     OperatorAction,
     RecordedAction,
+    ScenarioActionRequest,
     SessionResult,
     SessionStatus,
     TrainingSession,
@@ -218,6 +219,30 @@ class SessionManager:
             self._sync_model_state(session, snapshot)
             self._snapshot_publisher(session_id, snapshot)
             return snapshot
+
+    def apply_scenario_action(
+        self,
+        session_id: UUID,
+        request: ScenarioActionRequest,
+    ) -> tuple[UUID, ModelSnapshot]:
+        """Build and apply an audited action from a minimal WebSocket request."""
+
+        with self._lock:
+            self._require_status(session_id, {SessionStatus.RUNNING})
+            action_id = self._id_factory()
+            current = self._models[session_id].get_snapshot()
+            action = OperatorAction(
+                action_id=action_id,
+                session_id=session_id,
+                action_type=request.action_type,
+                target_id=request.target_id,
+                parameters=request.parameters,
+                expected_state_version=current.state_version,
+                idempotency_key=str(action_id),
+                submitted_at=self._clock(),
+            )
+            snapshot = self.apply_action(session_id, action)
+            return action_id, snapshot
 
     def get_snapshot(self, session_id: UUID) -> ModelSnapshot:
         with self._lock:

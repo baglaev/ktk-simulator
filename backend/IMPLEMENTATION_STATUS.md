@@ -18,8 +18,8 @@
 | Оценка 0–100 и штрафы | `evaluation/deterministic.py` | `test_full_scenario.py` |
 | Журнал действий и ошибок | `RecordedAction` | `test_full_scenario_api.py` |
 | Сессии/действия/результаты в БД | SQLAlchemy + Alembic | `test_persistence.py` |
-| REST-контракт | FastAPI/Pydantic | `test_full_scenario_api.py` |
-| WebSocket-контракт | snapshot/update | `test_websocket_api.py` |
+| REST lifecycle/отчёт | FastAPI/Pydantic | `test_session_api.py` |
+| WebSocket-действия и телеметрия | action.result + snapshot/update | `test_full_scenario_api.py`, `test_websocket_api.py` |
 
 Текущая граница MVP: активное состояние численной модели остаётся в памяти
 одного worker. После рестарта архив сессии, действия и результат доступны из

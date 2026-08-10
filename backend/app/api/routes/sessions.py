@@ -7,7 +7,6 @@ from app.domain import (
     AdvanceSessionRequest,
     CreateSessionRequest,
     ModelSnapshot,
-    OperatorAction,
     RecordedAction,
     SessionResult,
     TrainingSession,
@@ -85,15 +84,6 @@ async def get_snapshot(
     manager: SessionManager = Depends(get_session_manager),
 ) -> ModelSnapshot:
     return manager.get_snapshot(session_id)
-
-
-@router.post("/{session_id}/actions", response_model=ModelSnapshot)
-async def apply_action(
-    session_id: UUID,
-    action: OperatorAction,
-    manager: SessionManager = Depends(get_session_manager),
-) -> ModelSnapshot:
-    return manager.apply_action(session_id, action)
 
 
 @router.get("/{session_id}/actions", response_model=list[RecordedAction])
