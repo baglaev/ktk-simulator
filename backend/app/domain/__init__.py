@@ -8,10 +8,16 @@ from app.domain.actions import (
     RecordedAction,
     ScenarioActionRequest,
 )
+from app.domain.auth import (
+    LoginFailureResponse,
+    LoginRequest,
+    LoginSuccessResponse,
+)
 from app.domain.base import APIModel, Provenance
 from app.domain.enums import (
     ActionType,
     ActionErrorCode,
+    AuthRole,
     DiagnosisConclusion,
     DiagnosisReason,
     EquipmentStatus,
@@ -59,6 +65,7 @@ __all__ = [
     "ActionRejectedMessage",
     "ActionType",
     "ActionErrorCode",
+    "AuthRole",
     "CreateSessionRequest",
     "ComponentParameterValue",
     "ComponentState",
@@ -74,6 +81,9 @@ __all__ = [
     "EducationalAssumption",
     "MeasurementType",
     "JournalEntry",
+    "LoginFailureResponse",
+    "LoginRequest",
+    "LoginSuccessResponse",
     "ModelSnapshot",
     "OperatorAction",
     "RecordedAction",
