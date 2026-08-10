@@ -320,21 +320,26 @@ function sendScenarioAction(actionType, targetId, parameters) {
 }
 ```
 
-### Доступные действия
+### Доступные `actionType`
 
 Единственный программный источник списка — `ActionType` в
 `app/domain/enums.py`.
 
-| `actionType` | Назначение | Пример `targetId` |
-|---|---|---|
-| `open_equipment_card` | открыть карточку оборудования | `eq-n1a` |
-| `view_signal` | посмотреть параметр | `PRA351` |
-| `run_diagnostics` | запустить учебную диагностику | `eq-n1a` |
-| `submit_decision` | зарегистрировать принятое решение | идентификатор объекта решения |
-| `acknowledge_event` | подтвердить событие | идентификатор события |
-| `submit_diagnosis` | отправить диагноз | `eq-n1a` |
-| `start_pump` | запустить учебный насос | `eq-n1b` |
-| `stop_pump` | остановить учебный насос | `eq-n1a` |
+| `actionType` | Когда frontend отправляет действие | `targetId` | `parameters` |
+|---|---|---|---|
+| `open_equipment_card` | пользователь открыл карточку оборудования | идентификатор оборудования, например `eq-n1a` | не нужны |
+| `view_signal` | пользователь открыл или просмотрел сигнал | идентификатор сигнала, например `PRA351` | не нужны |
+| `run_diagnostics` | пользователь нажал «Провести диагностику» | диагностируемое оборудование `eq-n1a` | не нужны |
+| `submit_diagnosis` | пользователь выбрал вариант и подтвердил диагноз | диагностируемый насос `eq-n1a` | обязательны `conclusion` и `reason` |
+| `start_pump` | пользователь подтвердил учебный запуск насоса | запускаемый насос, например `eq-n1b` | не нужны |
+| `stop_pump` | пользователь подтвердил учебную остановку насоса | останавливаемый насос, например `eq-n1a` | не нужны |
+| `submit_decision` | пользователь подтвердил общее решение вне формы диагноза | идентификатор объекта решения | зависят от интерфейса |
+| `acknowledge_event` | пользователь подтвердил событие или сигнализацию | идентификатор события | не нужны |
+
+Для основного пути сценария Н-1А используются `open_equipment_card`,
+`view_signal`, `run_diagnostics`, `submit_diagnosis`, `start_pump` и
+`stop_pump`. Действия `submit_decision` и `acknowledge_event` поддерживаются
+контрактом, но не являются обязательными этапами текущего MVP.
 
 Открыть карточку Н-1А:
 
@@ -381,6 +386,51 @@ function sendScenarioAction(actionType, targetId, parameters) {
 Допустимые `conclusion`: `fault_detected`, `no_fault`. Допустимые `reason`:
 `bearing_wear`, `cavitation`, `electrical_overload`, `unknown`. Правильная пара
 для текущего учебного сценария — `fault_detected` / `bearing_wear`.
+
+Четыре варианта формы диагностики frontend отображает пользователю произвольным
+текстом, но в backend передает стабильные машинные значения:
+
+| Вариант интерфейса | `conclusion` | `reason` |
+|---|---|---|
+| Износ подшипника | `fault_detected` | `bearing_wear` |
+| Кавитация | `fault_detected` | `cavitation` |
+| Электрическая перегрузка | `fault_detected` | `electrical_overload` |
+| Неисправность не обнаружена | `no_fault` | `unknown` |
+
+При открытии формы frontend может отправить `run_diagnostics`. Выбранный вариант
+отправляется один раз как `submit_diagnosis` после нажатия «Подтвердить»:
+
+```javascript
+const diagnosisPayloadByOption = {
+  bearing_wear: {
+    conclusion: "fault_detected",
+    reason: "bearing_wear",
+  },
+  cavitation: {
+    conclusion: "fault_detected",
+    reason: "cavitation",
+  },
+  electrical_overload: {
+    conclusion: "fault_detected",
+    reason: "electrical_overload",
+  },
+  no_fault: {
+    conclusion: "no_fault",
+    reason: "unknown",
+  },
+};
+
+function submitDiagnosis(optionId) {
+  sendScenarioAction(
+    "submit_diagnosis",
+    "eq-n1a",
+    diagnosisPayloadByOption[optionId]
+  );
+}
+```
+
+При переключении radio-кнопки сообщение не отправляется. При отмене формы
+сообщение также не отправляется.
 
 Запустить резервный Н-1Б:
 
