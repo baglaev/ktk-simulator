@@ -7,9 +7,15 @@ from app.services.session_manager import (
 from app.services.simulation_runtime import SimulationRuntime
 
 __all__ = [
+    "AuthenticatedPrincipal",
     "InvalidSessionTransitionError",
     "SessionConflictError",
     "SessionManager",
     "SessionNotFoundError",
+    "SimpleAuthenticationService",
     "SimulationRuntime",
 ]
+from app.services.authentication import (
+    AuthenticatedPrincipal,
+    SimpleAuthenticationService,
+)

@@ -7,6 +7,13 @@ class UserRole(str, Enum):
     ADMIN = "admin"
 
 
+class AuthRole(str, Enum):
+    """Two roles available in the simplified demo login."""
+
+    USER = "user"
+    INSTRUCTOR = "instructor"
+
+
 class TrainingMode(str, Enum):
     TRAINING = "training"
     CONTROL = "control"

@@ -9,7 +9,12 @@ from app.api.errors import (
     session_conflict_handler,
     session_not_found_handler,
 )
-from app.api.routes import scenarios_router, sessions_router, websocket_router
+from app.api.routes import (
+    auth_router,
+    scenarios_router,
+    sessions_router,
+    websocket_router,
+)
 from app.api.dependencies import get_session_manager
 from app.config import Settings, get_settings
 from app.services import (
@@ -70,6 +75,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             version=resolved_settings.app_version,
         )
 
+    application.include_router(auth_router)
     application.include_router(scenarios_router)
     application.include_router(sessions_router)
     application.include_router(websocket_router)
