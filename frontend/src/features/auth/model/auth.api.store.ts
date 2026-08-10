@@ -1,8 +1,6 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 
-import { authApi } from './auth.api';
-
-export type UserRole = 'user' | 'instructor';
+import { authApi, type UserRole } from './auth.api';
 
 class AuthStore {
   isAuthenticated = false;
@@ -25,13 +23,13 @@ class AuthStore {
     }
   };
 
-  login = async (username: string, password: string) => {
+  login = async (login: string, password: string) => {
     this.isLoading = true;
     this.error = '';
 
     try {
       const { data } = await authApi.login({
-        username,
+        login,
         password,
       });
 
@@ -43,16 +41,14 @@ class AuthStore {
         return null;
       }
 
-      const role: UserRole = data.path === '/instructor-page' ? 'instructor' : 'user';
-
       runInAction(() => {
         this.isAuthenticated = true;
-        this.role = role;
+        this.role = data.role;
       });
 
-      localStorage.setItem('role', role);
+      localStorage.setItem('role', data.role);
 
-      return data.path;
+      return data.redirectTo;
     } catch (error) {
       console.error(error);
 

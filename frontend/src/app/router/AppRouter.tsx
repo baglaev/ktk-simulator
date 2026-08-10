@@ -13,10 +13,8 @@ export const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* доступна без авторизации */}
         <Route path="/login" element={<LoginPage />} />
 
-        {/* страницы USER */}
         <Route element={<ProtectedRoute allowedRole="user" />}>
           <Route path="/" element={<MainPage />} />
           <Route path="/preparation" element={<ScenarioPreparationPage />} />
@@ -24,9 +22,8 @@ export const AppRouter = () => {
           <Route path="/summary-results" element={<SummaryResultPage />} />
         </Route>
 
-        {/* страницы INSTRUCTOR */}
         <Route element={<ProtectedRoute allowedRole="instructor" />}>
-          <Route path="/instructor-page" element={<InstructorPage />} />
+          <Route path="/instructor" element={<InstructorPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -6,5 +6,5 @@ export const routes = {
   simulator: '/simulator',
   summary: '/summary-results',
 
-  instructorPage: '/instructor-page',
+  instructorPage: '/instructor',
 };

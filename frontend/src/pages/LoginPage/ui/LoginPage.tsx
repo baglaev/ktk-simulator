@@ -16,10 +16,10 @@ export const LoginPage = observer(() => {
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
-    const path = await authStore.login(username, password);
+    const redirectTo = await authStore.login(username, password);
 
-    if (path) {
-      navigate(path, {
+    if (redirectTo) {
+      navigate(redirectTo, {
         replace: true,
       });
     }
