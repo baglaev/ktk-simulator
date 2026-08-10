@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 
-import { Line, LineChart, ResponsiveContainer, YAxis } from 'recharts';
+import { Line, LineChart, ResponsiveContainer } from 'recharts';
 
 import { Button } from '@consta/uikit/Button';
 import { Text } from '@consta/uikit/Text';
@@ -96,7 +96,7 @@ export const SimulatorInfoPanel = observer(() => {
             Диагностические параметры
           </Text>
 
-          {selectedComponent.parameters.map((parameter) => {
+          {/* {selectedComponent.parameters.map((parameter) => {
             const history = simulatorStore.getParameterHistory(parameter.parameterId);
 
             return (
@@ -128,6 +128,70 @@ export const SimulatorInfoPanel = observer(() => {
                     <LineChart data={history}>
                       <YAxis hide domain={['dataMin', 'dataMax']} />
 
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        strokeWidth={2}
+                        dot={false}
+                        isAnimationActive={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            );
+          })} */}
+
+          {selectedComponent.parameters.map((parameter) => {
+            const history = simulatorStore.getParameterHistory(parameter.parameterId);
+
+            return (
+              <div key={parameter.parameterId} className={styles.parameter}>
+                <div className={styles.parameterName}>
+                  <Badge
+                    size="xs"
+                    form="round"
+                    status={
+                      parameter.status === 'success'
+                        ? 'success'
+                        : parameter.status === 'warning'
+                          ? 'warning'
+                          : 'error'
+                    }
+                  />
+
+                  <Text size="xs">{parameter.name}</Text>
+                </div>
+
+                <Text size="s" weight="semibold" className={styles.parameterValue}>
+                  {Math.round(parameter.valuePercent)}%
+                </Text>
+
+                <div className={styles.chartContainer}>
+                  {/* <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={history}>
+                      <YAxis hide domain={['dataMin', 'dataMax']} />
+
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        strokeWidth={2}
+                        dot={false}
+                        isAnimationActive={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer> */}
+
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={history}
+                      margin={{
+                        top: 2,
+                        right: 2,
+                        bottom: 2,
+                        left: 2,
+                      }}
+                    >
                       <Line
                         type="monotone"
                         dataKey="value"
