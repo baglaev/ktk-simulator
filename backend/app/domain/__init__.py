@@ -1,6 +1,13 @@
 """Public data contracts shared by API, simulation model and frontend."""
 
-from app.domain.actions import OperatorAction, RecordedAction
+from app.domain.actions import (
+    ActionAcceptedMessage,
+    ActionErrorDetail,
+    ActionRejectedMessage,
+    OperatorAction,
+    RecordedAction,
+    ScenarioActionRequest,
+)
 from app.domain.base import APIModel, Provenance
 from app.domain.enums import (
     ActionType,
@@ -47,6 +54,9 @@ from app.domain.telemetry import (
 __all__ = [
     "APIModel",
     "AdvanceSessionRequest",
+    "ActionAcceptedMessage",
+    "ActionErrorDetail",
+    "ActionRejectedMessage",
     "ActionType",
     "ActionErrorCode",
     "CreateSessionRequest",
@@ -70,6 +80,7 @@ __all__ = [
     "ParameterOrigin",
     "Provenance",
     "ScenarioConfig",
+    "ScenarioActionRequest",
     "ScenarioSummary",
     "ScenarioOutcome",
     "ScoreSection",

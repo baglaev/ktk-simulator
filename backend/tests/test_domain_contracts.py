@@ -18,6 +18,7 @@ from app.domain import (
     OperatorAction,
     ParameterOrigin,
     Provenance,
+    ScenarioActionRequest,
     ScenarioTiming,
     SessionStatus,
     SignalDefinition,
@@ -180,6 +181,25 @@ def test_training_session_and_operator_action_contracts() -> None:
 
     assert action.session_id == session.session_id
     assert action.action_type is ActionType.VIEW_SIGNAL
+
+
+def test_websocket_action_request_has_minimal_strict_contract() -> None:
+    action = ScenarioActionRequest.model_validate(
+        {"actionType": "view_signal", "targetId": "PRA351"}
+    )
+
+    assert action.action_type is ActionType.VIEW_SIGNAL
+    assert action.target_id == "PRA351"
+    assert action.parameters == {}
+
+    with pytest.raises(ValidationError, match="actionId"):
+        ScenarioActionRequest.model_validate(
+            {
+                "actionType": "view_signal",
+                "targetId": "PRA351",
+                "actionId": "22222222-2222-2222-2222-222222222222",
+            }
+        )
 
 
 def test_telemetry_update_without_components_is_rejected() -> None:

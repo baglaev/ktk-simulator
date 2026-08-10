@@ -136,37 +136,392 @@ alembic upgrade head
 - детерминированная оценка 0–100 с ошибками, штрафами и критическими условиями;
 - постоянный аудит сессий, действий и результатов в БД.
 
-## REST API
+## Интеграция frontend и backend
+
+Для обмена используются два механизма:
+
+| Механизм | Назначение |
+|---|---|
+| REST API | описание модели, создание, запуск, пауза, завершение сессии и результат |
+| WebSocket | действия пользователя во время сценария и live-телеметрия |
+
+Адреса локального backend:
+
+- REST: `http://127.0.0.1:8000`;
+- Swagger REST API: `http://127.0.0.1:8000/docs`;
+- WebSocket: `ws://127.0.0.1:8000/ws/v1/sessions/{sessionId}`.
+
+WebSocket не входит в OpenAPI и поэтому не отображается в Swagger. Его полный
+контракт описан ниже.
+
+### Последовательность работы frontend
+
+1. Получить модель: `GET /api/v1/scenarios/MVP-SC-01/model-definition`.
+2. Создать сессию: `POST /api/v1/sessions`.
+3. Сохранить `sessionId` из ответа.
+4. Запустить сессию: `POST /api/v1/sessions/{sessionId}/start`.
+5. Подключиться к WebSocket с полученным `sessionId`.
+6. Применить первое сообщение `telemetry.snapshot`.
+7. Отправлять действия кнопок минимальными JSON-сообщениями в WebSocket.
+8. Обрабатывать подтверждения `action.result`.
+9. Обновлять экран из сообщений `telemetry.update`.
+10. После `ready_to_complete` вызвать REST `/complete` и `/result`.
+
+### REST API
 
 - `GET /api/v1/scenarios` — каталог сценариев;
 - `GET /api/v1/scenarios/MVP-SC-01/model-definition` — статическая модель,
   источники и учебные допущения;
 - `POST /api/v1/sessions` — создать сессию;
+- `GET /api/v1/sessions/{id}` — получить состояние сессии;
 - `POST /api/v1/sessions/{id}/start` — запустить live-модель;
-- `POST /api/v1/sessions/{id}/pause` / `resume` — пауза / продолжение;
-- `POST /api/v1/sessions/{id}/actions` — действие обучаемого;
-- `GET /api/v1/sessions/{id}/actions` — сохранённый аудит действий;
-- `GET /api/v1/sessions/{id}/snapshot` — текущий полный снимок;
+- `POST /api/v1/sessions/{id}/pause` — поставить сессию на паузу;
+- `POST /api/v1/sessions/{id}/resume` — продолжить сессию;
+- `GET /api/v1/sessions/{id}/snapshot` — получить полный снимок;
 - `POST /api/v1/sessions/{id}/complete` — завершить прохождение;
-- `GET /api/v1/sessions/{id}/result` — результат SCR-04;
-- `POST /api/v1/sessions/{id}/advance` — только тестовый ручной шаг времени.
+- `GET /api/v1/sessions/{id}/result` — получить результат SCR-04;
+- `GET /api/v1/sessions/{id}/actions` — получить сохранённый аудит действий;
+- `POST /api/v1/sessions/{id}/advance` — тестовый ручной шаг времени.
 
-Frontend не вызывает `/advance`: в обычном запуске время продвигает backend.
+Frontend не отправляет действия пользователя через REST и не вызывает
+`/advance` в обычном live-режиме: время продвигает backend.
 
-## WebSocket
+Тело создания сессии:
 
-Адрес: `WS /ws/v1/sessions/{sessionId}`.
+```json
+{
+  "scenarioId": "MVP-SC-01",
+  "traineeId": "trainee-001",
+  "instructorId": "instructor-001",
+  "mode": "training"
+}
+```
 
-Первое сообщение — `telemetry.snapshot`, последующие — `telemetry.update`.
-Каждое сообщение содержит полный упорядоченный массив восьми компонентов,
-вложенные параметры, live-время и журнал вида `time` / `description`.
+## WebSocket-контракт
 
-Команды пользователя идут через REST `/actions`. WebSocket используется в
-обратном направлении — для отправки актуального состояния backend → frontend.
-WebSocket-маршрут не отображается в Swagger/OpenAPI; полный контракт находится
-в [FRONTEND_INTEGRATION.md](FRONTEND_INTEGRATION.md).
+Соединение открывается после запуска сессии:
 
-Матрица требований и автотестов: [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md).
+```text
+ws://127.0.0.1:8000/ws/v1/sessions/{sessionId}
+```
+
+Один WebSocket двунаправленный:
+
+```text
+frontend → backend: действия пользователя
+backend → frontend: action.result и телеметрия
+```
+
+### Что frontend отправляет в backend
+
+Действие передаётся текстовым JSON-сообщением. Минимальный пример:
+
+```json
+{
+  "actionType": "view_signal",
+  "targetId": "PRA351"
+}
+```
+
+Допустимые поля:
+
+| Поле | Обязательность | Назначение |
+|---|---|---|
+| `actionType` | всегда | тип действия из списка ниже |
+| `targetId` | для действия над объектом | идентификатор компонента, сигнала или события |
+| `parameters` | когда действию нужны данные | дополнительные значения, например диагноз |
+
+Frontend не передаёт `actionId`, `sessionId`, `submittedAt`,
+`expectedStateVersion` и `idempotencyKey`. Backend получает `sessionId` из URL,
+сам создаёт UUID и серверное время, использует текущую версию состояния и
+сохраняет полную запись действия в БД.
+
+Пример отправки из frontend:
+
+```javascript
+const socket = new WebSocket(
+  `ws://127.0.0.1:8000/ws/v1/sessions/${sessionId}`
+);
+
+function sendScenarioAction(actionType, targetId, parameters) {
+  if (socket.readyState !== WebSocket.OPEN) return;
+
+  const message = { actionType };
+  if (targetId !== undefined) message.targetId = targetId;
+  if (parameters !== undefined) message.parameters = parameters;
+
+  socket.send(JSON.stringify(message));
+}
+```
+
+### Доступные действия
+
+Единственный программный источник списка — `ActionType` в
+`app/domain/enums.py`.
+
+| `actionType` | Назначение | Пример `targetId` |
+|---|---|---|
+| `open_equipment_card` | открыть карточку оборудования | `eq-n1a` |
+| `view_signal` | посмотреть параметр | `PRA351` |
+| `run_diagnostics` | запустить учебную диагностику | `eq-n1a` |
+| `submit_decision` | зарегистрировать принятое решение | идентификатор объекта решения |
+| `acknowledge_event` | подтвердить событие | идентификатор события |
+| `submit_diagnosis` | отправить диагноз | `eq-n1a` |
+| `start_pump` | запустить учебный насос | `eq-n1b` |
+| `stop_pump` | остановить учебный насос | `eq-n1a` |
+
+Открыть карточку Н-1А:
+
+```json
+{
+  "actionType": "open_equipment_card",
+  "targetId": "eq-n1a"
+}
+```
+
+Посмотреть PRA 351:
+
+```json
+{
+  "actionType": "view_signal",
+  "targetId": "PRA351"
+}
+```
+
+Допустимые основные сигналы сценария: `PRA351`, `FYQR117`, `LRCA605`.
+
+Запустить диагностику Н-1А:
+
+```json
+{
+  "actionType": "run_diagnostics",
+  "targetId": "eq-n1a"
+}
+```
+
+Отправить диагноз:
+
+```json
+{
+  "actionType": "submit_diagnosis",
+  "targetId": "eq-n1a",
+  "parameters": {
+    "conclusion": "fault_detected",
+    "reason": "bearing_wear"
+  }
+}
+```
+
+Допустимые `conclusion`: `fault_detected`, `no_fault`. Допустимые `reason`:
+`bearing_wear`, `cavitation`, `electrical_overload`, `unknown`. Правильная пара
+для текущего учебного сценария — `fault_detected` / `bearing_wear`.
+
+Запустить резервный Н-1Б:
+
+```json
+{
+  "actionType": "start_pump",
+  "targetId": "eq-n1b"
+}
+```
+
+Остановить неисправный Н-1А:
+
+```json
+{
+  "actionType": "stop_pump",
+  "targetId": "eq-n1a"
+}
+```
+
+Допустимые насосы: `eq-n1`, `eq-n1a`, `eq-n1b`, `eq-n1v`. Диалог
+подтверждения реализует frontend. При выборе «Отмена» сообщение не отправляется.
+
+### Что backend возвращает в frontend
+
+Сразу после подключения backend отправляет полный `telemetry.snapshot`.
+
+После корректного действия сначала приходит подтверждение:
+
+```json
+{
+  "type": "action.result",
+  "status": "accepted",
+  "actionId": "22222222-2222-2222-2222-222222222222",
+  "stateVersion": 18
+}
+```
+
+Затем всем подключённым клиентам сессии приходит новое `telemetry.update`.
+
+Если действие невалидно или не может быть выполнено:
+
+```json
+{
+  "type": "action.result",
+  "status": "rejected",
+  "error": {
+    "code": "invalid_action",
+    "message": "Action must contain a valid actionType, targetId and optional parameters"
+  }
+}
+```
+
+Коды ошибок действий:
+
+- `invalid_message` — сообщение не является текстовым JSON;
+- `invalid_action` — отсутствуют или невалидны поля действия;
+- `session_not_found` — сессия недоступна;
+- `session_not_running` — сессия не имеет статус `running`;
+- `action_rejected` — неизвестная цель или действие отклонено моделью.
+
+Ошибка действия не закрывает WebSocket.
+
+### Телеметрия
+
+Пример сокращённого сообщения:
+
+```json
+{
+  "type": "telemetry.update",
+  "sessionId": "11111111-1111-1111-1111-111111111111",
+  "scenarioId": "MVP-SC-01",
+  "scenarioVersion": "0.3.0",
+  "modelId": "n1a-deterministic-training-model",
+  "modelVersion": "0.3.0",
+  "sequenceNo": 25,
+  "stateVersion": 25,
+  "timing": {
+    "mode": "live",
+    "elapsedMs": 55000,
+    "totalMs": 120000,
+    "remainingMs": 65000,
+    "progressPercent": 45.8
+  },
+  "components": [
+    {
+      "componentId": "eq-n1a",
+      "uiId": "pump-h1a",
+      "tag": "Н-1А",
+      "name": "Сырьевой насос Н-1А",
+      "componentType": "pump",
+      "status": "alert",
+      "operatingState": "running",
+      "parameters": [
+        {
+          "parameterId": "COMPAX.N1A.VELOCITY",
+          "tag": "COMPAX.N1A.VELOCITY",
+          "name": "Виброскорость Н-1А",
+          "valuePercent": 375.0,
+          "status": "alert"
+        }
+      ],
+      "state": {
+        "faultSeverityPercent": 68.3
+      }
+    }
+  ],
+  "journal": [
+    {
+      "entryId": "22222222-2222-2222-2222-222222222222",
+      "time": "00:55",
+      "description": "Запущен насос Н-1Б"
+    }
+  ]
+}
+```
+
+`valuePercent` — нормализованное учебное значение. Физические единицы через
+WebSocket не передаются. Допустимые статусы: `success`, `warning`, `alert`.
+
+### Постоянный список компонентов
+
+Список и порядок компонентов не меняются:
+
+| `componentId` | `uiId` | Параметры |
+|---|---|---|
+| `eq-n1` | `pump-h1` | 5 параметров COMPACS |
+| `eq-n1a` | `pump-h1a` | 5 параметров COMPACS |
+| `eq-n1b` | `pump-h1b` | 5 параметров COMPACS |
+| `eq-n1v` | `pump-h1v` | 5 параметров COMPACS |
+| `eq-n1-discharge` | `line-n1-elou` | PRA 351, FYQR 117 |
+| `eq-t1-t11` | `heat-exchanger-t1-t11` | расход, температура |
+| `eq-elou` | `elou-block` | уровни I и II ступени |
+| `eq-e15` | `e15` | LRCA 605 |
+
+Остановленный насос остаётся в массиве, получает `operatingState = stopped`,
+а его `parameters = []`. После запуска параметры появляются снова. Для
+изменения отображения насоса frontend использует `operatingState`, а не общий
+`status`.
+
+В `state` компонента `eq-n1-discharge` дополнительно передаются:
+
+- `recoveryActive` — идёт восстановление;
+- `stabilized` — целевые значения достигнуты;
+- `safePumpConfiguration` — достигнута безопасная учебная конфигурация;
+- `scenarioFailed` и `failureReason` — терминальный отказ и его причина.
+
+### Обработка сообщений на frontend
+
+```javascript
+socket.onmessage = (event) => {
+  const message = JSON.parse(event.data);
+
+  if (message.type === "action.result") {
+    handleActionResult(message);
+    return;
+  }
+
+  if (
+    message.type === "telemetry.snapshot" ||
+    message.type === "telemetry.update"
+  ) {
+    applyTelemetry(message);
+  }
+};
+```
+
+Правила применения телеметрии:
+
+1. Проверять `sequenceNo` только у телеметрии и игнорировать старые сообщения.
+2. Полностью заменять `components`, `timing` и `journal`.
+3. Искать визуальный объект по `uiId`.
+4. Значение брать из `valuePercent`, цвет — из `status`.
+5. Журнал показывать колонками `time` и `description`.
+6. После переподключения принять новый полный `telemetry.snapshot`.
+
+Коды закрытия WebSocket: `4403` — запрещён Origin, `4404` — сессия не найдена,
+`4409` — сессия не запущена.
+
+### Где контракт реализован в коде
+
+| Часть контракта | Файл |
+|---|---|
+| список `actionType` | `app/domain/enums.py`, класс `ActionType` |
+| минимальное входное сообщение | `app/domain/actions.py`, класс `ScenarioActionRequest` |
+| ответы `action.result` | `app/domain/actions.py`, классы `ActionAcceptedMessage` и `ActionRejectedMessage` |
+| приём и отправка WebSocket | `app/api/routes/websocket.py` |
+| создание UUID, времени и внутреннего действия | `app/services/session_manager.py`, метод `apply_scenario_action` |
+| проверка целей и изменение модели | `app/simulation/model.py` |
+| форматы snapshot/update | `app/domain/telemetry.py` |
+
+## Статусы и завершение сценария
+
+Статусы сессии: `created`, `running`, `paused`, `ready_to_complete`,
+`completed`, `failed`, `cancelled`.
+
+После стабилизации backend устанавливает `ready_to_complete` и останавливает
+live-таймер. Frontend вызывает:
+
+```http
+POST /api/v1/sessions/{sessionId}/complete
+GET  /api/v1/sessions/{sessionId}/result
+GET  /api/v1/sessions/{sessionId}/actions
+```
+
+`result` содержит `rubricVersion`, итог, балл, секции оценки, штрафы,
+`errorCodes` и `criticalFailureReasons`. `actions` содержит полный аудит с
+виртуальным временем, описанием и ошибками для отчёта и будущего AI-модуля.
 
 ## Состояние и хранение
 
@@ -188,3 +543,14 @@ Redis/Kafka не требуются для одного worker. Внешний �
 cd backend
 KTK_DATABASE_URL=sqlite+pysqlite:///:memory: pytest
 ```
+
+Основные проверки:
+
+| Требование | Тест |
+|---|---|
+| REST lifecycle и результат | `test_session_api.py` |
+| минимальные действия через WebSocket | `test_websocket_api.py` |
+| полный пользовательский путь Н-1А | `test_full_scenario_api.py` |
+| динамика и восстановление модели | `test_full_scenario.py` |
+| хранение сессий, действий и результатов | `test_persistence.py` |
+| миграции Alembic | `test_migrations.py` |

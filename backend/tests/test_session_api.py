@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from uuid import UUID
 
 import pytest
@@ -119,90 +118,15 @@ def test_two_sessions_have_isolated_model_state() -> None:
     assert second_snapshot["stateVersion"] == 0
 
 
-def test_action_is_idempotent() -> None:
+def test_scenario_actions_are_not_accepted_over_rest() -> None:
     session_id = create_session()["sessionId"]
     client.post(f"/api/v1/sessions/{session_id}/start")
-    action_id = "22222222-2222-2222-2222-222222222222"
-    payload = {
-        "actionId": action_id,
-        "sessionId": session_id,
-        "actionType": "view_signal",
-        "targetId": "PRA351",
-        "expectedStateVersion": 0,
-        "idempotencyKey": "view-pra351-1",
-        "submittedAt": datetime(2026, 8, 8, 9, 0, tzinfo=timezone.utc).isoformat(),
-    }
-
-    first = client.post(
-        f"/api/v1/sessions/{session_id}/actions",
-        json=payload,
-    )
-    second = client.post(
-        f"/api/v1/sessions/{session_id}/actions",
-        json=payload,
-    )
-
-    assert first.status_code == 200
-    assert second.status_code == 200
-    assert first.json()["stateVersion"] == 1
-    assert second.json()["stateVersion"] == 1
-    assert len(first.json()["journal"]) == len(second.json()["journal"])
-
-
-def test_reusing_idempotency_key_for_another_action_returns_conflict() -> None:
-    session_id = create_session()["sessionId"]
-    client.post(f"/api/v1/sessions/{session_id}/start")
-    base_payload = {
-        "sessionId": session_id,
-        "actionType": "view_signal",
-        "targetId": "PRA351",
-        "expectedStateVersion": 0,
-        "idempotencyKey": "view-pra351-1",
-        "submittedAt": datetime(2026, 8, 8, 9, 0, tzinfo=timezone.utc).isoformat(),
-    }
-    first_payload = {
-        **base_payload,
-        "actionId": "22222222-2222-2222-2222-222222222222",
-    }
-    second_payload = {
-        **base_payload,
-        "actionId": "33333333-3333-3333-3333-333333333333",
-    }
-
-    first = client.post(
-        f"/api/v1/sessions/{session_id}/actions",
-        json=first_payload,
-    )
-    second = client.post(
-        f"/api/v1/sessions/{session_id}/actions",
-        json=second_payload,
-    )
-
-    assert first.status_code == 200
-    assert second.status_code == 409
-    assert "idempotency key" in second.json()["detail"]
-
-
-def test_action_rejects_path_session_mismatch() -> None:
-    first_id = create_session("trainee-001")["sessionId"]
-    second_id = create_session("trainee-002")["sessionId"]
-    client.post(f"/api/v1/sessions/{first_id}/start")
-    payload = {
-        "actionId": "22222222-2222-2222-2222-222222222222",
-        "sessionId": second_id,
-        "actionType": "run_diagnostics",
-        "targetId": "eq-n1a",
-        "expectedStateVersion": 0,
-        "idempotencyKey": "diagnostics-n1a-1",
-        "submittedAt": datetime(2026, 8, 8, 9, 0, tzinfo=timezone.utc).isoformat(),
-    }
-
     response = client.post(
-        f"/api/v1/sessions/{first_id}/actions",
-        json=payload,
+        f"/api/v1/sessions/{session_id}/actions",
+        json={"actionType": "view_signal", "targetId": "PRA351"},
     )
 
-    assert response.status_code == 409
+    assert response.status_code == 405
 
 
 def test_create_session_rejects_unknown_scenario() -> None:
