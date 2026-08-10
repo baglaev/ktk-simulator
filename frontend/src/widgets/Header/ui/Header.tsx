@@ -3,8 +3,23 @@ import { Text } from '@consta/uikit/Text';
 import { Picture } from '@consta/uikit/Picture';
 
 import styles from './Header.module.css';
+import { Button } from '@consta/uikit/Button';
+import { IconExit } from '@consta/icons/IconExit';
+import { observer } from 'mobx-react-lite';
+import { authStore } from '@/features/auth/model/auth.api.store';
+import { useNavigate } from 'react-router-dom';
 
-export const Header = () => {
+export const Header = observer(() => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    authStore.logout();
+
+    navigate('/login', {
+      replace: true,
+    });
+  };
+
   return (
     <header className={styles.header}>
       <div className={styles.titleContainer}>
@@ -16,9 +31,13 @@ export const Header = () => {
           </Text>
         </div>
       </div>
-      <User name="Демо-профиль" info="Обучаемый" size="l" />
+
+      <div className={styles.userContainer}>
+        <User name="Демо-профиль" info="Обучаемый" size="l" />
+        <Button onlyIcon view="ghost" iconLeft={IconExit} onClick={handleLogout} />
+      </div>
     </header>
   );
-};
+});
 
 Header.displayName = 'Header';

@@ -6,6 +6,9 @@ import { Button } from '@consta/uikit/Button';
 import { User } from '@consta/uikit/User';
 import { observer } from 'mobx-react-lite';
 import { simulatorStore } from '@/features/simulator/SimulatorSchema/model/simulatorSchema.store';
+import { useNavigate } from 'react-router-dom';
+import { authStore } from '@/features/auth/model/auth.api.store';
+import { IconExit } from '@consta/icons/IconExit';
 
 interface Props {
   pageName: string;
@@ -18,6 +21,16 @@ export const HeaderSimulator = observer((props: Props) => {
   const { pageName, descriptionPage, simulatorEnabled, summaryEnabled } = props;
 
   const { formattedElapsedTime } = simulatorStore;
+
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    authStore.logout();
+
+    navigate('/login', {
+      replace: true,
+    });
+  };
 
   return (
     <header className={styles.header}>
@@ -44,7 +57,11 @@ export const HeaderSimulator = observer((props: Props) => {
       {summaryEnabled && (
         <div className={styles.summarySection}>
           <Badge label="Обучающий режим" view="stroked" size="l" />
-          <User name="Демо-профиль" info="Обучаемый" size="l" />
+
+          <div className={styles.userContainer}>
+            <User name="Демо-профиль" info="Обучаемый" size="l" />
+            <Button onlyIcon view="ghost" iconLeft={IconExit} onClick={handleLogout} />
+          </div>
         </div>
       )}
     </header>
