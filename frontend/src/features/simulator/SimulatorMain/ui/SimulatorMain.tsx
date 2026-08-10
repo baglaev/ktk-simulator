@@ -43,13 +43,31 @@ export const SimulatorMain = observer(() => {
     };
   }, [sessionId]);
 
+  // const handleSendMessage = () => {
+  //   if (wsRef.current?.readyState === WebSocket.OPEN) {
+  //     wsRef.current.send('hello');
+  //     console.log('message sent');
+  //   } else {
+  //     console.log('WebSocket is not connected');
+  //   }
+  // };
+
   const handleSendMessage = () => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send('hello');
-      console.log('message sent');
-    } else {
+    const ws = wsRef.current;
+
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
       console.log('WebSocket is not connected');
+      return;
     }
+
+    const message = {
+      actionType: 'view_signal',
+      targetId: 'PRA351',
+    };
+
+    ws.send(JSON.stringify(message));
+
+    console.log('ws sent:', message);
   };
 
   //

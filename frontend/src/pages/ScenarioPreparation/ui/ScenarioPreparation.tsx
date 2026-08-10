@@ -57,8 +57,8 @@ import { observer } from 'mobx-react-lite';
 import { useNavigate } from 'react-router-dom';
 
 export const ScenarioPreparationPage = observer(() => {
-  const { selectedScenario, sessionId, isLoading, isStarting, initialize, startSession } =
-    scenarioStore;
+  // const { selectedScenario, sessionId, isLoading, isStarting, initialize, startSession } =
+  const { isStarting, initialize, startSession } = scenarioStore;
 
   const navigate = useNavigate();
 
@@ -82,7 +82,8 @@ export const ScenarioPreparationPage = observer(() => {
   return (
     <MainLayout>
       <section className={styles.container}>
-        {selectedScenario && <ScenarioSection />}
+        {/* {selectedScenario && <ScenarioSection />} */}
+        <ScenarioSection />
 
         <div className={styles.buttonContaier}>
           <Button
@@ -100,7 +101,7 @@ export const ScenarioPreparationPage = observer(() => {
             size="l"
             onClick={handleStartScenario}
             loading={isStarting}
-            disabled={!sessionId || isLoading}
+            // disabled={!sessionId || isLoading}
           />
         </div>
       </section>
