@@ -8,6 +8,8 @@ from app.domain import (
     CreateSessionRequest,
     ModelSnapshot,
     OperatorAction,
+    RecordedAction,
+    SessionResult,
     TrainingSession,
 )
 from app.services import SessionManager
@@ -92,3 +94,23 @@ async def apply_action(
     manager: SessionManager = Depends(get_session_manager),
 ) -> ModelSnapshot:
     return manager.apply_action(session_id, action)
+
+
+@router.get("/{session_id}/actions", response_model=list[RecordedAction])
+async def list_actions(
+    session_id: UUID,
+    manager: SessionManager = Depends(get_session_manager),
+) -> list[RecordedAction]:
+    """Return the persisted action audit ordered by model sequence."""
+
+    return manager.list_actions(session_id)
+
+
+@router.get("/{session_id}/result", response_model=SessionResult)
+async def get_result(
+    session_id: UUID,
+    manager: SessionManager = Depends(get_session_manager),
+) -> SessionResult:
+    """Return the deterministic SCR-04 result after terminal completion."""
+
+    return manager.get_result(session_id)

@@ -50,16 +50,17 @@ def test_initial_snapshot_contains_complete_model_state() -> None:
     assert snapshot.state_version == 0
     assert snapshot.timing.elapsed_ms == 0
     assert snapshot.timing.total_ms == 120_000
-    assert snapshot.scenario_version == "0.2.0"
-    assert snapshot.model_version == "0.2.0"
+    assert snapshot.scenario_version == "0.3.0"
+    assert snapshot.model_version == "0.3.0"
     assert len(snapshot.components) == 8
-    assert len(parameters) == 27
+    assert len(parameters) == 22
     assert parameters["PRA351"].value_percent == 100
     assert parameters["FYQR117"].value_percent == 100
     assert parameters["COMPAX.N1V.VELOCITY"].value_percent == 100
     assert parameters["LRCA605"].value_percent == 65
     assert component_map(snapshot)["eq-n1v"].operating_state.value == "running"
     assert component_map(snapshot)["eq-n1b"].operating_state.value == "stopped"
+    assert component_map(snapshot)["eq-n1b"].parameters == []
     assert n1a.status is GeneralStatus.SUCCESS
     assert n1a.state == {"faultSeverityPercent": 0.0}
     assert [item.description for item in snapshot.journal] == [
@@ -79,6 +80,20 @@ def test_model_interpolates_between_keyframes() -> None:
     assert parameters["COMPAX.N1A.VELOCITY"].value_percent == 328.1
     assert parameters["COMPAX.N1.VELOCITY"].value_percent == 100
     assert component_map(snapshot)["eq-n1a"].status is GeneralStatus.ALERT
+
+
+def test_n1a_enters_warning_at_ten_seconds() -> None:
+    model = create_model()
+    model.initialize(SESSION_ID)
+
+    snapshot = model.step(10_000)
+    n1a = component_map(snapshot)["eq-n1a"]
+    parameters = {item.parameter_id: item for item in n1a.parameters}
+
+    assert n1a.status is GeneralStatus.WARNING
+    assert parameters["COMPAX.N1A.VELOCITY"].status is GeneralStatus.WARNING
+    assert component_map(snapshot)["eq-n1b"].operating_state.value == "stopped"
+    assert component_map(snapshot)["eq-n1b"].parameters == []
 
 
 def test_model_emits_events_crossed_by_large_step() -> None:
@@ -125,7 +140,8 @@ def test_terminal_snapshot_uses_training_boundaries() -> None:
     assert parameters["LRCA605"].value_percent == 20
     assert parameters["ELOU.STAGE1.LEVEL"].value_percent == 72
     assert parameters["ELOU.STAGE2.LEVEL"].value_percent == 81
-    assert snapshot.journal[-1].description == "Общее время сценария завершено"
+    assert model.is_failed
+    assert snapshot.journal[-1].description.endswith("учебной границы 20%")
 
     with pytest.raises(SimulationCompletedError):
         model.step(1_000)

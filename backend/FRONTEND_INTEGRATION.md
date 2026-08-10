@@ -1,25 +1,27 @@
-# Контракт интеграции frontend с backend v2
+# Контракт frontend ↔ backend v3
 
-## Локальные адреса
+## Адреса
 
-- REST API: `http://127.0.0.1:8000`
-- Swagger: `http://127.0.0.1:8000/docs`
+- REST: `http://127.0.0.1:8000`
+- Swagger REST: `http://127.0.0.1:8000/docs`
 - WebSocket: `ws://127.0.0.1:8000/ws/v1/sessions/{sessionId}`
 
-Разрешённые Origin по умолчанию: `http://localhost:5173` и
-`http://127.0.0.1:5173`.
+WebSocket не входит в OpenAPI и поэтому не показывается в Swagger. Его формат
+зафиксирован в этом документе и Pydantic-моделях `app/domain/telemetry.py`.
 
-## Последовательность подключения
+## Последовательность работы frontend
 
-1. `GET /api/v1/scenarios/MVP-SC-01/model-definition` — статическая модель,
-   источники и учебные допущения.
-2. `POST /api/v1/sessions` — создать сессию и сохранить `sessionId`.
-3. `POST /api/v1/sessions/{sessionId}/start` — запустить live-сценарий.
-4. Подключиться к `WS /ws/v1/sessions/{sessionId}`.
-5. Действия пользователя отправлять через REST
-   `POST /api/v1/sessions/{sessionId}/actions`.
+1. `GET /api/v1/scenarios/MVP-SC-01/model-definition`.
+2. `POST /api/v1/sessions` и сохранить `sessionId`.
+3. `POST /api/v1/sessions/{sessionId}/start`.
+4. Подключить WebSocket с полученным `sessionId`.
+5. Применить первый `telemetry.snapshot`.
+6. Кнопки отправляют REST-действия в `/actions`.
+7. Состояние экрана обновлять из следующих `telemetry.update`.
+8. Когда статус сессии `ready_to_complete`, разрешить «Завершить».
+9. Вызвать `/complete`, затем получить `/result`.
 
-Тело создания сессии:
+Создание сессии:
 
 ```json
 {
@@ -30,34 +32,103 @@
 }
 ```
 
-Сессия работает в live-режиме: одна секунда сценария соответствует одной
-реальной секунде. Общая длительность текущего учебного профиля — 120 000 мс
-(02:00). Это **учебное допущение**, а не производственный норматив.
+## Действия пользователя
 
-## WebSocket-сообщения
+Все действия отправляются в:
 
-Первое сообщение — `telemetry.snapshot`, следующие — `telemetry.update`.
-Оба типа содержат полный массив `components` в одном и том же порядке.
-Frontend может целиком заменять `timing`, `components` и `journal`.
+```http
+POST /api/v1/sessions/{sessionId}/actions
+Content-Type: application/json
+```
 
-Сокращённый пример:
+Общие поля:
+
+```json
+{
+  "actionId": "новый UUID",
+  "sessionId": "UUID из POST /sessions",
+  "actionType": "view_signal",
+  "targetId": "PRA351",
+  "parameters": {},
+  "expectedStateVersion": 17,
+  "idempotencyKey": "уникальная строка для одного клика",
+  "submittedAt": "2026-08-10T12:00:00+03:00"
+}
+```
+
+`expectedStateVersion` брать из последнего WebSocket-сообщения или REST-ответа.
+Успешный `/actions` возвращает новый полный snapshot и одновременно публикует
+его в WebSocket. При устаревшей версии backend возвращает `409`.
+
+### Просмотр
+
+- открыть карточку: `actionType = open_equipment_card`, `targetId = eq-n1a`;
+- посмотреть параметр: `actionType = view_signal`, например `PRA351`,
+  `FYQR117`, `LRCA605`.
+
+### Диагностика
+
+```json
+{
+  "actionType": "submit_diagnosis",
+  "targetId": "eq-n1a",
+  "parameters": {
+    "conclusion": "fault_detected",
+    "reason": "bearing_wear"
+  }
+}
+```
+
+Допустимые `conclusion`: `fault_detected`, `no_fault`.
+
+Допустимые `reason`: `bearing_wear`, `cavitation`, `electrical_overload`,
+`unknown`. Для текущего учебного сценария правильная пара —
+`fault_detected` / `bearing_wear`.
+
+### Управление насосами
+
+Запуск резервного Н-1Б:
+
+```json
+{
+  "actionType": "start_pump",
+  "targetId": "eq-n1b",
+  "parameters": {}
+}
+```
+
+Останов неисправного Н-1А:
+
+```json
+{
+  "actionType": "stop_pump",
+  "targetId": "eq-n1a",
+  "parameters": {}
+}
+```
+
+Допустимые идентификаторы учебных насосов: `eq-n1`, `eq-n1a`, `eq-n1b`,
+`eq-n1v`. Диалог подтверждения реализует frontend. Если пользователь нажал
+«Отмена», запрос не отправляется — ошибки и штрафа нет.
+
+## WebSocket-сообщение
 
 ```json
 {
   "type": "telemetry.update",
   "sessionId": "11111111-1111-1111-1111-111111111111",
   "scenarioId": "MVP-SC-01",
-  "scenarioVersion": "0.2.0",
+  "scenarioVersion": "0.3.0",
   "modelId": "n1a-deterministic-training-model",
-  "modelVersion": "0.2.0",
+  "modelVersion": "0.3.0",
   "sequenceNo": 25,
   "stateVersion": 25,
   "timing": {
     "mode": "live",
-    "elapsedMs": 25000,
+    "elapsedMs": 55000,
     "totalMs": 120000,
-    "remainingMs": 95000,
-    "progressPercent": 20.8
+    "remainingMs": 65000,
+    "progressPercent": 45.8
   },
   "components": [
     {
@@ -73,96 +144,92 @@ Frontend может целиком заменять `timing`, `components` и `j
           "parameterId": "COMPAX.N1A.VELOCITY",
           "tag": "COMPAX.N1A.VELOCITY",
           "name": "Виброскорость Н-1А",
-          "valuePercent": 300.0,
+          "valuePercent": 375.0,
           "status": "alert"
         }
       ],
-      "state": {"faultSeverityPercent": 35.0}
+      "state": {"faultSeverityPercent": 68.3}
     }
   ],
   "journal": [
     {
       "entryId": "22222222-2222-2222-2222-222222222222",
-      "time": "00:25",
-      "description": "Параметры диагностики Н-1А перешли в состояние alert"
+      "time": "00:55",
+      "description": "Запущен насос Н-1Б"
     }
   ]
 }
 ```
 
-Числа траекторий модели — **учебные допущения**. WebSocket не передаёт
-физические единицы: каждый динамический показатель называется
-`valuePercent`. Паспортные значения и их исходные единицы остаются только в
-статическом `model-definition` для прослеживаемости.
+`valuePercent` — нормализованное учебное значение. Физические единицы через
+WebSocket не передаются. Допустимые статусы: `success`, `warning`, `alert`.
 
 ## Постоянный список компонентов
 
-В каждом snapshot/update всегда присутствуют восемь экранных компонентов:
+Порядок и состав всегда одинаковы:
 
 | `componentId` | `uiId` | Параметры |
 |---|---|---|
-| `eq-n1` | `pump-h1` | 5 параметров диагностики |
-| `eq-n1a` | `pump-h1a` | 5 параметров диагностики |
-| `eq-n1b` | `pump-h1b` | 5 параметров диагностики |
-| `eq-n1v` | `pump-h1v` | 5 параметров диагностики |
+| `eq-n1` | `pump-h1` | 5 COMPACS |
+| `eq-n1a` | `pump-h1a` | 5 COMPACS |
+| `eq-n1b` | `pump-h1b` | 5 COMPACS |
+| `eq-n1v` | `pump-h1v` | 5 COMPACS |
 | `eq-n1-discharge` | `line-n1-elou` | PRA 351, FYQR 117 |
 | `eq-t1-t11` | `heat-exchanger-t1-t11` | расход, температура |
 | `eq-elou` | `elou-block` | уровни I и II ступени |
 | `eq-e15` | `e15` | LRCA 605 |
 
-Допустимый UI-статус компонента и каждого параметра: `success`, `warning` или
-`alert`. Поле `operatingState` отдельно сообщает режим оборудования
-(`running`, `stopped` и т. п.); оно не используется как цвет Badge.
+Остановленный насос остаётся в массиве, получает `operatingState = stopped`,
+а его `parameters = []`. После запуска параметры снова появляются. Именно
+`operatingState`, а не `status`, должен делать насос серым и менять кнопку
+«Запустить» / «Остановить».
 
-## Обработка на frontend
+Для `eq-n1-discharge` в `state` дополнительно приходят:
 
-1. Применять сообщение, только если `sequenceNo` больше уже обработанного.
-2. Для `telemetry.snapshot` и `telemetry.update` полностью заменять
-   `components`, `timing` и `journal`.
-3. На мнемосхеме искать компонент по `uiId`.
-4. Badge брать из `status`, число — из `valuePercent` и добавлять `%` в UI.
-5. Таймер строить из `timing.elapsedMs` или `timing.remainingMs`.
-6. Журнал выводить колонками `time` и `description`; ключ строки — `entryId`.
-7. После переподключения принять новый полный `telemetry.snapshot`.
+- `recoveryActive` — идёт 30-секундное восстановление;
+- `stabilized` — целевые значения достигнуты;
+- `safePumpConfiguration` — выполнена безопасная конфигурация.
+- `scenarioFailed` и `failureReason` — терминальный отказ и его причина.
 
-`stateVersion` из последнего сообщения необходимо передавать как
-`expectedStateVersion` при действии пользователя.
+## Правила live-модели
 
-## Действия пользователя
+На 10-й секунде Н-1А становится `warning`. Восстановление запускается только
+если Н-1Б работает, Н-1А остановлен, Н-1 и Н-1В работают. Оно линейно длится
+30 секунд. PRA 351, FYQR 117 и уровни ЭЛОУ идут к 100%, LRCA 605 — к 65%.
+
+Если LRCA 605 достиг 20% до запуска восстановления, сессия становится
+`failed`. Если восстановление начато раньше при значении строго выше 20%, ему
+разрешается закончиться после отметки 120 секунд. Это **учебное допущение**.
+В `model-definition` правило имеет идентификатор `A-17`; методика статусов и
+оценки — `A-18`.
+
+## Статусы и завершение
+
+Статусы сессии: `created`, `running`, `paused`, `ready_to_complete`,
+`completed`, `failed`, `cancelled`.
+
+После стабилизации backend ставит `ready_to_complete` и останавливает live-таймер.
+Frontend вызывает:
 
 ```http
-POST /api/v1/sessions/{sessionId}/actions
-Content-Type: application/json
-
-{
-  "actionId": "22222222-2222-2222-2222-222222222222",
-  "sessionId": "{sessionId}",
-  "actionType": "run_diagnostics",
-  "targetId": "eq-n1a",
-  "expectedStateVersion": 25,
-  "idempotencyKey": "diagnostics-n1a-1",
-  "submittedAt": "2026-08-08T09:00:00+03:00"
-}
+POST /api/v1/sessions/{sessionId}/complete
+GET  /api/v1/sessions/{sessionId}/result
+GET  /api/v1/sessions/{sessionId}/actions
 ```
 
-Допустимые `actionType`: `open_equipment_card`, `view_signal`,
-`run_diagnostics`, `submit_decision`, `acknowledge_event`. Успешное действие
-появляется в `journal` следующего WebSocket-сообщения.
+`result` содержит `rubricVersion`, `outcome`, `totalScore`, четыре секции баллов, `penalties`,
+`errorCodes` и `criticalFailureReasons`. `/actions` содержит весь аудит с
+`virtualTimeMs`, описанием и ошибками — это вход для будущего AI-модуля.
 
-## Управление и ошибки
+## Правила применения сообщений
 
-- `POST /api/v1/sessions/{sessionId}/pause`
-- `POST /api/v1/sessions/{sessionId}/resume`
-- `POST /api/v1/sessions/{sessionId}/complete`
-- `GET /api/v1/sessions/{sessionId}`
-- `GET /api/v1/sessions/{sessionId}/snapshot`
+1. Игнорировать сообщение, если `sequenceNo` не больше уже применённого.
+2. Полностью заменять `components`, `timing` и `journal`.
+3. Искать визуальный объект по `uiId`.
+4. Число брать из `valuePercent`, цвет — из `status`.
+5. Журнал показывать колонками `time` и `description`.
+6. После reconnect принять новый полный `telemetry.snapshot`.
 
-REST: `404` — объект не найден, `409` — конфликт состояния, `422` — неверное
-тело. WebSocket: `4403` — Origin запрещён, `4404` — сессия не найдена,
-`4409` — сессия ещё не запущена.
-
-`POST /advance` является только служебным методом тестирования. Frontend его
-не вызывает: live-таймер и расчёт выполняет backend автоматически.
-
-Активные сессии MVP хранятся в памяти, поэтому backend запускается с одним
-worker. Redis и Kafka для этого однопроцессного этапа не требуются.
+REST-ошибки: `404` — не найдено, `409` — конфликт lifecycle/stateVersion,
+`422` — невалидное тело. WebSocket: `4403` — Origin запрещён, `4404` — сессия
+не найдена, `4409` — сессия не запущена.

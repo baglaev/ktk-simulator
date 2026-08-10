@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "modelId": "n1a-deterministic-training-model",
-  "modelVersion": "0.2.0",
+  "modelVersion": "0.3.0",
   "scenarioId": "MVP-SC-01",
   "componentIds": [
     "eq-n1", "eq-n1a", "eq-n1b", "eq-n1v",
@@ -200,7 +200,7 @@
     {"componentId": "eq-e15", "keyframes": [{"timeMs": 0, "status": "success"}, {"timeMs": 80000, "status": "warning"}, {"timeMs": 110000, "status": "alert"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-04"}}
   ],
   "scheduledEvents": [
-    {"eventKey": "scenario-initialized", "timeMs": 0, "eventType": "scenario_initialized", "severity": "info", "sourceId": "MVP-SC-01", "description": "Сценарий запущен", "payload": {"modelVersion": "0.2.0"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"eventKey": "scenario-initialized", "timeMs": 0, "eventType": "scenario_initialized", "severity": "info", "sourceId": "MVP-SC-01", "description": "Сценарий запущен", "payload": {"modelVersion": "0.3.0"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
     {"eventKey": "compax-warning", "timeMs": 10000, "eventType": "diagnostic_warning", "severity": "warning", "sourceId": "eq-n1a", "description": "Параметры диагностики Н-1А перешли в состояние warning", "payload": {"diagnosticStatus": "warning"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
     {"eventKey": "compax-critical", "timeMs": 25000, "eventType": "diagnostic_critical", "severity": "critical", "sourceId": "eq-n1a", "description": "Параметры диагностики Н-1А перешли в состояние alert", "payload": {"diagnosticStatus": "alert"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
     {"eventKey": "line-decline", "timeMs": 40000, "eventType": "feed_parameters_declining", "severity": "warning", "sourceId": "eq-n1-discharge", "description": "Снижаются PRA 351 и FYQR 117", "payload": {}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-03"}},
