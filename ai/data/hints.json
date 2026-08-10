@@ -1,0 +1,78 @@
+{
+  "version": "0.1.0",
+  "scenarioId": "MVP-SC-01",
+  "rules": [
+    {
+      "ruleId": "unsafe_switch",
+      "hintId": "unsafe-pump-configuration",
+      "priority": 100,
+      "level": "alert",
+      "title": "Проверьте резервирование",
+      "message": "Учебная конфигурация насосной группы не обеспечивает подачу. Проверьте состояния Н-1А и Н-1Б.",
+      "sourceRefs": ["A-17", "учебное допущение"]
+    },
+    {
+      "ruleId": "ready_to_complete",
+      "hintId": "ready-to-complete",
+      "priority": 90,
+      "level": "success",
+      "title": "Параметры стабилизированы",
+      "message": "Учебная модель подтверждает восстановление. Можно завершить сценарий после проверки результата.",
+      "sourceRefs": ["A-17", "A-18", "учебное допущение"]
+    },
+    {
+      "ruleId": "monitor_recovery",
+      "hintId": "monitor-recovery",
+      "priority": 80,
+      "level": "warning",
+      "title": "Контролируйте восстановление",
+      "message": "После изменения конфигурации сопоставьте тренды связанных параметров и дождитесь подтверждения стабилизации учебной модели.",
+      "sourceRefs": ["A-17", "учебное допущение"]
+    },
+    {
+      "ruleId": "review_switch",
+      "hintId": "review-pump-configuration",
+      "priority": 70,
+      "level": "warning",
+      "title": "Проверьте насосную конфигурацию",
+      "message": "Диагноз зарегистрирован, но безопасная учебная конфигурация насосной группы еще не подтверждена.",
+      "sourceRefs": ["A-17", "учебное допущение"]
+    },
+    {
+      "ruleId": "submit_diagnosis",
+      "hintId": "submit-diagnosis",
+      "priority": 60,
+      "level": "warning",
+      "title": "Зафиксируйте вывод",
+      "message": "Диагностические данные собраны. Зафиксируйте учебный диагноз, опираясь на просмотренные признаки.",
+      "sourceRefs": ["A-02", "учебное допущение"]
+    },
+    {
+      "ruleId": "run_diagnostics",
+      "hintId": "run-diagnostics",
+      "priority": 50,
+      "level": "warning",
+      "title": "Сопоставьте признаки",
+      "message": "Линейные сигналы просмотрены. Выполните предусмотренную сценарием учебную диагностику Н-1А.",
+      "sourceRefs": ["A-02", "учебное допущение"]
+    },
+    {
+      "ruleId": "compare_line_signals",
+      "hintId": "compare-line-signals",
+      "priority": 40,
+      "level": "warning",
+      "title": "Сравните связанные сигналы",
+      "message": "Сопоставьте изменения Н-1А с трендами PRA 351 и FYQR 117.",
+      "sourceRefs": ["A-02", "учебное допущение"]
+    },
+    {
+      "ruleId": "inspect_n1a",
+      "hintId": "inspect-n1a",
+      "priority": 30,
+      "level": "warning",
+      "title": "Проверьте Н-1А",
+      "message": "Статус Н-1А изменился. Откройте карточку оборудования и изучите доступные диагностические признаки.",
+      "sourceRefs": ["A-02", "учебное допущение"]
+    }
+  ]
+}
