@@ -3,4 +3,5 @@ export const routes = {
   preparation: '/preparation',
   simulator: '/simulator',
   summary: '/summary-results',
+  instructorPage: '/instructor-page',
 };
