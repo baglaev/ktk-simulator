@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction } from 'mobx';
+import { makeAutoObservable, observable, runInAction } from 'mobx';
 
 export type ScenarioStatus = 'success' | 'warning' | 'alert';
 
@@ -95,6 +95,7 @@ class SimulatorStore {
   constructor() {
     makeAutoObservable(this, {
       socket: false,
+      history: observable.ref,
     });
   }
 
@@ -242,29 +243,37 @@ class SimulatorStore {
   private updateHistory = (message: TelemetryMessage) => {
     const time = Math.floor(message.timing.elapsedMs / 1000);
 
+    const nextHistory = {
+      ...this.history,
+    };
+
     for (const component of message.components) {
       for (const parameter of component.parameters) {
-        const currentHistory = this.history[parameter.parameterId] ?? [];
+        const currentHistory = [...(nextHistory[parameter.parameterId] ?? [])];
 
         const lastPoint = currentHistory[currentHistory.length - 1];
 
         if (lastPoint?.time === time) {
-          lastPoint.value = parameter.valuePercent;
-          continue;
+          currentHistory[currentHistory.length - 1] = {
+            time,
+            value: parameter.valuePercent,
+          };
+        } else {
+          currentHistory.push({
+            time,
+            value: parameter.valuePercent,
+          });
         }
-
-        currentHistory.push({
-          time,
-          value: parameter.valuePercent,
-        });
 
         if (currentHistory.length > 120) {
           currentHistory.shift();
         }
 
-        this.history[parameter.parameterId] = currentHistory;
+        nextHistory[parameter.parameterId] = currentHistory;
       }
     }
+
+    this.history = nextHistory;
   };
 
   get formattedElapsedTime() {

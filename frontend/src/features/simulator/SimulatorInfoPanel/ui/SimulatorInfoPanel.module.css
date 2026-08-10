@@ -1,6 +1,94 @@
-.panel {
+/* .panel {
   background: var(--color-bg-secondary);
   border-radius: 8px;
   padding: 8px;
   border: 1px solid var(--color-bg-border);
+} */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  height: 100%;
+  padding: 20px;
+
+  overflow-y: auto;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.operatingState {
+  flex-shrink: 0;
+}
+
+.passport {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.passportItems {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.parameters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.parametersTitle {
+  margin-bottom: 4px;
+}
+
+.parameter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 100px;
+  align-items: center;
+  gap: 12px;
+
+  min-height: 64px;
+  padding: 8px 0;
+
+  border-bottom: 1px solid var(--color-bg-border);
+}
+
+.parameterInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.parameterName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chartContainer {
+  width: 100px;
+  height: 42px;
+}
+
+.stopped {
+  padding: 16px;
+
+  border: 1px solid var(--color-bg-border);
+  border-radius: 4px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  margin-top: auto;
 }
