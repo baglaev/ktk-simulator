@@ -44,6 +44,10 @@ KTK_DATABASE_URL=sqlite+pysqlite:///./ktk_simulator.sqlite3
 alembic upgrade head
 ```
 
+Миграцию также нужно выполнить перед первым запуском с файловой SQLite.
+Версия `20260810_01` умеет принять локальные таблицы, созданные ранней версией
+backend до внедрения Alembic; удалять БД или выполнять `stamp` вручную не нужно.
+
 Проверка backend: <http://127.0.0.1:8000/health>. Swagger REST API:
 <http://127.0.0.1:8000/docs>.
 
