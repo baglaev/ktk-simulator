@@ -13,19 +13,19 @@ export const OtherScenarios = () => {
           title="Пуск установки"
           description="Штатный сценарий"
           badgeName="В разработке"
-          imageIcon="../../../../../public/main-1.jpg"
+          imageIcon="../../../../../public/pusk-ust.png"
         />
         <ScenarioItem
           title="Нарушение установки электродегидратора"
           description="Нештатный сценарий"
           badgeName="В разработке"
-          imageIcon="../../../../../public/main-2.jpg"
+          imageIcon="../../../../../public/electro.png"
         />
         <ScenarioItem
           title="Отказ регулятора Е-15"
           description="Нештатный сценарий"
           badgeName="В разработке"
-          imageIcon="../../../../../public/main-3.jpg"
+          imageIcon="../../../../../public/e-15.png"
         />
       </div>
     </section>
