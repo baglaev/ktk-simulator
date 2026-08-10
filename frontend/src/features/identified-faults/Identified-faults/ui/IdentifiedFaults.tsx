@@ -8,8 +8,12 @@ import { IconForward } from '@consta/icons/IconForward';
 
 import styles from './IdentifiedFaults.module.css';
 import { Text } from '@consta/uikit/Text';
+import { Picture } from '@consta/uikit/Picture';
+import { useNavigate } from 'react-router-dom';
 
 export const IdentifiedFaults = () => {
+  const navigate = useNavigate();
+
   return (
     <section className={styles.container}>
       <div className={styles.badges}>
@@ -18,7 +22,7 @@ export const IdentifiedFaults = () => {
       </div>
       <Text size="l">Раннее выявление неисправности насоса Н-1</Text>
       <div className={styles.previewContainer}>
-        <div></div>
+        <Picture src="../../../../../public/main-pic.jpg" className={styles.mainPic} />
         <div>
           <div className={styles.previewStats}>
             <div className={styles.statItem}>
@@ -54,6 +58,7 @@ export const IdentifiedFaults = () => {
             label="Перейти к подготовке"
             iconRight={IconForward}
             className={styles.nextButton}
+            onClick={() => navigate('/preparation')}
           />
         </div>
       </div>

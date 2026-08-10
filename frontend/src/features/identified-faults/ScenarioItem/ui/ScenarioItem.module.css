@@ -20,6 +20,8 @@
 
 .imageItem {
   grid-area: left;
+  width: fit-content;
+  max-width: 200px;
 }
 
 .titleItem {

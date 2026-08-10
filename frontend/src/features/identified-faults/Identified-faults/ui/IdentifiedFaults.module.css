@@ -53,3 +53,9 @@
 .nextButton {
   margin-top: 16px;
 }
+
+.mainPic {
+  width: fit-content;
+  max-width: 600px;
+  margin: 10px auto;
+}

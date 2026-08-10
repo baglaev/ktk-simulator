@@ -43,6 +43,7 @@ export const ScenarioPreparationPage = observer(() => {
               className={styles.nextButton}
               view="secondary"
               size="l"
+              onClick={() => navigate('/')}
             />
 
             <Button
