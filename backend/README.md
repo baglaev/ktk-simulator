@@ -17,39 +17,108 @@
 - PostgreSQL; SQLite используется как локальный fallback;
 - pytest.
 
-## Запуск
+## Быстрый локальный запуск
+
+Команды выполняются из корня репозитория. Для локальной разработки по
+умолчанию достаточно SQLite: отдельный сервер БД устанавливать не нужно.
+
+### 1. Подготовить окружение
 
 ```bash
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
-cp .env.example .env
-uvicorn app.main:app --reload
 ```
 
-В `.env` выберите БД:
+Если файла `.env` ещё нет, создайте его из примера:
+
+```bash
+cp .env.example .env
+```
+
+В `.env` выберите подключение к БД. Для локального запуска:
 
 ```dotenv
-# целевой вариант
-KTK_DATABASE_URL=postgresql+psycopg://ktk:ktk@localhost:5432/ktk_simulator
-
-# локальный вариант без PostgreSQL
 KTK_DATABASE_URL=sqlite+pysqlite:///./ktk_simulator.sqlite3
 ```
 
-Для PostgreSQL перед запуском примените миграцию:
+### 2. Подготовить структуру БД
+
+Alembic — не база данных, а инструмент управления версиями структуры БД.
+Команда ниже создаёт недостающие таблицы и применяет новые миграции к выбранной
+в `.env` SQLite или PostgreSQL:
 
 ```bash
 alembic upgrade head
 ```
 
-Миграцию также нужно выполнить перед первым запуском с файловой SQLite.
-Версия `20260810_01` умеет принять локальные таблицы, созданные ранней версией
-backend до внедрения Alembic; удалять БД или выполнять `stamp` вручную не нужно.
+Проверить применённую версию можно командой:
+
+```bash
+alembic current
+```
+
+Текущая версия должна содержать `20260810_01 (head)`. Миграцию следует
+выполнять после каждого `git pull`, если в проекте появились новые файлы
+миграций. Версия `20260810_01` умеет принять локальные таблицы, созданные
+ранней версией backend до внедрения Alembic; удалять БД или выполнять
+`alembic stamp` вручную не нужно.
+
+### 3. Запустить backend
+
+```bash
+uvicorn app.main:app --reload
+```
 
 Проверка backend: <http://127.0.0.1:8000/health>. Swagger REST API:
 <http://127.0.0.1:8000/docs>.
+
+Остановить backend можно сочетанием `Ctrl+C` в терминале, где запущен Uvicorn.
+
+## Запуск с PostgreSQL
+
+Создайте БД и пользователя PostgreSQL, затем укажите подключение в `.env`:
+
+```dotenv
+KTK_DATABASE_URL=postgresql+psycopg://ktk:ktk@localhost:5432/ktk_simulator
+```
+
+После этого примените миграции и запустите backend:
+
+```bash
+cd backend
+source .venv/bin/activate
+alembic upgrade head
+uvicorn app.main:app --reload
+```
+
+## Частые ошибки запуска
+
+### `Address already in use`
+
+Порт `8000` уже занят, чаще всего ранее запущенным Uvicorn. Найдите процесс:
+
+```bash
+lsof -nP -iTCP:8000 -sTCP:LISTEN
+```
+
+Если это старый процесс Uvicorn, остановите его в исходном терминале через
+`Ctrl+C` или выполните `kill <PID>`, подставив PID из вывода `lsof`.
+
+### `table training_sessions already exists`
+
+Сначала получите актуальную версию ветки и повторно примените миграцию:
+
+```bash
+git pull
+cd backend
+source .venv/bin/activate
+alembic upgrade head
+```
+
+Актуальная миграция принимает уже существующую схему. Удалять локальную БД и
+вручную помечать миграцию применённой не требуется.
 
 ## Что реализовано
 
@@ -109,7 +178,11 @@ WebSocket-маршрут не отображается в Swagger/OpenAPI; по�
 Redis/Kafka не требуются для одного worker. Внешний брокер понадобится при
 горизонтальном масштабировании и нескольких экземплярах backend.
 
-## Тесты
+## Тесты (необязательно)
+
+Тесты не запускаются автоматически вместе с Uvicorn и не блокируют merge:
+сейчас в репозитории не настроен обязательный CI-check. При необходимости их
+можно запустить вручную:
 
 ```bash
 cd backend
