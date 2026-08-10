@@ -1,17 +1,35 @@
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+
 import { MainPage } from '@/pages/MainPage/ui/MainPage';
 import { ScenarioPreparationPage } from '@/pages/ScenarioPreparation/ui/ScenarioPreparation';
 import { SimlatorPage } from '@/pages/SimlatorPage/ui/SimlatorPage';
 import { SummaryResultPage } from '@/pages/SummaryResultPage/ui/SummaryResultPage';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+
+import { LoginPage } from '@/pages/LoginPage/ui/LoginPage';
+import { ProtectedRoute } from './ProtectedRouter';
+import { InstructorPage } from '@/pages/InstructoPage/ui/InstrucotrPage';
 
 export const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<MainPage />} />
-        <Route path="/preparation" element={<ScenarioPreparationPage />} />
-        <Route path="/simulator" element={<SimlatorPage />} />
-        <Route path="/summary-results" element={<SummaryResultPage />} />
+        {/* доступна без авторизации */}
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* страницы USER */}
+        <Route element={<ProtectedRoute allowedRole="user" />}>
+          <Route path="/" element={<MainPage />} />
+          <Route path="/preparation" element={<ScenarioPreparationPage />} />
+          <Route path="/simulator" element={<SimlatorPage />} />
+          <Route path="/summary-results" element={<SummaryResultPage />} />
+        </Route>
+
+        {/* страницы INSTRUCTOR */}
+        <Route element={<ProtectedRoute allowedRole="instructor" />}>
+          <Route path="/instructor-page" element={<InstructorPage />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
