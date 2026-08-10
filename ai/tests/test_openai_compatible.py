@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import json
 import unittest
-from urllib.error import URLError
+from io import BytesIO
+from urllib.error import HTTPError, URLError
 
 from ai.openai_compatible import (
     LLMConfig,
@@ -111,6 +112,33 @@ class OpenAICompatibleClientTests(unittest.TestCase):
         )
         with self.assertRaises(LLMRequestError):
             client.complete_json(system_prompt="system", user_payload={})
+
+    def test_http_error_keeps_safe_provider_reason(self) -> None:
+        def failing_urlopen(request, timeout):
+            body = json.dumps(
+                {
+                    "error": {
+                        "code": 403,
+                        "message": "Request blocked by a guardrail",
+                        "metadata": {
+                            "error_type": "permission_denied",
+                            "flagged_input": "must not be exposed",
+                        },
+                    }
+                }
+            ).encode("utf-8")
+            raise HTTPError(request.full_url, 403, "Forbidden", {}, BytesIO(body))
+
+        client = OpenAICompatibleClient(
+            LLMConfig(enabled=True, api_key="secret"),
+            urlopen_impl=failing_urlopen,
+        )
+        with self.assertRaises(LLMRequestError) as raised:
+            client.complete_json(system_prompt="system", user_payload={})
+        message = str(raised.exception)
+        self.assertIn("Request blocked by a guardrail", message)
+        self.assertIn("error_type=permission_denied", message)
+        self.assertNotIn("must not be exposed", message)
 
     def test_markdown_fenced_json_is_accepted(self) -> None:
         self.assertEqual(parse_json_object("```json\n{\"ok\": true}\n```"), {"ok": True})

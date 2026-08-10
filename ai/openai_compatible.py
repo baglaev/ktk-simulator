@@ -166,7 +166,7 @@ class OpenAICompatibleClient:
             with self._urlopen(request, timeout=self.config.timeout_seconds) as response:
                 raw_response = response.read().decode("utf-8")
         except HTTPError as error:
-            raise LLMRequestError(f"LLM provider returned HTTP {error.code}") from error
+            raise LLMRequestError(self._http_error_message(error)) from error
         except (URLError, TimeoutError, OSError) as error:
             raise LLMRequestError("LLM provider is unavailable") from error
 
@@ -192,6 +192,32 @@ class OpenAICompatibleClient:
             resolved_model=resolved_model,
             usage=usage,
         )
+
+    @staticmethod
+    def _http_error_message(error: HTTPError) -> str:
+        """Keep provider diagnostics but omit prompts and other metadata."""
+
+        prefix = f"LLM provider returned HTTP {error.code}"
+        try:
+            raw_body = error.read().decode("utf-8")
+            payload = json.loads(raw_body)
+            detail = payload.get("error", {})
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            return prefix
+        if not isinstance(detail, Mapping):
+            return prefix
+        message = detail.get("message")
+        metadata = detail.get("metadata", {})
+        error_type = (
+            metadata.get("error_type") if isinstance(metadata, Mapping) else None
+        )
+        parts = [prefix]
+        if isinstance(message, str) and message.strip():
+            normalized = " ".join(message.split())[:300]
+            parts.append(normalized)
+        if isinstance(error_type, str) and error_type:
+            parts.append(f"error_type={error_type}")
+        return ": ".join(parts)
 
 
 def parse_json_object(content: str) -> dict[str, Any]:
