@@ -37,11 +37,13 @@ python -m pip install -r requirements.txt
 cp .env.example .env
 ```
 
-В `.env` выберите подключение к БД. Для локального запуска:
+Скопированный файл уже использует SQLite по умолчанию:
 
 ```dotenv
 KTK_DATABASE_URL=sqlite+pysqlite:///./ktk_simulator.sqlite3
 ```
+
+Поэтому локальный запуск не требует установленного PostgreSQL.
 
 ### 2. Подготовить структуру БД
 
