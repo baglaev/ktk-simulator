@@ -4,6 +4,8 @@ import { IconWatchStroked } from '@consta/icons/IconWatchStroked';
 import { Badge } from '@consta/uikit/Badge';
 import { Button } from '@consta/uikit/Button';
 import { User } from '@consta/uikit/User';
+import { observer } from 'mobx-react-lite';
+import { simulatorStore } from '@/features/simulator/SimulatorSchema/model/simulatorSchema.store';
 
 interface Props {
   pageName: string;
@@ -12,8 +14,10 @@ interface Props {
   summaryEnabled?: boolean;
 }
 
-export const HeaderSimulator = (props: Props) => {
+export const HeaderSimulator = observer((props: Props) => {
   const { pageName, descriptionPage, simulatorEnabled, summaryEnabled } = props;
+
+  const { formattedElapsedTime } = simulatorStore;
 
   return (
     <header className={styles.header}>
@@ -26,7 +30,7 @@ export const HeaderSimulator = (props: Props) => {
         <div className={styles.simulatorSection}>
           <div className={styles.timeContainer}>
             <IconWatchStroked />
-            <Text>00:03</Text>
+            <Text>{formattedElapsedTime}</Text>
           </div>
           <Badge title="Обучающий режим" view="stroked" status="disabled" />
           <div className={styles.statusContainer}>
@@ -45,6 +49,6 @@ export const HeaderSimulator = (props: Props) => {
       )}
     </header>
   );
-};
+});
 
 HeaderSimulator.displayName = 'HeaderSimulator';

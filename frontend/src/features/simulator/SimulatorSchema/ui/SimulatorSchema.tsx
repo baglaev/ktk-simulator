@@ -3,9 +3,14 @@ import { simulatorStore } from '../model/simulatorSchema.store';
 import styles from './SimulatorSchema.module.css';
 import { Text } from '@consta/uikit/Text';
 import { Badge } from '@consta/uikit/Badge';
+import { observer } from 'mobx-react-lite';
 
-export const SimulatorSchema = () => {
-  const { setSelectedElement } = simulatorStore;
+export const SimulatorSchema = observer(() => {
+  const { setSelectedElement, getParameter } = simulatorStore;
+
+  const pra351 = getParameter('PRA351');
+  const fyqr117 = getParameter('FYQR117');
+  const lrca605 = getParameter('LRCA605');
 
   const clickableIds = [
     'pump-h1',
@@ -41,25 +46,31 @@ export const SimulatorSchema = () => {
 
   return (
     <div className={styles.simulatorSchema}>
-      {/* <div className={styles.schemaNamingComponents}>
-        <Text className={styles.itemF}>1. Ёмкости сырья</Text>
-        <Text>2. Насосная группа Н-1</Text>
-        <Text>3. Параметры на линии</Text>
-        <Text>4. Теплообменный блок Т-1-Т-11</Text>
-        <Text>5. Блок ЭЛОУ</Text>
-        <Text>6. Е-15</Text>
-      </div> */}
       <div className={styles.schemeSvgContainer}>
         <SchemeSvg onClick={handleSchemeClick} className={styles.schemeSvg} />
 
         <div className={styles.valueContainer}>
           <div className={`${styles.valueItem} ${styles.pra}`}>
             <Text>PRA 351</Text>
+
             <div className={styles.procentContainer}>
               <Text size="m" weight="bold">
-                100%
+                {pra351 ? `${Math.round(pra351.valuePercent)}%` : '--'}
               </Text>
-              <Badge status="success" form="round" size="xs" />
+
+              {pra351 && (
+                <Badge
+                  status={
+                    pra351.status === 'success'
+                      ? 'success'
+                      : pra351.status === 'warning'
+                        ? 'warning'
+                        : 'error'
+                  }
+                  form="round"
+                  size="xs"
+                />
+              )}
             </div>
 
             <Text size="xs">От исходного</Text>
@@ -67,11 +78,25 @@ export const SimulatorSchema = () => {
 
           <div className={`${styles.valueItem} ${styles.fyqr}`}>
             <Text>FYQR 117</Text>
+
             <div className={styles.procentContainer}>
               <Text size="m" weight="bold">
-                100%
+                {fyqr117 ? `${Math.round(fyqr117.valuePercent)}%` : '--'}
               </Text>
-              <Badge status="success" form="round" size="xs" />
+
+              {fyqr117 && (
+                <Badge
+                  status={
+                    fyqr117.status === 'success'
+                      ? 'success'
+                      : fyqr117.status === 'warning'
+                        ? 'warning'
+                        : 'error'
+                  }
+                  form="round"
+                  size="xs"
+                />
+              )}
             </div>
 
             <Text size="xs">От исходного</Text>
@@ -80,16 +105,30 @@ export const SimulatorSchema = () => {
 
         <div className={`${styles.valueItem} ${styles.lrca}`}>
           <Text>LRCA 605</Text>
+
           <div className={styles.procentContainer}>
             <Text size="m" weight="bold">
-              80%
+              {lrca605 ? `${Math.round(lrca605.valuePercent)}%` : '--'}
             </Text>
-            <Badge status="success" form="round" size="xs" />
+
+            {lrca605 && (
+              <Badge
+                status={
+                  lrca605.status === 'success'
+                    ? 'success'
+                    : lrca605.status === 'warning'
+                      ? 'warning'
+                      : 'error'
+                }
+                form="round"
+                size="xs"
+              />
+            )}
           </div>
         </div>
       </div>
     </div>
   );
-};
+});
 
 SimulatorSchema.displayName = 'SimulatorSchema';
