@@ -13,5 +13,5 @@ def test_health_returns_service_status() -> None:
     assert response.json() == {
         "status": "ok",
         "service": "KTK ELOU-AVT Backend",
-        "version": "0.1.0",
+        "version": "0.3.0",
     }

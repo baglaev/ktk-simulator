@@ -39,5 +39,7 @@ class ComponentState(APIModel):
     component_type: EquipmentType
     status: GeneralStatus
     operating_state: EquipmentStatus
-    parameters: list[ComponentParameterValue] = Field(min_length=1)
+    # The component itself always remains in the ordered frontend contract.
+    # A stopped pump intentionally has no live diagnostic parameters.
+    parameters: list[ComponentParameterValue] = Field(default_factory=list)
     state: dict[str, JsonValue] = Field(default_factory=dict)

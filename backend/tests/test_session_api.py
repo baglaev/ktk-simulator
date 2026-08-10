@@ -70,8 +70,13 @@ def test_full_session_lifecycle() -> None:
 
     completed = client.post(f"/api/v1/sessions/{session_id}/complete")
     assert completed.status_code == 200
-    assert completed.json()["status"] == "completed"
+    assert completed.json()["status"] == "failed"
     assert completed.json()["completedAt"] is not None
+
+    result = client.get(f"/api/v1/sessions/{session_id}/result")
+    assert result.status_code == 200
+    assert result.json()["outcome"] == "failed"
+    assert "completed_before_stable" in result.json()["errorCodes"]
 
 
 def test_snapshot_requires_started_session() -> None:

@@ -1,9 +1,12 @@
 """Public data contracts shared by API, simulation model and frontend."""
 
-from app.domain.actions import OperatorAction
+from app.domain.actions import OperatorAction, RecordedAction
 from app.domain.base import APIModel, Provenance
 from app.domain.enums import (
     ActionType,
+    ActionErrorCode,
+    DiagnosisConclusion,
+    DiagnosisReason,
     EquipmentStatus,
     EquipmentType,
     EventSeverity,
@@ -11,6 +14,7 @@ from app.domain.enums import (
     MeasurementType,
     ParameterOrigin,
     SessionStatus,
+    ScenarioOutcome,
     TrainingMode,
     UserRole,
 )
@@ -24,6 +28,7 @@ from app.domain.sessions import (
     CreateSessionRequest,
     TrainingSession,
 )
+from app.domain.results import ScoreSection, SessionResult
 from app.domain.scenarios import (
     EducationalAssumption,
     EquipmentConnection,
@@ -43,6 +48,7 @@ __all__ = [
     "APIModel",
     "AdvanceSessionRequest",
     "ActionType",
+    "ActionErrorCode",
     "CreateSessionRequest",
     "ComponentParameterValue",
     "ComponentState",
@@ -53,15 +59,21 @@ __all__ = [
     "EquipmentType",
     "EventSeverity",
     "GeneralStatus",
+    "DiagnosisConclusion",
+    "DiagnosisReason",
     "EducationalAssumption",
     "MeasurementType",
     "JournalEntry",
     "ModelSnapshot",
     "OperatorAction",
+    "RecordedAction",
     "ParameterOrigin",
     "Provenance",
     "ScenarioConfig",
     "ScenarioSummary",
+    "ScenarioOutcome",
+    "ScoreSection",
+    "SessionResult",
     "SessionStatus",
     "SignalDefinition",
     "SourceReference",

@@ -160,6 +160,8 @@ def test_training_session_and_operator_action_contracts() -> None:
         session_id=SESSION_ID,
         scenario_id="N1A-DEVELOPING-FAULT",
         scenario_version="0.1.0",
+        model_id="n1a-model",
+        model_version="0.1.0",
         trainee_id="trainee-001",
         mode=TrainingMode.TRAINING,
         status=SessionStatus.CREATED,

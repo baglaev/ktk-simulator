@@ -15,6 +15,8 @@ class TrainingSession(APIModel):
     session_id: UUID
     scenario_id: str = Field(min_length=1)
     scenario_version: str = Field(min_length=1)
+    model_id: str = Field(min_length=1)
+    model_version: str = Field(min_length=1)
     trainee_id: str = Field(min_length=1)
     instructor_id: str | None = None
     mode: TrainingMode

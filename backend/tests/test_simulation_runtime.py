@@ -45,7 +45,7 @@ def test_runtime_advances_only_running_sessions() -> None:
     assert manager.get_session(session_id).elapsed_time_ms == 2_000
 
 
-def test_runtime_completes_session_at_scenario_boundary() -> None:
+def test_runtime_fails_session_at_safety_boundary_without_recovery() -> None:
     manager, session_id = create_started_session()
     runtime = SimulationRuntime(
         manager=manager,
@@ -57,7 +57,7 @@ def test_runtime_completes_session_at_scenario_boundary() -> None:
     session = manager.get_session(session_id)
 
     assert session.elapsed_time_ms == 120_000
-    assert session.status is SessionStatus.COMPLETED
+    assert session.status is SessionStatus.FAILED
     assert session.completed_at is not None
     assert manager.running_session_ids() == ()
 
