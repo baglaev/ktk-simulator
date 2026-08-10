@@ -1,0 +1,14 @@
+{
+  "version": "0.1.0",
+  "scenarioId": "MVP-SC-01",
+  "trainingWindows": {
+    "warningAtMs": 10000,
+    "diagnosisBeforeOrAtMs": 80000,
+    "preferredSwitchBeforeOrAtMs": 80000,
+    "lateSwitchBeforeOrAtMs": 110000
+  },
+  "provenance": {
+    "origin": "educational_assumption",
+    "sourceRefs": ["A-02", "A-17", "A-18", "учебное допущение"]
+  }
+}

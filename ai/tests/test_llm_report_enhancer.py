@@ -14,7 +14,7 @@ def base_report() -> dict:
         "sessionId": "session-1",
         "outcome": "failed",
         "summary": "Исходный итог.",
-        "strengths": [],
+        "strengths": ["Исходная сильная сторона."],
         "mistakes": [
             {"code": "pra_not_checked", "description": "Исходная ошибка."}
         ],
@@ -32,6 +32,8 @@ class SuccessfulClient:
     def complete_json(self, *, system_prompt, user_payload):
         assert "производственные" in system_prompt
         assert "sessionId" not in json.dumps(user_payload)
+        assert "actionAnalysis" in user_payload
+        assert "timeline" not in user_payload["actionAnalysis"]
         return CompletionResult(
             content=json.dumps(
                 {

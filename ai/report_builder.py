@@ -6,15 +6,22 @@ import json
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from .action_analysis import ActionSequenceAnalyzer
+
 
 class SessionReportBuilder:
     """Build an explainable report without an LLM call."""
 
-    def __init__(self, rules_path: str | Path | None = None) -> None:
+    def __init__(
+        self,
+        rules_path: str | Path | None = None,
+        action_analyzer: ActionSequenceAnalyzer | None = None,
+    ) -> None:
         path = Path(rules_path) if rules_path else Path(__file__).parent / "data" / "report_rules.json"
         with path.open(encoding="utf-8") as source:
             catalog = json.load(source)
         self._rules: Mapping[str, Mapping[str, str]] = catalog["errors"]
+        self._action_analyzer = action_analyzer or ActionSequenceAnalyzer()
 
     def build(
         self,
@@ -40,7 +47,14 @@ class SessionReportBuilder:
             if recommendation not in recommendations:
                 recommendations.append(recommendation)
 
+        action_analysis = self._action_analyzer.analyze(actions, result)
         strengths = self._strengths(result, outcome)
+        for message in action_analysis["strengths"]:
+            if message not in strengths:
+                strengths.append(message)
+        for message in action_analysis["focusAreas"]:
+            if message not in recommendations:
+                recommendations.append(message)
         if not recommendations and outcome in {"success", "completed", "passed"}:
             recommendations.append("Закрепите правильную последовательность повторным прохождением без подсказок.")
 
@@ -56,6 +70,7 @@ class SessionReportBuilder:
                 "actionCount": len(actions),
                 "hintCount": len(issued_hints),
             },
+            "actionAnalysis": action_analysis,
             "provenance": {
                 "method": "deterministic_template",
                 "llmUsed": False,
@@ -98,7 +113,10 @@ class SessionReportBuilder:
             strengths.append("Сценарий завершен с успешным учебным результатом.")
         checks = (
             (("diagnosis", "diagnostics"), "Учебная неисправность распознана корректно."),
-            (("stabilization", "recovery"), "Стабилизация после переключения подтверждена."),
+            (
+                ("stabilization", "recovery"),
+                "Учебное переключение насосов выполнено по критериям оценки.",
+            ),
             (
                 ("consequenceControl", "consequence_control", "consequences", "safety"),
                 "Последствия развития отказа были ограничены.",

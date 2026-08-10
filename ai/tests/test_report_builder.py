@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import unittest
 
+from ai.tests.test_action_analysis import successful_actions
 from ai.report_builder import SessionReportBuilder
 
 
@@ -72,6 +73,22 @@ class SessionReportBuilderTests(unittest.TestCase):
         self.assertEqual(report["type"], "ai.report")
         self.assertEqual(report["metrics"]["hintCount"], 1)
         json.dumps(report)
+
+    def test_report_contains_deterministic_action_analysis(self) -> None:
+        actions = successful_actions()
+        report = self.builder.build(
+            session_id="analyzed-session",
+            result={"outcome": "success", "errorCodes": []},
+            actions=actions,
+        )
+        self.assertEqual(report["metrics"]["actionCount"], len(actions))
+        self.assertEqual(
+            report["actionAnalysis"]["timing"]["switchCompletedAtMs"], 45_000
+        )
+        self.assertIn(
+            "правильной последовательности",
+            " ".join(report["strengths"]),
+        )
 
 
 if __name__ == "__main__":

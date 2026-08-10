@@ -21,7 +21,12 @@ def main() -> None:
             "targetId": "eq-n1a",
         },
         {
-            "virtualTimeMs": 90_000,
+            "virtualTimeMs": 38_000,
+            "actionType": "view_signal",
+            "targetId": "FYQR117",
+        },
+        {
+            "virtualTimeMs": 50_000,
             "actionType": "submit_diagnosis",
             "targetId": "eq-n1a",
             "parameters": {
@@ -29,16 +34,39 @@ def main() -> None:
                 "reason": "bearing_wear",
             },
         },
+        {
+            "virtualTimeMs": 60_000,
+            "actionType": "start_pump",
+            "targetId": "eq-n1b",
+        },
+        {
+            "virtualTimeMs": 65_000,
+            "actionType": "stop_pump",
+            "targetId": "eq-n1a",
+        },
+        {
+            "virtualTimeMs": 70_000,
+            "actionType": "open_equipment_card",
+            "targetId": "eq-elou",
+        },
     ]
     base_report = SessionReportBuilder().build(
         session_id="openrouter-demo",
         result={
             "outcome": "failed",
-            "errorCodes": ["pra_not_checked", "completed_before_stable"],
-            "diagnosis": {"score": 20, "maxScore": 35},
-            "stabilization": {"score": 0, "maxScore": 30},
-            "consequenceControl": {"score": 10, "maxScore": 20},
-            "timeliness": {"score": 5, "maxScore": 15},
+            "errorCodes": [
+                "pra_not_checked",
+                "e15_not_checked_after_switch",
+                "lrca_recovery_not_confirmed",
+                "completed_before_stable"
+            ],
+            "criticalFailureReasons": [
+                "Сценарий завершён до стабилизации параметров"
+            ],
+            "diagnosis": {"score": 22, "maxScore": 25},
+            "stabilization": {"score": 40, "maxScore": 40},
+            "consequenceControl": {"score": 8, "maxScore": 20},
+            "timeliness": {"score": 15, "maxScore": 15},
         },
         actions=actions,
     )
