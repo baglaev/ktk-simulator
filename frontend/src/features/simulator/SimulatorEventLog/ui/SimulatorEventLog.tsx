@@ -34,7 +34,11 @@ export const SimulatorEventLog = observer(() => {
         Журнал событий
       </Text>
 
-      <Table columns={columns} rows={journal} />
+      {/* <Table columns={columns} rows={journal} /> */}
+
+      <div className={styles.tableScroll}>
+        <Table columns={columns} rows={journal} />
+      </div>
     </section>
   );
 });

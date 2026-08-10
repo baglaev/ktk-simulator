@@ -5,3 +5,8 @@
 .eventLog {
   margin-top: 40px;
 }
+
+.tableScroll {
+  max-height: 300px;
+  overflow-y: auto;
+}
