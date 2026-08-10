@@ -33,6 +33,12 @@ export const SimulatorInfoPanel = observer(() => {
     simulatorStore.sendAction('stop_pump', selectedComponent.componentId);
   };
 
+  const canRunDiagnostics = isPump && selectedComponent.uiId !== 'pump-h1v' && isRunning;
+
+  const handleRunDiagnostics = () => {
+    simulatorStore.sendAction('run_diagnostics', selectedComponent.componentId);
+  };
+
   return (
     <section className={styles.panel}>
       <div className={styles.header}>
@@ -95,52 +101,6 @@ export const SimulatorInfoPanel = observer(() => {
           <Text size="s" weight="semibold" className={styles.parametersTitle}>
             Диагностические параметры
           </Text>
-
-          {/* {selectedComponent.parameters.map((parameter) => {
-            const history = simulatorStore.getParameterHistory(parameter.parameterId);
-
-            return (
-              <div key={parameter.parameterId} className={styles.parameter}>
-                <div className={styles.parameterInfo}>
-                  <div className={styles.parameterName}>
-                    <Text size="s">{parameter.name}</Text>
-
-                    <Badge
-                      size="xs"
-                      form="round"
-                      status={
-                        parameter.status === 'success'
-                          ? 'success'
-                          : parameter.status === 'warning'
-                            ? 'warning'
-                            : 'error'
-                      }
-                    />
-                  </div>
-
-                  <Text size="m" weight="semibold">
-                    {Math.round(parameter.valuePercent)}%
-                  </Text>
-                </div>
-
-                <div className={styles.chartContainer}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={history}>
-                      <YAxis hide domain={['dataMin', 'dataMax']} />
-
-                      <Line
-                        type="monotone"
-                        dataKey="value"
-                        strokeWidth={2}
-                        dot={false}
-                        isAnimationActive={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            );
-          })} */}
 
           {selectedComponent.parameters.map((parameter) => {
             const history = simulatorStore.getParameterHistory(parameter.parameterId);
@@ -218,6 +178,15 @@ export const SimulatorInfoPanel = observer(() => {
 
       {isPump && (
         <div className={styles.actions}>
+          {canRunDiagnostics && (
+            <Button
+              width="full"
+              view="secondary"
+              label="Провести диагностику"
+              onClick={handleRunDiagnostics}
+            />
+          )}
+
           {isRunning ? (
             <Button
               width="full"
