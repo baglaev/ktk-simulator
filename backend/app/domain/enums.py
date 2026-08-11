@@ -29,6 +29,18 @@ class SessionStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
+class ScenarioRuntimeStatus(str, Enum):
+    ACTIVE = "active"
+    COMPLETED = "completed"
+
+
+class CompletionReason(str, Enum):
+    OBJECTIVES_COMPLETED = "objectives_completed"
+    CRITICAL_LIMIT_REACHED = "critical_limit_reached"
+    TIME_LIMIT_REACHED = "time_limit_reached"
+    COMPLETED_BEFORE_STABILIZATION = "completed_before_stabilization"
+
+
 class EquipmentType(str, Enum):
     PUMP_GROUP = "pump_group"
     TANK = "tank"
@@ -99,11 +111,19 @@ class DiagnosisReason(str, Enum):
     BEARING_WEAR = "bearing_wear"
     CAVITATION = "cavitation"
     ELECTRICAL_OVERLOAD = "electrical_overload"
+    SUCTION_SUPPLY_DISRUPTION = "suction_supply_disruption"
+    COMPAX_SENSOR_FAULT = "compax_sensor_fault"
     UNKNOWN = "unknown"
 
 
 class ScenarioOutcome(str, Enum):
     SUCCESS = "success"
+    FAILED = "failed"
+
+
+class ResultStatus(str, Enum):
+    PASSED = "passed"
+    PASSED_WITH_REMARKS = "passed_with_remarks"
     FAILED = "failed"
 
 
@@ -116,6 +136,7 @@ class ActionErrorCode(str, Enum):
     DIAGNOSIS_WITHOUT_PRA_CHECK = "diagnosis_without_pra_check"
     DIAGNOSIS_WITHOUT_FYQR_CHECK = "diagnosis_without_fyqr_check"
     WRONG_DIAGNOSIS_CORRECTED = "wrong_diagnosis_corrected"
+    DIAGNOSTICS_NOT_RUN = "diagnostics_not_run"
     PUMP_COMMAND_BEFORE_WARNING = "pump_command_before_warning"
     N1A_STOPPED_BEFORE_N1B = "n1a_stopped_before_n1b"
     N1A_STOPPED_WITHOUT_DIAGNOSIS = "n1a_stopped_without_diagnosis"

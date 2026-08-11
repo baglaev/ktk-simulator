@@ -11,6 +11,9 @@ from app.domain import (
     OperatorAction,
     RecordedAction,
     ScenarioActionRequest,
+    ScenarioHintMessage,
+    SessionAIAnalysis,
+    AdaptiveRepetitionPlan,
     SessionResult,
     SessionStatus,
     TrainingSession,
@@ -18,6 +21,10 @@ from app.domain import (
 from app.evaluation import evaluate_session
 from app.persistence import SessionRepository, create_database
 from app.scenarios import load_n1a_scenario
+from app.services.hint_service import ScenarioHintService
+from app.services.ai_analysis import SessionAIAnalysisService
+from app.services.rag_gateway import PostSessionRAGGateway
+from app.services.llm_analysis_gateway import PostSessionLLMAnalysisGateway
 from app.simulation import (
     N1AProcessModel,
     SimulationCompletedError,
@@ -51,6 +58,7 @@ class SessionManager:
         clock: Callable[[], datetime] = utc_now,
         id_factory: Callable[[], UUID] = uuid4,
         snapshot_publisher: Callable[[UUID, ModelSnapshot], None] | None = None,
+        event_publisher: Callable[[UUID, ScenarioHintMessage], None] | None = None,
         repository: SessionRepository | None = None,
     ) -> None:
         self._clock = clock
@@ -60,6 +68,11 @@ class SessionManager:
         self._snapshot_publisher = snapshot_publisher or (
             lambda _id, _snapshot: None
         )
+        self._event_publisher = event_publisher or (lambda _id, _event: None)
+        self._hint_service = ScenarioHintService()
+        self._ai_analysis_service = SessionAIAnalysisService()
+        self._rag_gateway = PostSessionRAGGateway()
+        self._llm_analysis_gateway = PostSessionLLMAnalysisGateway()
         if repository is None:
             _, session_factory = create_database("sqlite+pysqlite:///:memory:")
             repository = SessionRepository(session_factory)
@@ -93,6 +106,7 @@ class SessionManager:
             self._sessions[session_id] = session
             self._models[session_id] = self._new_model()
             self._processed_actions[session_id] = {}
+            self._hint_service.reset(session_id)
             self._repository.save_session(session)
             return session.model_copy(deep=True)
 
@@ -111,7 +125,7 @@ class SessionManager:
     def start_session(self, session_id: UUID) -> TrainingSession:
         with self._lock:
             session = self._require_status(session_id, {SessionStatus.CREATED})
-            snapshot = self._models[session_id].initialize(session_id)
+            snapshot = self._models[session_id].initialize(session_id, session.mode)
             updated = session.model_copy(
                 update={
                     "status": SessionStatus.RUNNING,
@@ -122,7 +136,7 @@ class SessionManager:
             )
             self._sessions[session_id] = updated
             self._repository.save_session(updated)
-            self._snapshot_publisher(session_id, snapshot)
+            self._publish_realtime(session_id, snapshot)
             return updated.model_copy(deep=True)
 
     def pause_session(self, session_id: UUID) -> TrainingSession:
@@ -152,29 +166,9 @@ class SessionManager:
                 },
             )
             model = self._models[session_id]
-            completed_at = self._clock()
-            result = evaluate_session(
-                session_id=session_id,
-                actions=model.get_recorded_actions(),
-                completed_at=completed_at,
-                safe_configuration=model.has_safe_configuration(),
-                stabilized=model.is_stabilized,
-                min_lrca_605=model.min_lrca_605,
-                model_failure_reason=model.failure_reason,
-            )
-            updated = session.model_copy(
-                update={
-                    "status": (
-                        SessionStatus.COMPLETED
-                        if result.outcome.value == "success"
-                        else SessionStatus.FAILED
-                    ),
-                    "completed_at": completed_at,
-                }
-            )
-            self._sessions[session_id] = updated
-            self._repository.save_session(updated)
-            self._repository.save_result(result)
+            snapshot = model.terminate_before_stabilization()
+            updated = self._finalize_session(session, snapshot)
+            self._publish_realtime(session_id, snapshot)
             return updated.model_copy(deep=True)
 
     def advance_session(self, session_id: UUID, dt_ms: int) -> ModelSnapshot:
@@ -185,7 +179,7 @@ class SessionManager:
             except SimulationCompletedError as error:
                 raise InvalidSessionTransitionError(str(error)) from error
             self._sync_model_state(session, snapshot)
-            self._snapshot_publisher(session_id, snapshot)
+            self._publish_realtime(session_id, snapshot)
             return snapshot
 
     def apply_action(
@@ -217,7 +211,7 @@ class SessionManager:
             recorded_action = self._models[session_id].get_recorded_actions()[-1]
             self._repository.save_action(recorded_action)
             self._sync_model_state(session, snapshot)
-            self._snapshot_publisher(session_id, snapshot)
+            self._publish_realtime(session_id, snapshot)
             return snapshot
 
     def apply_scenario_action(
@@ -264,6 +258,11 @@ class SessionManager:
             self._require_session(session_id)
             return self._repository.list_actions(session_id)
 
+    def list_hints(self, session_id: UUID) -> list[ScenarioHintMessage]:
+        with self._lock:
+            self._require_session(session_id)
+            return self._repository.list_hints(session_id)
+
     def get_result(self, session_id: UUID) -> SessionResult:
         with self._lock:
             self._require_session(session_id)
@@ -274,8 +273,73 @@ class SessionManager:
                 )
             return result
 
+    def generate_ai_analysis(self, session_id: UUID) -> SessionAIAnalysis:
+        with self._lock:
+            result = self.get_result(session_id)
+            actions = self._repository.list_actions(session_id)
+            hints = self._repository.list_hints(session_id)
+        analysis = self._ai_analysis_service.build(result, actions, hints)
+        # Keep the optional external request outside the global session lock
+        # so live simulations in other sessions continue to tick.
+        analysis = self._llm_analysis_gateway.enhance(
+            analysis,
+            result,
+            actions,
+            hints,
+        )
+        with self._lock:
+            self._repository.save_ai_analysis(
+                session_id,
+                analysis.model_dump(mode="json", by_alias=True),
+                self._clock(),
+            )
+            return analysis
+
+    def get_ai_analysis(self, session_id: UUID) -> SessionAIAnalysis:
+        with self._lock:
+            self._require_session(session_id)
+            payload = self._repository.get_ai_analysis(session_id)
+            if payload is None:
+                raise InvalidSessionTransitionError(
+                    "AI analysis has not been generated; call POST ai-analysis"
+                )
+            return SessionAIAnalysis.model_validate(payload)
+
+    def get_adaptive_plan(self, session_id: UUID) -> AdaptiveRepetitionPlan:
+        with self._lock:
+            return self._ai_analysis_service.adaptive_plan(
+                self.get_result(session_id)
+            )
+
+    def ask_post_session_assistant(
+        self,
+        session_id: UUID,
+        question: str,
+    ) -> dict:
+        with self._lock:
+            session = self._require_session(session_id)
+            if session.status not in {SessionStatus.COMPLETED, SessionStatus.FAILED}:
+                raise InvalidSessionTransitionError(
+                    "RAG assistant is available only after scenario completion"
+                )
+        return self._rag_gateway.ask(question)
+
     def _new_model(self) -> N1AProcessModel:
         return N1AProcessModel(self._scenario, self._profile)
+
+    def _publish_realtime(
+        self,
+        session_id: UUID,
+        snapshot: ModelSnapshot,
+    ) -> None:
+        self._snapshot_publisher(session_id, snapshot)
+        hint = self._hint_service.evaluate(
+            snapshot,
+            self._models[session_id].get_recorded_actions(),
+        )
+        if hint is not None:
+            self._repository.save_hint(hint)
+            self._event_publisher(session_id, hint)
 
     def _sync_model_state(
         self,
@@ -287,29 +351,57 @@ class SessionManager:
             "state_version": snapshot.state_version,
         }
         model = self._models[session.session_id]
-        if model.is_stabilized:
-            update["status"] = SessionStatus.READY_TO_COMPLETE
-        elif model.is_failed:
-            completed_at = self._clock()
-            update.update(
-                {
-                    "status": SessionStatus.FAILED,
-                    "completed_at": completed_at,
-                }
-            )
-            result = evaluate_session(
-                session_id=session.session_id,
-                actions=model.get_recorded_actions(),
-                completed_at=completed_at,
-                safe_configuration=model.has_safe_configuration(),
-                stabilized=model.is_stabilized,
-                min_lrca_605=model.min_lrca_605,
-                model_failure_reason=model.failure_reason,
-            )
-            self._repository.save_result(result)
+        if model.is_terminal:
+            self._finalize_session(session, snapshot)
+            return
         updated = session.model_copy(update=update)
         self._sessions[session.session_id] = updated
         self._repository.save_session(updated)
+
+    def _finalize_session(
+        self,
+        session: TrainingSession,
+        snapshot: ModelSnapshot,
+    ) -> TrainingSession:
+        """Persist a terminal state and its deterministic result exactly once."""
+
+        existing = self._repository.get_result(session.session_id)
+        completed_at = session.completed_at or self._clock()
+        model = self._models[session.session_id]
+        result = existing or evaluate_session(
+            session_id=session.session_id,
+            actions=model.get_recorded_actions(),
+            completed_at=completed_at,
+            safe_configuration=model.has_safe_configuration(),
+            stabilized=model.is_stabilized,
+            min_lrca_605=model.min_lrca_605,
+            model_failure_reason=model.failure_reason,
+            mode=session.mode,
+            completion_reason=(
+                model.completion_reason
+                or snapshot.scenario_state.completion_reason
+            ),
+            snapshot=snapshot,
+            minimum_values=model.min_signal_values,
+            final_parameters=model.get_all_parameter_values(),
+        )
+        updated = session.model_copy(
+            update={
+                "status": (
+                    SessionStatus.COMPLETED
+                    if result.outcome.value == "success"
+                    else SessionStatus.FAILED
+                ),
+                "elapsed_time_ms": snapshot.timing.elapsed_ms,
+                "state_version": snapshot.state_version,
+                "completed_at": completed_at,
+            }
+        )
+        self._sessions[session.session_id] = updated
+        self._repository.save_session(updated)
+        if existing is None:
+            self._repository.save_result(result)
+        return updated
 
     def _require_session(self, session_id: UUID) -> TrainingSession:
         try:

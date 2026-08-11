@@ -51,15 +51,20 @@ def test_websocket_contract_executes_complete_frontend_user_path() -> None:
                 payload["parameters"] = parameters
             websocket.send_json(payload)
             result = websocket.receive_json()
+            while result["type"] == "scenario.hint":
+                result = websocket.receive_json()
             assert result["type"] == "action.result"
             assert result["status"] == "accepted"
             snapshot = websocket.receive_json()
+            while snapshot["type"] == "scenario.hint":
+                snapshot = websocket.receive_json()
             assert snapshot["type"] == "telemetry.update"
             assert snapshot["stateVersion"] == result["stateVersion"]
 
         action("open_equipment_card", "eq-n1a")
         action("view_signal", "PRA351")
         action("view_signal", "FYQR117")
+        action("run_diagnostics", "eq-n1a")
         action(
             "submit_diagnosis",
             "eq-n1a",
@@ -78,23 +83,23 @@ def test_websocket_contract_executes_complete_frontend_user_path() -> None:
             json={"dtMs": 30_000},
         )
         stable_update = websocket.receive_json()
+        while stable_update["type"] == "scenario.hint":
+            stable_update = websocket.receive_json()
 
     assert stable.status_code == 200
     assert stable_update["type"] == "telemetry.update"
     assert client.get(f"/api/v1/sessions/{session_id}").json()["status"] == (
-        "ready_to_complete"
+        "completed"
     )
 
-    completed = client.post(f"/api/v1/sessions/{session_id}/complete")
     result = client.get(f"/api/v1/sessions/{session_id}/result")
     actions = client.get(f"/api/v1/sessions/{session_id}/actions")
 
-    assert completed.json()["status"] == "completed"
     assert result.status_code == 200
     assert result.json()["totalScore"] == 100
     assert result.json()["outcome"] == "success"
     assert actions.status_code == 200
-    assert len(actions.json()) == 11
+    assert len(actions.json()) == 12
     assert actions.json()[0]["virtualTimeMs"] == 55_000
 
 

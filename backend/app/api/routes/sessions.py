@@ -1,17 +1,21 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.dependencies import get_session_manager
 from app.domain import (
     AdvanceSessionRequest,
+    AdaptiveRepetitionPlan,
+    AssistantQuestionRequest,
     CreateSessionRequest,
     ModelSnapshot,
     RecordedAction,
+    ScenarioHintMessage,
     SessionResult,
+    SessionAIAnalysis,
     TrainingSession,
 )
-from app.services import SessionManager
+from app.services import RAGUnavailableError, SessionManager
 
 
 router = APIRouter(prefix="/api/v1/sessions", tags=["sessions"])
@@ -96,6 +100,16 @@ async def list_actions(
     return manager.list_actions(session_id)
 
 
+@router.get("/{session_id}/hints", response_model=list[ScenarioHintMessage])
+async def list_hints(
+    session_id: UUID,
+    manager: SessionManager = Depends(get_session_manager),
+) -> list[ScenarioHintMessage]:
+    """Return hints actually shown during a training-mode session."""
+
+    return manager.list_hints(session_id)
+
+
 @router.get("/{session_id}/result", response_model=SessionResult)
 async def get_result(
     session_id: UUID,
@@ -104,3 +118,49 @@ async def get_result(
     """Return the deterministic SCR-04 result after terminal completion."""
 
     return manager.get_result(session_id)
+
+
+@router.post("/{session_id}/ai-analysis", response_model=SessionAIAnalysis)
+def generate_ai_analysis(
+    session_id: UUID,
+    manager: SessionManager = Depends(get_session_manager),
+) -> SessionAIAnalysis:
+    """Build and persist SCR-05 explanation without changing SCR-04 score."""
+
+    return manager.generate_ai_analysis(session_id)
+
+
+@router.get("/{session_id}/ai-analysis", response_model=SessionAIAnalysis)
+async def get_ai_analysis(
+    session_id: UUID,
+    manager: SessionManager = Depends(get_session_manager),
+) -> SessionAIAnalysis:
+    return manager.get_ai_analysis(session_id)
+
+
+@router.get(
+    "/{session_id}/adaptive-plan",
+    response_model=AdaptiveRepetitionPlan,
+)
+async def get_adaptive_plan(
+    session_id: UUID,
+    manager: SessionManager = Depends(get_session_manager),
+) -> AdaptiveRepetitionPlan:
+    return manager.get_adaptive_plan(session_id)
+
+
+@router.post("/{session_id}/assistant/question")
+def ask_post_session_assistant(
+    session_id: UUID,
+    request: AssistantQuestionRequest,
+    manager: SessionManager = Depends(get_session_manager),
+) -> dict:
+    """Grounded RAG Q&A; deliberately unavailable during an active attempt."""
+
+    try:
+        return manager.ask_post_session_assistant(session_id, request.question)
+    except RAGUnavailableError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(error),
+        ) from error

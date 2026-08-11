@@ -49,15 +49,16 @@ def test_initial_snapshot_contains_complete_model_state() -> None:
     assert snapshot.sequence_no == 0
     assert snapshot.state_version == 0
     assert snapshot.timing.elapsed_ms == 0
-    assert snapshot.timing.total_ms == 120_000
-    assert snapshot.scenario_version == "0.3.0"
-    assert snapshot.model_version == "0.3.0"
+    assert snapshot.timing.total_ms == 180_000
+    assert snapshot.scenario_version == "0.4.0"
+    assert snapshot.model_version == "0.4.0"
     assert len(snapshot.components) == 8
     assert len(parameters) == 22
-    assert parameters["PRA351"].value_percent == 100
-    assert parameters["FYQR117"].value_percent == 100
-    assert parameters["COMPAX.N1V.VELOCITY"].value_percent == 100
-    assert parameters["LRCA605"].value_percent == 65
+    assert parameters["PRA351"].value == 100
+    assert parameters["FYQR117"].value == 100
+    assert parameters["COMPAX.N1V.VELOCITY"].value == 2.4
+    assert parameters["COMPAX.N1V.VELOCITY"].unit == "мм/с"
+    assert parameters["LRCA605"].value == 65
     assert component_map(snapshot)["eq-n1v"].operating_state.value == "running"
     assert component_map(snapshot)["eq-n1b"].operating_state.value == "stopped"
     assert component_map(snapshot)["eq-n1b"].parameters == []
@@ -75,10 +76,10 @@ def test_model_interpolates_between_keyframes() -> None:
     snapshot = model.step(32_500)
     parameters = parameter_map(snapshot)
 
-    assert parameters["PRA351"].value_percent == 97.5
-    assert parameters["FYQR117"].value_percent == 96.5
-    assert parameters["COMPAX.N1A.VELOCITY"].value_percent == 328.1
-    assert parameters["COMPAX.N1.VELOCITY"].value_percent == 100
+    assert parameters["PRA351"].value == 97.5
+    assert parameters["FYQR117"].value == 96.5
+    assert parameters["COMPAX.N1A.VELOCITY"].value == 7.9
+    assert parameters["COMPAX.N1.VELOCITY"].value == 2.4
     assert component_map(snapshot)["eq-n1a"].status is GeneralStatus.ALERT
 
 
@@ -135,11 +136,11 @@ def test_terminal_snapshot_uses_training_boundaries() -> None:
     assert snapshot.timing.elapsed_ms == 120_000
     assert snapshot.timing.remaining_ms == 0
     assert snapshot.timing.progress_percent == 100
-    assert parameters["PRA351"].value_percent == 38
-    assert parameters["FYQR117"].value_percent == 34
-    assert parameters["LRCA605"].value_percent == 20
-    assert parameters["ELOU.STAGE1.LEVEL"].value_percent == 72
-    assert parameters["ELOU.STAGE2.LEVEL"].value_percent == 81
+    assert parameters["PRA351"].value == 38
+    assert parameters["FYQR117"].value == 34
+    assert parameters["LRCA605"].value == 20
+    assert parameters["ELOU.STAGE1.LEVEL"].value == 72
+    assert parameters["ELOU.STAGE2.LEVEL"].value == 81
     assert model.is_failed
     assert snapshot.journal[-1].description.endswith("учебной границы 20%")
 

@@ -95,16 +95,33 @@ def _validate_action_payload(
     target_id: str | None,
     parameters: dict[str, JsonValue],
 ) -> None:
+    if action_type in {
+        ActionType.OPEN_EQUIPMENT_CARD,
+        ActionType.VIEW_SIGNAL,
+        ActionType.RUN_DIAGNOSTICS,
+    } and not target_id:
+        raise ValueError(f"targetId is required for {action_type.value}")
     if action_type is ActionType.SUBMIT_DIAGNOSIS:
         if not target_id:
             raise ValueError("targetId is required for submit_diagnosis")
         try:
-            DiagnosisConclusion(parameters.get("conclusion"))
-            DiagnosisReason(parameters.get("reason"))
+            conclusion = DiagnosisConclusion(parameters.get("conclusion"))
         except (TypeError, ValueError) as error:
             raise ValueError(
-                "submit_diagnosis requires valid conclusion and reason"
+                "submit_diagnosis requires a valid conclusion"
             ) from error
+        reason = parameters.get("reason")
+        if conclusion is DiagnosisConclusion.FAULT_DETECTED:
+            try:
+                parsed_reason = DiagnosisReason(reason)
+            except (TypeError, ValueError) as error:
+                raise ValueError(
+                    "reason is required when conclusion is fault_detected"
+                ) from error
+            if parsed_reason is DiagnosisReason.UNKNOWN:
+                raise ValueError("reason must be one of the diagnostic options")
+        elif reason is not None:
+            raise ValueError("reason must be omitted when conclusion is no_fault")
     if action_type in {ActionType.START_PUMP, ActionType.STOP_PUMP}:
         if not target_id:
             raise ValueError("targetId is required for a pump command")

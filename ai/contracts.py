@@ -17,8 +17,15 @@ JsonObject = Mapping[str, Any]
 @dataclass(frozen=True)
 class ParameterObservation:
     parameter_id: str
-    value_percent: float
+    value: float
+    unit: str = "1"
     status: str = "success"
+
+    @property
+    def value_percent(self) -> float:
+        """Compatibility accessor for old AI rules; check ``unit`` first."""
+
+        return self.value
 
     @classmethod
     def from_payload(cls, payload: JsonObject) -> "ParameterObservation":
@@ -26,7 +33,8 @@ class ParameterObservation:
         raw_value = payload.get("valuePercent", payload.get("value", 0.0))
         return cls(
             parameter_id=parameter_id,
-            value_percent=float(raw_value),
+            value=float(raw_value),
+            unit=str(payload.get("unit", "%" if "valuePercent" in payload else "1")),
             status=str(payload.get("status", "success")),
         )
 
@@ -44,7 +52,7 @@ class ComponentObservation:
         raw_parameters = payload.get("parameters", ())
         if isinstance(raw_parameters, Mapping):
             raw_parameters = [
-                {"parameterId": key, "valuePercent": value}
+                {"parameterId": key, "value": value, "unit": "1"}
                 for key, value in raw_parameters.items()
             ]
         parameters = tuple(

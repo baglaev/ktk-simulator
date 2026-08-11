@@ -39,7 +39,7 @@ def test_full_session_lifecycle() -> None:
     assert created["status"] == "created"
     assert created["timeMode"] == "live"
     assert created["elapsedTimeMs"] == 0
-    assert created["totalDurationMs"] == 120_000
+    assert created["totalDurationMs"] == 180_000
 
     started = client.post(f"/api/v1/sessions/{session_id}/start")
     assert started.status_code == 200

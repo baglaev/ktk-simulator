@@ -6,6 +6,7 @@ from uuid import UUID
 from pydantic import Field, model_validator
 
 from app.domain.base import APIModel
+from app.domain.enums import CompletionReason, ScenarioRuntimeStatus, TrainingMode
 from app.domain.equipment import ComponentState
 
 
@@ -23,6 +24,11 @@ class ScenarioTiming(APIModel):
     progress_percent: float = Field(ge=0, le=100)
 
 
+class ScenarioRuntimeState(APIModel):
+    status: ScenarioRuntimeStatus
+    completion_reason: CompletionReason | None = None
+
+
 class TelemetryEnvelope(APIModel):
     session_id: UUID
     scenario_id: str = Field(min_length=1)
@@ -31,6 +37,8 @@ class TelemetryEnvelope(APIModel):
     model_version: str = Field(min_length=1)
     sequence_no: int = Field(ge=0)
     state_version: int = Field(ge=0)
+    mode: TrainingMode
+    scenario_state: ScenarioRuntimeState
     timing: ScenarioTiming
 
 

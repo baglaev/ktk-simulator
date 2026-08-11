@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import Field, model_validator
 
 from app.domain.base import APIModel, Provenance
-from app.domain.enums import ParameterOrigin
+from app.domain.enums import DiagnosisConclusion, DiagnosisReason, ParameterOrigin
 from app.domain.equipment import EquipmentDefinition
 from app.domain.signals import SignalDefinition
 
@@ -42,12 +42,40 @@ class ScenarioSummary(APIModel):
     description: str = Field(min_length=1)
 
 
+class DiagnosisChoice(APIModel):
+    value: str = Field(min_length=1)
+    label: str = Field(min_length=1)
+
+
+class DiagnosisFormConfig(APIModel):
+    """Stable frontend form contract; it never exposes the correct answer."""
+
+    target_id: str = Field(min_length=1)
+    conclusions: list[DiagnosisChoice] = Field(min_length=2)
+    fault_reasons: list[DiagnosisChoice] = Field(min_length=1)
+    provenance: Provenance
+
+    @model_validator(mode="after")
+    def validate_values(self) -> DiagnosisFormConfig:
+        conclusions = {item.value for item in self.conclusions}
+        if conclusions != {item.value for item in DiagnosisConclusion}:
+            raise ValueError("diagnosis conclusions differ from action contract")
+        reasons = {item.value for item in self.fault_reasons}
+        supported_reasons = {
+            item.value for item in DiagnosisReason if item is not DiagnosisReason.UNKNOWN
+        }
+        if reasons != supported_reasons:
+            raise ValueError("diagnosis reasons differ from action contract")
+        return self
+
+
 class ScenarioConfig(APIModel):
     schema_version: Literal["1.0"] = "1.0"
     scenario_id: str = Field(min_length=1)
     scenario_version: str = Field(min_length=1)
     name: str = Field(min_length=1)
     description: str = Field(min_length=1)
+    diagnosis_form: DiagnosisFormConfig
     sources: list[SourceReference] = Field(default_factory=list)
     assumptions: list[EducationalAssumption] = Field(default_factory=list)
     equipment: list[EquipmentDefinition] = Field(default_factory=list)

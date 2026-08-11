@@ -27,6 +27,8 @@ def build_telemetry_update(
         model_version=current.model_version,
         sequence_no=current.sequence_no,
         state_version=current.state_version,
+        mode=current.mode,
+        scenario_state=current.scenario_state,
         timing=current.timing,
         components=current.components,
         journal=current.journal,

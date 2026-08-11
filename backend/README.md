@@ -1,258 +1,168 @@
 # Backend КТК ЭЛОУ-АВТ
 
-Версия backend `0.3.0` реализует полный учебный путь MVP по развивающейся
-неисправности сырьевого насоса Н-1А: live-модель, действия обучаемого,
-переключение Н-1А → Н-1Б, восстановление параметров, журнал, результат и БД.
+Backend реализует учебный сценарий `MVP-SC-01`: live-модель отказа Н-1А,
+двунаправленный WebSocket, действия обучаемого, журнал, автоматическое
+завершение, результат SCR-04, объяснимый разбор SCR-05, план повторения и
+послесессионный RAG.
 
-Все временные точки, пороги и численные траектории сценария являются
-**учебными допущениями** и не являются производственными инструкциями или
-уставками. В `model-definition` правила восстановления отмечены `A-17`, а
-пороги статусов и шкала оценки — `A-18`.
+Все численные траектории, пороги, критическая граница и нормативы времени
+являются **учебными допущениями** `A-02`, `A-17`, `A-18`. Это не реальные
+производственные уставки и не команды для промышленного оборудования.
 
 ## Стек
 
 - Python, FastAPI, Pydantic;
 - WebSocket;
 - SQLAlchemy, Alembic;
-- PostgreSQL; SQLite используется как локальный fallback;
+- SQLite локально, PostgreSQL для развёртывания;
 - pytest.
 
-## Быстрый локальный запуск
+## Запуск
 
-Команды выполняются из корня репозитория. Для локальной разработки по
-умолчанию достаточно SQLite: отдельный сервер БД устанавливать не нужно.
-
-### 1. Подготовить окружение
+Из корня репозитория:
 
 ```bash
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
+cp .env.example .env  # только если .env ещё нет
+alembic upgrade head
+uvicorn app.main:app --reload
 ```
 
-Если файла `.env` ещё нет, создайте его из примера:
+Проверка: <http://127.0.0.1:8000/health>. Swagger REST API:
+<http://127.0.0.1:8000/docs>.
 
-```bash
-cp .env.example .env
-```
+Alembic — не база данных, а система версий её структуры. Актуальная миграция:
+`20260811_02 (head)`. После `git pull` снова выполняйте `alembic upgrade head`.
 
-Скопированный файл уже использует SQLite по умолчанию:
+SQLite используется по умолчанию:
 
 ```dotenv
 KTK_DATABASE_URL=sqlite+pysqlite:///./ktk_simulator.sqlite3
 ```
 
-Поэтому локальный запуск не требует установленного PostgreSQL.
-
-### 2. Подготовить структуру БД
-
-Alembic — не база данных, а инструмент управления версиями структуры БД.
-Команда ниже создаёт недостающие таблицы и применяет новые миграции к выбранной
-в `.env` SQLite или PostgreSQL:
-
-```bash
-alembic upgrade head
-```
-
-Проверить применённую версию можно командой:
-
-```bash
-alembic current
-```
-
-Текущая версия должна содержать `20260810_01 (head)`. Миграцию следует
-выполнять после каждого `git pull`, если в проекте появились новые файлы
-миграций. Версия `20260810_01` умеет принять локальные таблицы, созданные
-ранней версией backend до внедрения Alembic; удалять БД или выполнять
-`alembic stamp` вручную не нужно.
-
-### 3. Запустить backend
-
-```bash
-uvicorn app.main:app --reload
-```
-
-Проверка backend: <http://127.0.0.1:8000/health>. Swagger REST API:
-<http://127.0.0.1:8000/docs>.
-
-Остановить backend можно сочетанием `Ctrl+C` в терминале, где запущен Uvicorn.
-
-## Упрощённый вход
-
-Для учебной демонстрации доступен REST-запрос:
-
-```text
-POST /api/v1/auth/login
-```
-
-Обучаемый:
-
-```json
-{
-  "login": "user",
-  "password": "user"
-}
-```
-
-Успешный ответ `200`:
-
-```json
-{
-  "login": true,
-  "role": "user",
-  "redirectTo": "/"
-}
-```
-
-Инструктор:
-
-```json
-{
-  "login": "instructor",
-  "password": "instructor"
-}
-```
-
-Успешный ответ `200`:
-
-```json
-{
-  "login": true,
-  "role": "instructor",
-  "redirectTo": "/instructor"
-}
-```
-
-При неизвестном логине или неверном пароле возвращается `401`:
-
-```json
-{
-  "login": false,
-  "error": "Неверный логин или пароль"
-}
-```
-
-Backend не перенаправляет браузер самостоятельно. После `login: true` frontend
-должен выполнить переход на `redirectTo`. Маршрут `/instructor` должен быть
-реализован на frontend.
-
-Это **упрощённая учебная аутентификация**: она не выдаёт JWT, не создаёт cookie
-или серверную сессию и пока не защищает остальные API-маршруты. Значения можно
-переопределить переменными `KTK_AUTH_*` из `.env`; такой механизм нельзя
-использовать как production-аутентификацию.
-
-## Запуск с PostgreSQL
-
-Создайте БД и пользователя PostgreSQL, затем укажите подключение в `.env`:
+Для PostgreSQL:
 
 ```dotenv
 KTK_DATABASE_URL=postgresql+psycopg://ktk:ktk@localhost:5432/ktk_simulator
 ```
 
-После этого примените миграции и запустите backend:
+Если порт занят, найдите старый процесс командой
+`lsof -nP -iTCP:8000 -sTCP:LISTEN` и остановите соответствующий Uvicorn.
 
-```bash
-cd backend
-source .venv/bin/activate
-alembic upgrade head
-uvicorn app.main:app --reload
+## Вход
+
+`POST /api/v1/auth/login` принимает `login` и `password`.
+
+Обучаемый: `user` / `user`. Инструктор: `instructor` / `instructor`.
+
+Успешный ответ:
+
+```json
+{"login": true, "role": "user", "redirectTo": "/"}
 ```
 
-## Частые ошибки запуска
+или:
 
-### `Address already in use`
-
-Порт `8000` уже занят, чаще всего ранее запущенным Uvicorn. Найдите процесс:
-
-```bash
-lsof -nP -iTCP:8000 -sTCP:LISTEN
+```json
+{"login": true, "role": "instructor", "redirectTo": "/instructor"}
 ```
 
-Если это старый процесс Uvicorn, остановите его в исходном терминале через
-`Ctrl+C` или выполните `kill <PID>`, подставив PID из вывода `lsof`.
+Ошибка возвращает HTTP 401:
 
-### `table training_sessions already exists`
-
-Сначала получите актуальную версию ветки и повторно примените миграцию:
-
-```bash
-git pull
-cd backend
-source .venv/bin/activate
-alembic upgrade head
+```json
+{"login": false, "error": "Неверный логин или пароль"}
 ```
 
-Актуальная миграция принимает уже существующую схему. Удалять локальную БД и
-вручную помечать миграцию применённой не требуется.
+Frontend сам выполняет переход на `redirectTo`. Это демонстрационная
+аутентификация без JWT и защиты остальных маршрутов; для production она не
+подходит.
 
-## Что реализовано
+### Учебные корпоративные учётные записи
 
-- на 10-й секунде Н-1А переходит в `warning`;
-- диагностика Н-1А с выводом и причиной;
-- команды запуска/останова четырёх учебных насосов;
-- Н-1Б изначально остановлен, Н-1, Н-1А и Н-1В работают;
-- безопасная конфигурация: Н-1Б работает, Н-1А остановлен, Н-1 и Н-1В
-  работают;
-- после безопасного переключения начинается линейное восстановление 30 секунд:
-  PRA 351, FYQR 117 и уровни ЭЛОУ до 100%, LRCA 605 до исходных 65%;
-- при достижении LRCA 605 значения 20% без запущенного восстановления сценарий
-  автоматически завершается как `failed`;
-- неверная диагностика уменьшает баллы, но не изменяет физическую динамику;
-- детерминированная оценка 0–100 с ошибками, штрафами и критическими условиями;
-- постоянный аудит сессий, действий и результатов в БД.
+Дополнительно доступны 20 корпоративно оформленных demo-аккаунтов. Все они
+имеют роль `user` и после успешного входа возвращают `redirectTo: "/"`.
 
-## Интеграция frontend и backend
-
-Для обмена используются два механизма:
-
-| Механизм | Назначение |
+| Логин | Пароль |
 |---|---|
-| REST API | описание модели, создание, запуск, пауза, завершение сессии и результат |
-| WebSocket | действия пользователя во время сценария и live-телеметрия |
+| `Matveev.AD@gazprom-neft.ru` | `GpnDemo#Mat26` |
+| `Voronov.NK@gazprom-neft.ru` | `GpnDemo#Vor26` |
+| `Sokolov.IV@gazprom-neft.ru` | `GpnDemo#Sok26` |
+| `Kuznetsov.MA@gazprom-neft.ru` | `GpnDemo#Kuz26` |
+| `Popov.ES@gazprom-neft.ru` | `GpnDemo#Pop26` |
+| `Smirnova.OV@gazprom-neft.ru` | `GpnDemo#Smi26` |
+| `Petrova.AN@gazprom-neft.ru` | `GpnDemo#Pet26` |
+| `Volkov.DS@gazprom-neft.ru` | `GpnDemo#Vol26` |
+| `Fedorov.PM@gazprom-neft.ru` | `GpnDemo#Fed26` |
+| `Morozova.EV@gazprom-neft.ru` | `GpnDemo#Mor26` |
+| `Lebedev.RA@gazprom-neft.ru` | `GpnDemo#Leb26` |
+| `Novikova.TS@gazprom-neft.ru` | `GpnDemo#Nov26` |
+| `Orlov.KV@gazprom-neft.ru` | `GpnDemo#Orl26` |
+| `Pavlov.SI@gazprom-neft.ru` | `GpnDemo#Pav26` |
+| `Semenova.NA@gazprom-neft.ru` | `GpnDemo#Sem26` |
+| `Golubev.VP@gazprom-neft.ru` | `GpnDemo#Gol26` |
+| `Vinogradova.MI@gazprom-neft.ru` | `GpnDemo#Vin26` |
+| `Bogdanov.AL@gazprom-neft.ru` | `GpnDemo#Bog26` |
+| `Komarova.ER@gazprom-neft.ru` | `GpnDemo#Kom26` |
+| `Zakharov.DN@gazprom-neft.ru` | `GpnDemo#Zak26` |
 
-Адреса локального backend:
+Пароли содержат не менее 12 символов. Фамилии и инициалы являются синтетическим
+demo-набором; весь список предназначен только для демонстрации. Это не
+подключение к корпоративному AD/SSO, и такие учётные данные нельзя использовать
+в production.
 
-- REST: `http://127.0.0.1:8000`;
-- Swagger REST API: `http://127.0.0.1:8000/docs`;
-- WebSocket: `ws://127.0.0.1:8000/ws/v1/sessions/{sessionId}`.
+## Жизненный цикл сценария
 
-WebSocket не входит в OpenAPI и поэтому не отображается в Swagger. Его полный
-контракт описан ниже.
+1. `GET /api/v1/scenarios/MVP-SC-01/model-definition` — получить оборудование,
+   сигналы, форму диагностики и происхождение данных.
+2. `POST /api/v1/sessions` — создать сессию и выбрать `training` или `control`.
+3. Взять `sessionId` из ответа.
+4. `POST /api/v1/sessions/{sessionId}/start` — запустить live-модель.
+5. Открыть `ws://127.0.0.1:8000/ws/v1/sessions/{sessionId}`.
+6. Применить первый `telemetry.snapshot`, затем `telemetry.update`.
+7. Передавать действия обучаемого через этот же WebSocket.
+8. Дождаться `scenarioState.status = completed`.
+9. Получить `GET .../result`, создать `POST .../ai-analysis`, затем запросить
+   `GET .../adaptive-plan`.
 
-### Последовательность работы frontend
+Backend автоматически продвигает виртуальное время раз в секунду. `/advance`
+нужен только тестам и ручной отладке.
 
-1. Получить модель: `GET /api/v1/scenarios/MVP-SC-01/model-definition`.
-2. Создать сессию: `POST /api/v1/sessions`.
-3. Сохранить `sessionId` из ответа.
-4. Запустить сессию: `POST /api/v1/sessions/{sessionId}/start`.
-5. Подключиться к WebSocket с полученным `sessionId`.
-6. Применить первое сообщение `telemetry.snapshot`.
-7. Отправлять действия кнопок минимальными JSON-сообщениями в WebSocket.
-8. Обрабатывать подтверждения `action.result`.
-9. Обновлять экран из сообщений `telemetry.update`.
-10. После `ready_to_complete` вызвать REST `/complete` и `/result`.
+Максимальное учебное время попытки — 180 секунд. Без корректирующих действий
+траектория достигает учебной границы LRCA 605 = 20% на 120-й секунде и попытка
+завершается раньше как неуспешная. Восстановление, начатое до критической
+границы, длится 30 учебных секунд и может завершиться после 120-й секунды, но до
+180-й. Это учебное допущение, а не производственный норматив.
 
-### REST API
+Успешная стабилизация и критическая граница завершают сессию автоматически.
+`POST .../complete` оставлен только для досрочного ручного завершения; такая
+попытка оценивается как `failed`.
 
-- `GET /api/v1/scenarios` — каталог сценариев;
-- `GET /api/v1/scenarios/MVP-SC-01/model-definition` — статическая модель,
-  источники и учебные допущения;
-- `POST /api/v1/sessions` — создать сессию;
-- `GET /api/v1/sessions/{id}` — получить состояние сессии;
-- `POST /api/v1/sessions/{id}/start` — запустить live-модель;
-- `POST /api/v1/sessions/{id}/pause` — поставить сессию на паузу;
-- `POST /api/v1/sessions/{id}/resume` — продолжить сессию;
-- `GET /api/v1/sessions/{id}/snapshot` — получить полный снимок;
-- `POST /api/v1/sessions/{id}/complete` — завершить прохождение;
-- `GET /api/v1/sessions/{id}/result` — получить результат SCR-04;
-- `GET /api/v1/sessions/{id}/actions` — получить сохранённый аудит действий;
-- `POST /api/v1/sessions/{id}/advance` — тестовый ручной шаг времени.
+## REST API
 
-Frontend не отправляет действия пользователя через REST и не вызывает
-`/advance` в обычном live-режиме: время продвигает backend.
+| Метод | URL | Назначение |
+|---|---|---|
+| GET | `/api/v1/scenarios` | каталог сценариев |
+| GET | `/api/v1/scenarios/MVP-SC-01/model-definition` | статическая модель и форма диагностики |
+| POST | `/api/v1/sessions` | создать сессию |
+| GET | `/api/v1/sessions/{id}` | состояние сессии |
+| POST | `/api/v1/sessions/{id}/start` | запуск |
+| POST | `/api/v1/sessions/{id}/pause` | пауза |
+| POST | `/api/v1/sessions/{id}/resume` | продолжение |
+| POST | `/api/v1/sessions/{id}/complete` | досрочно завершить как неуспешную |
+| GET | `/api/v1/sessions/{id}/snapshot` | полный текущий снимок |
+| GET | `/api/v1/sessions/{id}/actions` | журнал принятых действий |
+| GET | `/api/v1/sessions/{id}/hints` | реально показанные подсказки |
+| GET | `/api/v1/sessions/{id}/result` | детерминированный SCR-04 |
+| POST | `/api/v1/sessions/{id}/ai-analysis` | создать и сохранить SCR-05 |
+| GET | `/api/v1/sessions/{id}/ai-analysis` | получить созданный SCR-05 |
+| GET | `/api/v1/sessions/{id}/adaptive-plan` | план повторной отработки |
+| POST | `/api/v1/sessions/{id}/assistant/question` | RAG-вопрос после завершения |
+| POST | `/api/v1/sessions/{id}/advance` | только ручной тестовый шаг времени |
 
-Тело создания сессии:
+Создание сессии:
 
 ```json
 {
@@ -263,114 +173,52 @@ Frontend не отправляет действия пользователя ч�
 }
 ```
 
-## WebSocket-контракт
+`training` включает подготовленные подсказки. `control` соответствует
+экзаменационному режиму и никогда не отправляет подсказки.
 
-Соединение открывается после запуска сессии:
+## WebSocket
 
-```text
-ws://127.0.0.1:8000/ws/v1/sessions/{sessionId}
-```
-
-Один WebSocket двунаправленный:
+WebSocket отсутствует в Swagger, потому что OpenAPI описывает HTTP, а не WS.
+Один канал двунаправленный:
 
 ```text
 frontend → backend: действия пользователя
-backend → frontend: action.result и телеметрия
+backend → frontend: action.result, telemetry.*, scenario.hint
 ```
 
-### Что frontend отправляет в backend
-
-Действие передаётся текстовым JSON-сообщением. Минимальный пример:
+Frontend отправляет только минимальный JSON. Backend сам добавляет `sessionId`,
+UUID действия, серверное время, версию состояния и ключ идемпотентности.
 
 ```json
-{
-  "actionType": "view_signal",
-  "targetId": "PRA351"
-}
+{"actionType": "view_signal", "targetId": "PRA351"}
 ```
 
-Допустимые поля:
+Основные действия сценария:
 
-| Поле | Обязательность | Назначение |
+| `actionType` | `targetId` | `parameters` |
 |---|---|---|
-| `actionType` | всегда | тип действия из списка ниже |
-| `targetId` | для действия над объектом | идентификатор компонента, сигнала или события |
-| `parameters` | когда действию нужны данные | дополнительные значения, например диагноз |
+| `open_equipment_card` | оборудование, например `eq-n1a` | нет |
+| `view_signal` | сигнал, например `PRA351` | нет |
+| `run_diagnostics` | только `eq-n1a` | нет |
+| `submit_diagnosis` | `eq-n1a` | `conclusion`, иногда `reason` |
+| `start_pump` | учебный насос, например `eq-n1b` | нет |
+| `stop_pump` | учебный насос, например `eq-n1a` | нет |
 
-Frontend не передаёт `actionId`, `sessionId`, `submittedAt`,
-`expectedStateVersion` и `idempotencyKey`. Backend получает `sessionId` из URL,
-сам создаёт UUID и серверное время, использует текущую версию состояния и
-сохраняет полную запись действия в БД.
+`submit_decision` и `acknowledge_event` зарезервированы контрактом, но текущий
+MVP не требует их для успешного пути.
 
-Пример отправки из frontend:
+### Форма диагностики
 
-```javascript
-const socket = new WebSocket(
-  `ws://127.0.0.1:8000/ws/v1/sessions/${sessionId}`
-);
+Источник вариантов для frontend — поле `diagnosisForm` в model-definition.
+Правильный ответ там намеренно не раскрывается.
 
-function sendScenarioAction(actionType, targetId, parameters) {
-  if (socket.readyState !== WebSocket.OPEN) return;
-
-  const message = { actionType };
-  if (targetId !== undefined) message.targetId = targetId;
-  if (parameters !== undefined) message.parameters = parameters;
-
-  socket.send(JSON.stringify(message));
-}
-```
-
-### Доступные `actionType`
-
-Единственный программный источник списка — `ActionType` в
-`app/domain/enums.py`.
-
-| `actionType` | Когда frontend отправляет действие | `targetId` | `parameters` |
-|---|---|---|---|
-| `open_equipment_card` | пользователь открыл карточку оборудования | идентификатор оборудования, например `eq-n1a` | не нужны |
-| `view_signal` | пользователь открыл или просмотрел сигнал | идентификатор сигнала, например `PRA351` | не нужны |
-| `run_diagnostics` | пользователь нажал «Провести диагностику» | диагностируемое оборудование `eq-n1a` | не нужны |
-| `submit_diagnosis` | пользователь выбрал вариант и подтвердил диагноз | диагностируемый насос `eq-n1a` | обязательны `conclusion` и `reason` |
-| `start_pump` | пользователь подтвердил учебный запуск насоса | запускаемый насос, например `eq-n1b` | не нужны |
-| `stop_pump` | пользователь подтвердил учебную остановку насоса | останавливаемый насос, например `eq-n1a` | не нужны |
-| `submit_decision` | пользователь подтвердил общее решение вне формы диагноза | идентификатор объекта решения | зависят от интерфейса |
-| `acknowledge_event` | пользователь подтвердил событие или сигнализацию | идентификатор события | не нужны |
-
-Для основного пути сценария Н-1А используются `open_equipment_card`,
-`view_signal`, `run_diagnostics`, `submit_diagnosis`, `start_pump` и
-`stop_pump`. Действия `submit_decision` и `acknowledge_event` поддерживаются
-контрактом, но не являются обязательными этапами текущего MVP.
-
-Открыть карточку Н-1А:
+Открытие формы:
 
 ```json
-{
-  "actionType": "open_equipment_card",
-  "targetId": "eq-n1a"
-}
+{"actionType": "run_diagnostics", "targetId": "eq-n1a"}
 ```
 
-Посмотреть PRA 351:
-
-```json
-{
-  "actionType": "view_signal",
-  "targetId": "PRA351"
-}
-```
-
-Допустимые основные сигналы сценария: `PRA351`, `FYQR117`, `LRCA605`.
-
-Запустить диагностику Н-1А:
-
-```json
-{
-  "actionType": "run_diagnostics",
-  "targetId": "eq-n1a"
-}
-```
-
-Отправить диагноз:
+Выявлена неисправность — `reason` обязателен:
 
 ```json
 {
@@ -383,290 +231,141 @@ function sendScenarioAction(actionType, targetId, parameters) {
 }
 ```
 
-Допустимые `conclusion`: `fault_detected`, `no_fault`. Допустимые `reason`:
-`bearing_wear`, `cavitation`, `electrical_overload`, `unknown`. Правильная пара
-для текущего учебного сценария — `fault_detected` / `bearing_wear`.
+Допустимые причины: `bearing_wear`, `cavitation`, `electrical_overload`,
+`suction_supply_disruption`, `compax_sensor_fault`.
 
-Четыре варианта формы диагностики frontend отображает пользователю произвольным
-текстом, но в backend передает стабильные машинные значения:
-
-| Вариант интерфейса | `conclusion` | `reason` |
-|---|---|---|
-| Износ подшипника | `fault_detected` | `bearing_wear` |
-| Кавитация | `fault_detected` | `cavitation` |
-| Электрическая перегрузка | `fault_detected` | `electrical_overload` |
-| Неисправность не обнаружена | `no_fault` | `unknown` |
-
-При открытии формы frontend может отправить `run_diagnostics`. Выбранный вариант
-отправляется один раз как `submit_diagnosis` после нажатия «Подтвердить»:
-
-```javascript
-const diagnosisPayloadByOption = {
-  bearing_wear: {
-    conclusion: "fault_detected",
-    reason: "bearing_wear",
-  },
-  cavitation: {
-    conclusion: "fault_detected",
-    reason: "cavitation",
-  },
-  electrical_overload: {
-    conclusion: "fault_detected",
-    reason: "electrical_overload",
-  },
-  no_fault: {
-    conclusion: "no_fault",
-    reason: "unknown",
-  },
-};
-
-function submitDiagnosis(optionId) {
-  sendScenarioAction(
-    "submit_diagnosis",
-    "eq-n1a",
-    diagnosisPayloadByOption[optionId]
-  );
-}
-```
-
-При переключении radio-кнопки сообщение не отправляется. При отмене формы
-сообщение также не отправляется.
-
-Запустить резервный Н-1Б:
+Неисправность не выявлена — `reason` не передаётся:
 
 ```json
 {
-  "actionType": "start_pump",
-  "targetId": "eq-n1b"
+  "actionType": "submit_diagnosis",
+  "targetId": "eq-n1a",
+  "parameters": {"conclusion": "no_fault"}
 }
 ```
 
-Остановить неисправный Н-1А:
+Значения `0`/`1` не используются: строковые коды устойчивее, понятнее в
+журнале и не требуют помнить смысл числа.
+
+### Сообщения backend
+
+При подключении приходит полный `telemetry.snapshot`, далее — полные списки тех
+же восьми компонентов в `telemetry.update`. В каждом сообщении есть:
+
+- `sequenceNo` — порядок сообщений модели;
+- `stateVersion` — версия состояния;
+- `mode` — `training` или `control`;
+- `timing` — live-время, максимум и прогресс;
+- `scenarioState.status` — `active` или `completed`;
+- `scenarioState.completionReason` — причина автоматического завершения;
+- `components` — неизменный по составу список компонентов;
+- `journal` — записи формата «время — описание действия».
+
+Параметр компонента:
 
 ```json
 {
-  "actionType": "stop_pump",
-  "targetId": "eq-n1a"
+  "parameterId": "COMPAX.N1A.VELOCITY",
+  "measurementType": "vibration_velocity",
+  "value": 7.9,
+  "unit": "мм/с",
+  "status": "alert"
 }
 ```
 
-Допустимые насосы: `eq-n1`, `eq-n1a`, `eq-n1b`, `eq-n1v`. Диалог
-подтверждения реализует frontend. При выборе «Отмена» сообщение не отправляется.
+COMPAX передаётся в физических единицах: °C, мм/с, м/с², мкм; ток — в процентах
+от учебной базовой величины. PRA 351, FYQR 117, ЭЛОУ и LRCA 605 остаются в `%`,
+потому что подтверждённых абсолютных режимных траекторий нет. Поле
+`valuePercent` удалено.
 
-### Что backend возвращает в frontend
-
-Сразу после подключения backend отправляет полный `telemetry.snapshot`.
-
-После корректного действия сначала приходит подтверждение:
-
-```json
-{
-  "type": "action.result",
-  "status": "accepted",
-  "actionId": "22222222-2222-2222-2222-222222222222",
-  "stateVersion": 18
-}
-```
-
-Затем всем подключённым клиентам сессии приходит новое `telemetry.update`.
-
-Если действие невалидно или не может быть выполнено:
+Подсказка приходит отдельным сообщением, поэтому обработчик frontend должен
+ветвиться по `type`, а не считать каждое сообщение телеметрией:
 
 ```json
 {
-  "type": "action.result",
-  "status": "rejected",
-  "error": {
-    "code": "invalid_action",
-    "message": "Action must contain a valid actionType, targetId and optional parameters"
+  "type": "scenario.hint",
+  "sessionId": "...",
+  "virtualTimeMs": 10000,
+  "hintId": "inspect-n1a",
+  "level": "warning",
+  "title": "Проверьте Н-1А",
+  "message": "Статус Н-1А изменился...",
+  "displayDurationMs": 8000,
+  "provenance": {
+    "method": "deterministic_rule",
+    "llmUsed": false,
+    "sourceRefs": ["A-18", "учебное допущение"]
   }
 }
 ```
 
-Коды ошибок действий:
+`displayDurationMs` позволяет показать временный popup. Во время live-сценария
+нейросеть и внешний API не вызываются.
 
-- `invalid_message` — сообщение не является текстовым JSON;
-- `invalid_action` — отсутствуют или невалидны поля действия;
-- `session_not_found` — сессия недоступна;
-- `session_not_running` — сессия не имеет статус `running`;
-- `action_rejected` — неизвестная цель или действие отклонено моделью.
-
-Ошибка действия не закрывает WebSocket.
-
-### Телеметрия
-
-Пример сокращённого сообщения:
-
-```json
-{
-  "type": "telemetry.update",
-  "sessionId": "11111111-1111-1111-1111-111111111111",
-  "scenarioId": "MVP-SC-01",
-  "scenarioVersion": "0.3.0",
-  "modelId": "n1a-deterministic-training-model",
-  "modelVersion": "0.3.0",
-  "sequenceNo": 25,
-  "stateVersion": 25,
-  "timing": {
-    "mode": "live",
-    "elapsedMs": 55000,
-    "totalMs": 120000,
-    "remainingMs": 65000,
-    "progressPercent": 45.8
-  },
-  "components": [
-    {
-      "componentId": "eq-n1a",
-      "uiId": "pump-h1a",
-      "tag": "Н-1А",
-      "name": "Сырьевой насос Н-1А",
-      "componentType": "pump",
-      "status": "alert",
-      "operatingState": "running",
-      "parameters": [
-        {
-          "parameterId": "COMPAX.N1A.VELOCITY",
-          "tag": "COMPAX.N1A.VELOCITY",
-          "name": "Виброскорость Н-1А",
-          "valuePercent": 375.0,
-          "status": "alert"
-        }
-      ],
-      "state": {
-        "faultSeverityPercent": 68.3
-      }
-    }
-  ],
-  "journal": [
-    {
-      "entryId": "22222222-2222-2222-2222-222222222222",
-      "time": "00:55",
-      "description": "Запущен насос Н-1Б"
-    }
-  ]
-}
-```
-
-`valuePercent` — нормализованное учебное значение. Физические единицы через
-WebSocket не передаются. Допустимые статусы: `success`, `warning`, `alert`.
-
-### Постоянный список компонентов
-
-Список и порядок компонентов не меняются:
-
-| `componentId` | `uiId` | Параметры |
-|---|---|---|
-| `eq-n1` | `pump-h1` | 5 параметров COMPACS |
-| `eq-n1a` | `pump-h1a` | 5 параметров COMPACS |
-| `eq-n1b` | `pump-h1b` | 5 параметров COMPACS |
-| `eq-n1v` | `pump-h1v` | 5 параметров COMPACS |
-| `eq-n1-discharge` | `line-n1-elou` | PRA 351, FYQR 117 |
-| `eq-t1-t11` | `heat-exchanger-t1-t11` | расход, температура |
-| `eq-elou` | `elou-block` | уровни I и II ступени |
-| `eq-e15` | `e15` | LRCA 605 |
-
-Остановленный насос остаётся в массиве, получает `operatingState = stopped`,
-а его `parameters = []`. После запуска параметры появляются снова. Для
-изменения отображения насоса frontend использует `operatingState`, а не общий
-`status`.
-
-В `state` компонента `eq-n1-discharge` дополнительно передаются:
-
-- `recoveryActive` — идёт восстановление;
-- `stabilized` — целевые значения достигнуты;
-- `safePumpConfiguration` — достигнута безопасная учебная конфигурация;
-- `scenarioFailed` и `failureReason` — терминальный отказ и его причина.
-
-### Обработка сообщений на frontend
+Пример маршрутизации сообщений:
 
 ```javascript
-socket.onmessage = (event) => {
-  const message = JSON.parse(event.data);
-
-  if (message.type === "action.result") {
+socket.onmessage = ({ data }) => {
+  const message = JSON.parse(data);
+  if (message.type === "telemetry.snapshot" || message.type === "telemetry.update") {
+    renderTelemetry(message);
+  } else if (message.type === "action.result") {
     handleActionResult(message);
-    return;
-  }
-
-  if (
-    message.type === "telemetry.snapshot" ||
-    message.type === "telemetry.update"
-  ) {
-    applyTelemetry(message);
+  } else if (message.type === "scenario.hint") {
+    showTemporaryHint(message, message.displayDurationMs);
   }
 };
 ```
 
-Правила применения телеметрии:
+## Результат и ИИ
 
-1. Проверять `sequenceNo` только у телеметрии и игнорировать старые сообщения.
-2. Полностью заменять `components`, `timing` и `journal`.
-3. Искать визуальный объект по `uiId`.
-4. Значение брать из `valuePercent`, цвет — из `status`.
-5. Журнал показывать колонками `time` и `description`.
-6. После переподключения принять новый полный `telemetry.snapshot`.
+SCR-04 рассчитывается кодом и содержит статус `passed`,
+`passed_with_remarks` или `failed`, балл 0–100, выполнение задач, конечные и
+минимальные контролируемые параметры, замечания и причину завершения.
 
-Коды закрытия WebSocket: `4403` — запрещён Origin, `4404` — сессия не найдена,
-`4409` — сессия не запущена.
+SCR-05 создаётся после результата. Он содержит упорядоченные карточки ошибок:
+классификацию, время, действие пользователя, последствие, правильный учебный
+подход, прогноз повторения и время показанной подсказки. SCR-05 не меняет балл
+и статус SCR-04 (`scoreChanged: false`).
 
-### Где контракт реализован в коде
+Если загружен `OPENROUTER_API_KEY`, один LLM-вызов может улучшить только текст
+итогового SCR-05. Коды ошибок, их порядок, балл и статус проверяются и остаются
+детерминированными. Без ключа возвращается полноценный шаблонный разбор с
+`llmUsed: false`.
 
-| Часть контракта | Файл |
-|---|---|
-| список `actionType` | `app/domain/enums.py`, класс `ActionType` |
-| минимальное входное сообщение | `app/domain/actions.py`, класс `ScenarioActionRequest` |
-| ответы `action.result` | `app/domain/actions.py`, классы `ActionAcceptedMessage` и `ActionRejectedMessage` |
-| приём и отправка WebSocket | `app/api/routes/websocket.py` |
-| создание UUID, времени и внутреннего действия | `app/services/session_manager.py`, метод `apply_scenario_action` |
-| проверка целей и изменение модели | `app/simulation/model.py` |
-| форматы snapshot/update | `app/domain/telemetry.py` |
+RAG доступен только после завершения сессии, поэтому он не подсказывает ответ во
+время экзамена. Запрос:
 
-## Статусы и завершение сценария
-
-Статусы сессии: `created`, `running`, `paused`, `ready_to_complete`,
-`completed`, `failed`, `cancelled`.
-
-После стабилизации backend устанавливает `ready_to_complete` и останавливает
-live-таймер. Frontend вызывает:
-
-```http
-POST /api/v1/sessions/{sessionId}/complete
-GET  /api/v1/sessions/{sessionId}/result
-GET  /api/v1/sessions/{sessionId}/actions
+```json
+{"question": "Почему в учебной модели анализируют PRA 351?"}
 ```
 
-`result` содержит `rubricVersion`, итог, балл, секции оценки, штрафы,
-`errorCodes` и `criticalFailureReasons`. `actions` содержит полный аудит с
-виртуальным временем, описанием и ошибками для отчёта и будущего AI-модуля.
+Перед использованием постройте локальный индекс из корня репозитория:
 
-## Состояние и хранение
+```bash
+python3 -m ai.examples.build_rag_index \
+  --source-dir "/полный/путь/КТК_ЭЛОУ_АВТ_пакет_для_промта"
+```
 
-Активный расчёт модели живёт в памяти одного процесса FastAPI, поэтому MVP
-запускается с одним worker. Метаданные сессий, все принятые действия и результаты
-сохраняются в БД и доступны для последующего AI-анализа. После перезапуска можно
-читать архив и результат, но продолжить незавершённый live-расчёт нельзя.
+Без индекса endpoint вернёт HTTP 503. Без ключа OpenRouter RAG безопасно
+возвращает найденные источники и fallback; секретный ключ никогда не уходит во
+frontend.
 
-Redis/Kafka не требуются для одного worker. Внешний брокер понадобится при
-горизонтальном масштабировании и нескольких экземплярах backend.
+## Таблицы БД
 
-## Тесты (необязательно)
+- `training_sessions` — сессии и их статусы;
+- `operator_actions` — аудит действий;
+- `session_results` — SCR-04 целиком в JSON;
+- `issued_hints` — реально показанные live-подсказки;
+- `session_ai_analyses` — сохранённый SCR-05;
+- `alembic_version` — версия структуры БД.
 
-Тесты не запускаются автоматически вместе с Uvicorn и не блокируют merge:
-сейчас в репозитории не настроен обязательный CI-check. При необходимости их
-можно запустить вручную:
+## Проверка
 
 ```bash
 cd backend
-KTK_DATABASE_URL=sqlite+pysqlite:///:memory: pytest
+source .venv/bin/activate
+pytest -q
+cd ..
+backend/.venv/bin/python -m pytest ai/tests -q
 ```
-
-Основные проверки:
-
-| Требование | Тест |
-|---|---|
-| REST lifecycle и результат | `test_session_api.py` |
-| минимальные действия через WebSocket | `test_websocket_api.py` |
-| полный пользовательский путь Н-1А | `test_full_scenario_api.py` |
-| динамика и восстановление модели | `test_full_scenario.py` |
-| хранение сессий, действий и результатов | `test_persistence.py` |
-| миграции Alembic | `test_migrations.py` |

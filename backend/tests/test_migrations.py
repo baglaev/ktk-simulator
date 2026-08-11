@@ -60,8 +60,10 @@ def test_initial_migration_adopts_pre_alembic_sqlite_schema(
     assert {"model_id", "model_version"}.issubset(columns)
     assert set(inspector.get_table_names()) == {
         "alembic_version",
+        "issued_hints",
         "operator_actions",
+        "session_ai_analyses",
         "session_results",
         "training_sessions",
     }
-    assert revision == "20260810_01"
+    assert revision == "20260811_02"
