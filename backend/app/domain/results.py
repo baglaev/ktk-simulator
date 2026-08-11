@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from decimal import Decimal, ROUND_HALF_UP
 from uuid import UUID
 
 from pydantic import AwareDatetime, Field, model_validator
@@ -75,11 +76,23 @@ class SessionResult(APIModel):
     def adopt_legacy_scr04_payload(cls, value):
         """Read 0.3.x result JSON retained in an upgraded local database."""
 
-        if not isinstance(value, dict) or (
-            "status" in value or "resultStatus" in value
-        ):
+        if not isinstance(value, dict):
             return value
         payload = dict(value)
+        parameters_key = (
+            "controlledParameters"
+            if "controlledParameters" in payload
+            else "controlled_parameters"
+        )
+        parameters = payload.get(parameters_key)
+        if isinstance(parameters, list):
+            payload[parameters_key] = [
+                _adopt_legacy_parameter(parameter)
+                for parameter in parameters
+            ]
+
+        if "status" in payload or "resultStatus" in payload:
+            return payload
         outcome = payload.get("outcome", "failed")
         payload.update(
             {
@@ -95,6 +108,28 @@ class SessionResult(APIModel):
             }
         )
         return payload
+
+
+def _adopt_legacy_parameter(value):
+    """Round fractional values written before the integer API contract."""
+
+    if not isinstance(value, dict):
+        return value
+    parameter = dict(value)
+    for camel_key, snake_key in (
+        ("finalValue", "final_value"),
+        ("minimumValue", "minimum_value"),
+    ):
+        key = camel_key if camel_key in parameter else snake_key
+        number = parameter.get(key)
+        if isinstance(number, float):
+            parameter[key] = int(
+                Decimal(str(number)).quantize(
+                    Decimal("1"),
+                    rounding=ROUND_HALF_UP,
+                )
+            )
+    return parameter
 
 
 class TraineeResultSummary(APIModel):
