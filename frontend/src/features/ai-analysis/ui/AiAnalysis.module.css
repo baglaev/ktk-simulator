@@ -132,3 +132,56 @@
 
   margin-top: 24px;
 }
+
+.errorCard {
+  overflow: hidden;
+
+  border: 1px solid var(--color-bg-border);
+  border-radius: 8px;
+}
+
+.errorHeaderButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  width: 100%;
+  padding: 16px;
+
+  color: inherit;
+  text-align: left;
+
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.errorHeaderButton:hover {
+  background: var(--color-bg-ghost);
+}
+
+.errorHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  flex-shrink: 0;
+}
+
+.arrow {
+  transition: transform 0.2s ease;
+}
+
+.arrowOpened {
+  transform: rotate(180deg);
+  transition: transform 0.2s ease;
+}
+
+.errorDetails {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+
+  padding: 0 16px 16px;
+}

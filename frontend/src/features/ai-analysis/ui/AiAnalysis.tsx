@@ -1,6 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import { useNavigate } from 'react-router-dom';
-
+import { useState } from 'react';
+import { IconArrowDown } from '@consta/icons/IconArrowDown';
 import { Text } from '@consta/uikit/Text';
 import { Badge } from '@consta/uikit/Badge';
 import { Button } from '@consta/uikit/Button';
@@ -18,6 +19,8 @@ export const AiAnalysis = observer(() => {
   const navigate = useNavigate();
 
   const { analysis } = aiAnalysisStore;
+
+  const [openedErrorCode, setOpenedErrorCode] = useState<string | null>(null);
 
   if (!analysis) {
     return (
@@ -98,51 +101,70 @@ export const AiAnalysis = observer(() => {
         </Text>
 
         <div className={styles.errors}>
-          {analysis.errors.map((error) => (
-            <div key={error.code} className={styles.errorCard}>
-              <div className={styles.errorHeader}>
-                <div className={styles.errorTitle}>
-                  <Badge
-                    form="round"
-                    size="xs"
-                    status={error.status === 'alert' ? 'error' : 'warning'}
-                  />
+          <div className={styles.errors}>
+            {analysis.errors.map((error) => {
+              const isOpen = openedErrorCode === error.code;
 
-                  <Text weight="semibold">
-                    {error.order}. {error.userAction}
-                  </Text>
+              return (
+                <div key={error.code} className={styles.errorCard}>
+                  <button
+                    type="button"
+                    className={styles.errorHeaderButton}
+                    onClick={() => setOpenedErrorCode(isOpen ? null : error.code)}
+                  >
+                    <div className={styles.errorTitle}>
+                      <Badge
+                        form="round"
+                        size="xs"
+                        status={error.status === 'alert' ? 'error' : 'warning'}
+                      />
+
+                      <Text weight="semibold">
+                        {error.order}. {error.userAction}
+                      </Text>
+                    </div>
+
+                    <div className={styles.errorHeaderRight}>
+                      <Badge label={error.classification} view="stroked" />
+
+                      <IconArrowDown
+                        size="s"
+                        className={isOpen ? styles.arrowOpened : styles.arrow}
+                      />
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className={styles.errorDetails}>
+                      <div className={styles.detailItem}>
+                        <Text size="xs" view="secondary">
+                          Последствие
+                        </Text>
+
+                        <Text size="s">{error.consequence}</Text>
+                      </div>
+
+                      <div className={styles.detailItem}>
+                        <Text size="xs" view="secondary">
+                          Как правильно
+                        </Text>
+
+                        <Text size="s">{error.correctApproach}</Text>
+                      </div>
+
+                      <div className={styles.detailItem}>
+                        <Text size="xs" view="secondary">
+                          При повторении
+                        </Text>
+
+                        <Text size="s">{error.prediction}</Text>
+                      </div>
+                    </div>
+                  )}
                 </div>
-
-                <Badge label={error.classification} view="stroked" />
-              </div>
-
-              <div className={styles.errorDetails}>
-                <div className={styles.detailItem}>
-                  <Text size="xs" view="secondary">
-                    Последствие
-                  </Text>
-
-                  <Text size="s">{error.consequence}</Text>
-                </div>
-
-                <div className={styles.detailItem}>
-                  <Text size="xs" view="secondary">
-                    Как правильно
-                  </Text>
-
-                  <Text size="s">{error.correctApproach}</Text>
-                </div>
-
-                <div className={styles.detailItem}>
-                  <Text size="xs" view="secondary">
-                    При повторении
-                  </Text>
-
-                  <Text size="s">{error.prediction}</Text>
-                </div>
-              </div>
-            </div>
-          ))}
+              );
+            })}
+          </div>
         </div>
       </section>
 
