@@ -8,10 +8,12 @@ import { AiAnalysisPage } from '@/pages/AiAnalysisPage/ui/AiAnalysisPage';
 import { LoginPage } from '@/pages/LoginPage/ui/LoginPage';
 import { ProtectedRoute } from './ProtectedRouter';
 import { InstructorPage } from '@/pages/InstructoPage/ui/InstrucotrPage';
+import { ScrollToTop } from '../routes/ScrollToTop';
 
 export const AppRouter = () => {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
 

@@ -360,15 +360,8 @@ class SimulatorStore {
   }
 
   get scenarioStatusBadge() {
-    if (
-      this.scenarioState.status === 'completed' &&
-      this.scenarioState.completionReason === 'critical_limit_reached'
-    ) {
-      return 'error' as const;
-    }
-
     if (this.scenarioState.status === 'completed') {
-      return 'success' as const;
+      return 'error' as const;
     }
 
     return 'success' as const;

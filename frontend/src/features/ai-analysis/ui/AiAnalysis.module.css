@@ -1,5 +1,12 @@
 .section {
+  width: 100%;
   padding: 12px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .titleContainer {
@@ -7,22 +14,24 @@
   align-items: center;
   gap: 12px;
 
-  margin-top: 40px;
+  margin-top: 12px;
+}
+
+.titleText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .summaryGrid {
   display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 12px;
-
-  margin-top: 20px;
+  grid-template-columns: 180px 1fr;
+  gap: 10px;
 }
 
 .scoreCard,
 .summaryCard,
 .card {
-  padding: 16px;
-
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-bg-border);
   border-radius: 8px;
@@ -32,122 +41,63 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 8px;
+  gap: 4px;
+
+  padding: 12px;
 }
 
-.scoreMax {
-  font-size: 18px;
-  opacity: 0.6;
-}
-
-.card {
-  margin-top: 12px;
-}
-
-.errors {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-
-  margin-top: 16px;
-}
-
-.errorCard {
-  padding: 16px;
-
-  border: 1px solid var(--color-bg-border);
-  border-radius: 8px;
-}
-
-.errorHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.errorTitle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.errorDetails {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-
-  margin-top: 16px;
-}
-
-.detailItem {
+.summaryCard {
   display: flex;
   flex-direction: column;
   gap: 6px;
 
   padding: 12px;
-
-  background: var(--color-bg-default);
-  border-radius: 8px;
 }
 
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.scoreMax {
+  margin-left: 2px;
 
-  margin-top: 12px;
+  font-size: 16px;
+  font-weight: 400;
+
+  opacity: 0.6;
 }
 
-.listItem {
+.card {
+  padding: 12px;
+}
+
+.sectionTitle {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.recommendation {
+.errors {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
+  flex-direction: column;
+  gap: 5px;
 
-.recommendationNumber {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  flex: 0 0 28px;
-
-  width: 28px;
-  height: 28px;
-
-  border: 1px solid var(--color-bg-border);
-  border-radius: 50%;
-}
-
-.buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-
-  margin-top: 24px;
+  margin-top: 8px;
 }
 
 .errorCard {
   overflow: hidden;
 
+  background: var(--color-bg-default);
   border: 1px solid var(--color-bg-border);
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .errorHeaderButton {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 10px;
 
   width: 100%;
-  padding: 16px;
+  min-height: 36px;
+  padding: 6px 8px;
 
   color: inherit;
   text-align: left;
@@ -161,27 +111,129 @@
   background: var(--color-bg-ghost);
 }
 
+.errorTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  min-width: 0;
+}
+
+.errorTitleText {
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .errorHeaderRight {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
 
   flex-shrink: 0;
 }
 
 .arrow {
+  flex-shrink: 0;
+
   transition: transform 0.2s ease;
 }
 
 .arrowOpened {
+  flex-shrink: 0;
+
   transform: rotate(180deg);
+
   transition: transform 0.2s ease;
 }
 
 .errorDetails {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 6px;
 
-  padding: 0 16px 16px;
+  padding: 4px 8px 8px;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  min-width: 0;
+  padding: 7px;
+
+  background: var(--color-bg-secondary);
+  border-radius: 5px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  margin-top: 8px;
+}
+
+.listItem {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.recommendations {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  margin-top: 8px;
+}
+
+.recommendation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  min-height: 32px;
+  padding: 5px 8px;
+
+  background: var(--color-bg-default);
+  border: 1px solid var(--color-bg-border);
+  border-radius: 6px;
+}
+
+.recommendationNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 22px;
+
+  width: 22px;
+  height: 22px;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  border: 1px solid var(--color-bg-border);
+  border-radius: 50%;
+}
+
+.buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+
+  margin-top: 4px;
+}
+
+@media (max-width: 900px) {
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .errorDetails {
+    grid-template-columns: 1fr;
+  }
 }
