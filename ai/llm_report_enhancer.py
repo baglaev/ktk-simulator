@@ -14,12 +14,16 @@ from .openai_compatible import (
 )
 
 
-_SYSTEM_PROMPT = """Отредактируй учебный отчет КТК ЭЛОУ-АВТ на русском языке.
-Используй только факты deterministicReport и actionAnalysis. Не вычисляй новые
-времена, оценки или причинно-следственные связи. Не добавляй производственные
-команды, уставки, нормативы или физические единицы. Все времена относятся только
-к учебной модели. Сохрани порядок и количество strengths, mistakes и
-recommendations; коды ошибок не изменяй.
+_SYSTEM_PROMPT = """Сформируй персонализированный учебный отчет КТК ЭЛОУ-АВТ
+на русском языке. Используй только факты deterministicReport, sessionContext,
+actionAnalysis, journalTimeline, hintTimeline и errorAnalysis. Учитывай журнал и
+хронологию действий, время реакции, порядок диагностики и переключения, контроль
+восстановления, фактически показанные подсказки, итоговые параметры и
+зафиксированные ошибки.
+Не вычисляй новые времена, оценки или причинно-следственные связи. Не добавляй
+производственные команды, уставки, нормативы или неподтвержденные физические
+значения. Все времена относятся только к учебной модели. Сохрани порядок и
+количество strengths, mistakes и recommendations; коды ошибок не изменяй.
 Верни только JSON: summary — строка; strengths и recommendations — массивы строк;
 mistakes — массив объектов {code, description}.
 """
@@ -102,12 +106,17 @@ class LLMReportEnhancer:
                 "mistakes": report.get("mistakes", []),
                 "recommendations": report.get("recommendations", []),
             },
+            "sessionContext": report.get("sessionContext", {}),
             "actionAnalysis": {
                 "stages": stages,
                 "timing": analysis.get("timing", {}),
                 "sequence": analysis.get("sequence", {}),
+                "timeline": analysis.get("timeline", []),
                 "focusAreas": analysis.get("focusAreas", []),
             },
+            "journalTimeline": report.get("journalTimeline", []),
+            "hintTimeline": report.get("hintTimeline", []),
+            "errorAnalysis": report.get("errorAnalysis", []),
         }
 
     @staticmethod

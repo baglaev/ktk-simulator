@@ -90,6 +90,67 @@ class SessionReportBuilderTests(unittest.TestCase):
             " ".join(report["strengths"]),
         )
 
+    def test_report_contains_anonymized_session_and_hint_context(self) -> None:
+        report = self.builder.build(
+            session_id="private-session-id",
+            result={
+                "outcome": "failed",
+                "status": "failed",
+                "completionReason": "critical_limit_reached",
+                "elapsedTimeMs": 120_000,
+                "totalScore": 42,
+                "taskExecution": [
+                    {
+                        "taskId": "diagnosis",
+                        "title": "Диагностика Н-1А",
+                        "status": "success",
+                        "completedAtMs": 35_000,
+                        "description": "Корректный диагноз зафиксирован",
+                    }
+                ],
+                "controlledParameters": [
+                    {
+                        "parameterId": "LRCA605",
+                        "name": "Уровень Е-15",
+                        "finalValue": 20,
+                        "minimumValue": 20,
+                        "unit": "%",
+                        "status": "alert",
+                    }
+                ],
+                "criticalFailureReasons": ["LRCA 605 достиг 20%"],
+            },
+            issued_hints=[
+                {
+                    "hintId": "inspect-n1a",
+                    "virtualTimeMs": 10_000,
+                    "level": "warning",
+                    "title": "Проверьте Н-1А",
+                    "message": "Откройте карточку Н-1А",
+                    "evidence": [
+                        {
+                            "kind": "component",
+                            "refId": "eq-n1a",
+                            "fact": "Статус warning",
+                        }
+                    ],
+                }
+            ],
+        )
+
+        self.assertNotIn("sessionId", report["sessionContext"])
+        self.assertEqual(
+            report["sessionContext"]["controlledParameters"][0][
+                "parameterId"
+            ],
+            "LRCA605",
+        )
+        self.assertEqual(report["hintTimeline"][0]["hintId"], "inspect-n1a")
+        self.assertEqual(
+            report["hintTimeline"][0]["evidence"][0]["refId"],
+            "eq-n1a",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

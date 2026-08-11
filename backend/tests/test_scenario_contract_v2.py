@@ -119,6 +119,17 @@ def test_ai_analysis_is_persisted_and_does_not_change_result() -> None:
     assert analysis.provenance.score_changed is False
     assert result_after == result_before
     assert analysis.errors
+    assert set(analysis.model_dump(mode="json", by_alias=True)) == {
+        "type",
+        "sessionId",
+        "resultStatus",
+        "totalScore",
+        "summary",
+        "strengths",
+        "errors",
+        "recommendations",
+        "provenance",
+    }
     assert [item.detected_at_ms for item in analysis.errors] == sorted(
         item.detected_at_ms for item in analysis.errors
     )
