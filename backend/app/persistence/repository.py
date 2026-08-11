@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.domain import (
@@ -20,6 +21,16 @@ from app.persistence.models import (
     SessionResultRecord,
     TrainingSessionRecord,
 )
+
+
+@dataclass(frozen=True)
+class TraineeResultStatistics:
+    attempts_count: int
+    successful_attempts_count: int
+    average_score: int
+    best_score: int
+    last_completed_at: datetime
+    latest_result: TraineeResultSummary
 
 
 class SessionRepository:
@@ -203,6 +214,85 @@ class SessionRepository:
                 )
             )
         return items, total
+
+    def list_trainee_result_statistics(
+        self,
+    ) -> dict[str, TraineeResultStatistics]:
+        """Aggregate all persisted terminal attempts by trainee identifier."""
+
+        query = (
+            select(
+                TrainingSessionRecord.trainee_id,
+                func.count(SessionResultRecord.session_id),
+                func.sum(
+                    case(
+                        (SessionResultRecord.outcome == "success", 1),
+                        else_=0,
+                    )
+                ),
+                func.avg(SessionResultRecord.total_score),
+                func.max(SessionResultRecord.total_score),
+                func.max(SessionResultRecord.completed_at),
+            )
+            .join(
+                SessionResultRecord,
+                SessionResultRecord.session_id
+                == TrainingSessionRecord.session_id,
+            )
+            .group_by(TrainingSessionRecord.trainee_id)
+        )
+        with self._session_factory() as database:
+            records = database.execute(query).all()
+
+            latest_records = database.execute(
+                select(TrainingSessionRecord, SessionResultRecord)
+                .join(
+                    SessionResultRecord,
+                    SessionResultRecord.session_id
+                    == TrainingSessionRecord.session_id,
+                )
+                .order_by(SessionResultRecord.completed_at.desc())
+            ).all()
+
+        latest_results: dict[str, TraineeResultSummary] = {}
+        for session_record, result_record in latest_records:
+            if session_record.trainee_id in latest_results:
+                continue
+            result = SessionResult.model_validate(result_record.payload_json)
+            latest_results[session_record.trainee_id] = TraineeResultSummary(
+                session_id=session_record.session_id,
+                trainee_id=session_record.trainee_id,
+                instructor_id=session_record.instructor_id,
+                scenario_id=session_record.scenario_id,
+                scenario_version=session_record.scenario_version,
+                mode=session_record.mode,
+                session_status=session_record.status,
+                result_status=result.status,
+                outcome=result.outcome,
+                total_score=result.total_score,
+                max_score=result.max_score,
+                elapsed_time_ms=result.elapsed_time_ms,
+                completed_at=_aware(result_record.completed_at),
+            )
+
+        return {
+            trainee_id: TraineeResultStatistics(
+                attempts_count=int(attempts_count),
+                successful_attempts_count=int(successful_attempts_count or 0),
+                average_score=round(float(average_score)),
+                best_score=int(best_score),
+                last_completed_at=_aware(last_completed_at),
+                latest_result=latest_results[trainee_id],
+            )
+            for (
+                trainee_id,
+                attempts_count,
+                successful_attempts_count,
+                average_score,
+                best_score,
+                last_completed_at,
+            ) in records
+        }
 
     def save_hint(self, item: ScenarioHintMessage) -> None:
         record = IssuedHintRecord(

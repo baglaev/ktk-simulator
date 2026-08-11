@@ -300,6 +300,12 @@ class SessionManager:
             offset=offset,
         )
 
+    def list_trainee_result_statistics(self):
+        """Return result aggregates used by the instructor dashboard."""
+
+        with self._lock:
+            return self._repository.list_trainee_result_statistics()
+
     def generate_ai_analysis(self, session_id: UUID) -> SessionAIAnalysis:
         with self._lock:
             result = self.get_result(session_id)

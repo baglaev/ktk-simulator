@@ -52,6 +52,13 @@ from app.domain.hints import (
     HintProvenance,
     ScenarioHintMessage,
 )
+from app.domain.instructor import (
+    InstructorAttemptJournal,
+    InstructorJournalItem,
+    InstructorOverview,
+    InstructorTrainee,
+    InstructorTraineeList,
+)
 from app.domain.sessions import (
     AdvanceSessionRequest,
     CreateSessionRequest,
@@ -111,6 +118,11 @@ __all__ = [
     "EventSeverity",
     "GeneralStatus",
     "HintEvidence",
+    "InstructorAttemptJournal",
+    "InstructorJournalItem",
+    "InstructorOverview",
+    "InstructorTrainee",
+    "InstructorTraineeList",
     "HintProvenance",
     "DiagnosisConclusion",
     "DiagnosisFormConfig",
