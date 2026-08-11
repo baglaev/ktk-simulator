@@ -358,6 +358,119 @@ socket.onmessage = ({ data }) => {
 };
 ```
 
+### Инструкция для frontend: журнал и подсказки
+
+Frontend создаёт сессию с выбранным режимом, запускает её и только после этого
+открывает WebSocket:
+
+```text
+POST /api/v1/sessions с mode = training | control
+→ POST /api/v1/sessions/{sessionId}/start
+→ ws://127.0.0.1:8000/ws/v1/sessions/{sessionId}
+```
+
+Если подключиться к ещё не запущенной сессии, backend закроет соединение с
+кодом `4409`. Для неизвестного `sessionId` используется код `4404`, для
+запрещённого `Origin` — `4403`.
+
+Первое WS-сообщение — `telemetry.snapshot`. После него приходят
+`telemetry.update`. Поле `journal` в обоих типах содержит **полный текущий
+журнал**, а не только новые записи:
+
+```json
+{
+  "journal": [
+    {
+      "entryId": "9d04a728-0000-0000-0000-000000000000",
+      "time": "00:10",
+      "description": "Подсказка «Проверьте Н-1А»: Статус Н-1А изменился..."
+    }
+  ]
+}
+```
+
+Поэтому frontend должен заменять массив целиком:
+
+```javascript
+function applyTelemetry(message) {
+  if (
+    message.type === "telemetry.update" &&
+    message.sequenceNo <= lastSequenceNo
+  ) {
+    return;
+  }
+
+  lastSequenceNo = message.sequenceNo;
+  components = message.components;
+  journal = message.journal; // заменить, не append/push
+  timing = message.timing;
+  scenarioState = message.scenarioState;
+}
+```
+
+В журнал автоматически попадают события модели, принятые действия пользователя,
+завершение сценария и выданные подсказки. Отклонённое действие в журнал не
+добавляется. Для действия `entryId` совпадает с серверным `actionId`.
+
+В режиме `training` backend проверяет правила после каждого тика модели и после
+каждого принятого действия. Подсказка может появиться, когда:
+
+- Н-1А перешёл в `warning`/`alert`, но его карточка не открыта;
+- карточка Н-1А открыта, но PRA 351 и FYQR 117 ещё не сопоставлены;
+- оба линейных сигнала просмотрены, но диагностика не запущена;
+- диагностика запущена, но заключение не отправлено;
+- правильный диагноз указан, но безопасная учебная конфигурация насосов не
+  достигнута;
+- началось восстановление параметров;
+- Н-1А и Н-1Б одновременно остановлены;
+- сценарий завершился.
+
+Каждый `hintId` выдаётся не более одного раза за сессию; за одно обновление
+формируется максимум одна подсказка. В режиме `control` сообщения
+`scenario.hint` и соответствующие записи в журнале отсутствуют.
+
+Если правило сработало, backend сначала добавляет текст подсказки в журнал,
+затем отправляет два сообщения:
+
+```text
+telemetry.update с обновлённым полным journal
+→ scenario.hint для временного popup
+```
+
+После действия пользователя порядок такой:
+
+```text
+action.result
+→ telemetry.update с записью действия и, возможно, подсказки
+→ scenario.hint, если сработало новое правило
+```
+
+`scenario.hint` не нужно вручную добавлять в журнал — это создаст дубликат.
+Frontend использует его только для popup и закрывает popup через
+`displayDurationMs`. При переподключении предыдущие popup не повторяются, но их
+записи остаются в полном `journal` начального `telemetry.snapshot`.
+
+Рекомендуемая маршрутизация:
+
+```javascript
+socket.onmessage = ({ data }) => {
+  const message = JSON.parse(data);
+
+  switch (message.type) {
+    case "telemetry.snapshot":
+    case "telemetry.update":
+      applyTelemetry(message);
+      break;
+    case "scenario.hint":
+      showTemporaryHint(message, message.displayDurationMs);
+      break;
+    case "action.result":
+      handleActionResult(message);
+      break;
+  }
+};
+```
+
 ## Результат и ИИ
 
 SCR-04 рассчитывается кодом и содержит статус `passed`,
