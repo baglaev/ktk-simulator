@@ -68,8 +68,8 @@ def test_instructor_can_list_completed_trainee_results() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["total"] == 2
-    assert payload["limit"] == 100
-    assert payload["offset"] == 0
+    assert "limit" not in payload
+    assert "offset" not in payload
     assert {item["sessionId"] for item in payload["items"]} == {
         first_id,
         second_id,
@@ -79,7 +79,7 @@ def test_instructor_can_list_completed_trainee_results() -> None:
     assert all(item["completedAt"] for item in payload["items"])
 
 
-def test_instructor_results_support_filters_and_pagination() -> None:
+def test_selected_trainee_results_support_mode_and_pagination() -> None:
     manager = build_manager()
     expected_id = complete_attempt(
         manager,
@@ -97,10 +97,8 @@ def test_instructor_results_support_filters_and_pagination() -> None:
     try:
         client = TestClient(app)
         response = client.get(
-            "/api/v1/instructor/results",
+            "/api/v1/instructor/trainees/trainee-filtered/results",
             params={
-                "traineeId": "trainee-filtered",
-                "instructorId": "instructor-001",
                 "mode": "control",
                 "limit": 1,
                 "offset": 0,
@@ -130,12 +128,12 @@ def test_instructor_results_returns_empty_page_before_completion() -> None:
         app.dependency_overrides.pop(get_session_manager, None)
 
     assert response.status_code == 200
-    assert response.json() == {
-        "items": [],
-        "total": 0,
-        "limit": 100,
-        "offset": 0,
-    }
+    assert response.json() == {"items": [], "total": 0}
+
+
+def test_all_results_openapi_has_no_query_parameters() -> None:
+    operation = app.openapi()["paths"]["/api/v1/instructor/results"]["get"]
+    assert operation.get("parameters", []) == []
 
 
 def test_instructor_receives_full_trainee_directory_before_attempts() -> None:

@@ -71,6 +71,7 @@ from app.domain.results import (
     SessionResult,
     TaskExecutionItem,
     TraineeResultSummary,
+    TraineeResultsCollection,
     TraineeResultsPage,
 )
 from app.domain.scenarios import (
@@ -158,6 +159,7 @@ __all__ = [
     "TelemetryUpdate",
     "TaskExecutionItem",
     "TraineeResultSummary",
+    "TraineeResultsCollection",
     "TraineeResultsPage",
     "TrainingMode",
     "TrainingSession",

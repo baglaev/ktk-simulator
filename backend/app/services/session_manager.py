@@ -17,6 +17,7 @@ from app.domain import (
     SessionAIAnalysis,
     SessionResult,
     SessionStatus,
+    TraineeResultsCollection,
     TraineeResultsPage,
     TrainingMode,
     TrainingSession,
@@ -305,6 +306,13 @@ class SessionManager:
 
         with self._lock:
             return self._repository.list_trainee_result_statistics()
+
+    def list_all_trainee_results(self) -> TraineeResultsCollection:
+        """Return all terminal results for the common instructor table."""
+
+        with self._lock:
+            items, total = self._repository.list_result_summaries(limit=None)
+        return TraineeResultsCollection(items=items, total=total)
 
     def generate_ai_analysis(self, session_id: UUID) -> SessionAIAnalysis:
         with self._lock:

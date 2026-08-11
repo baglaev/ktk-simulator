@@ -122,3 +122,10 @@ class TraineeResultsPage(APIModel):
     total: int = Field(ge=0)
     limit: int = Field(gt=0)
     offset: int = Field(ge=0)
+
+
+class TraineeResultsCollection(APIModel):
+    """All completed results returned without frontend query parameters."""
+
+    items: list[TraineeResultSummary] = Field(default_factory=list)
+    total: int = Field(ge=0)

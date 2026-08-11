@@ -151,7 +151,7 @@ class SessionRepository:
         trainee_id: str | None = None,
         instructor_id: str | None = None,
         mode: TrainingMode | None = None,
-        limit: int = 100,
+        limit: int | None = 100,
         offset: int = 0,
     ) -> tuple[list[TraineeResultSummary], int]:
         """Return completed attempts ordered from newest to oldest."""
@@ -186,12 +186,12 @@ class SessionRepository:
 
         with self._session_factory() as database:
             total = int(database.scalar(count_query) or 0)
-            records = database.execute(
-                joined
-                .order_by(SessionResultRecord.completed_at.desc())
-                .limit(limit)
-                .offset(offset)
-            ).all()
+            result_query = joined.order_by(
+                SessionResultRecord.completed_at.desc()
+            )
+            if limit is not None:
+                result_query = result_query.limit(limit).offset(offset)
+            records = database.execute(result_query).all()
 
         items: list[TraineeResultSummary] = []
         for session_record, result_record in records:
