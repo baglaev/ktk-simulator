@@ -55,7 +55,7 @@ export const SimulatorSchema = observer(() => {
 
             <div className={styles.procentContainer}>
               <Text size="m" weight="bold">
-                {pra351 ? `${Math.round(pra351.valuePercent)}%` : '--'}
+                {pra351 ? `${pra351.value} ${pra351.unit}` : '--'}
               </Text>
 
               {pra351 && (
@@ -81,7 +81,7 @@ export const SimulatorSchema = observer(() => {
 
             <div className={styles.procentContainer}>
               <Text size="m" weight="bold">
-                {fyqr117 ? `${Math.round(fyqr117.valuePercent)}%` : '--'}
+                {fyqr117 ? `${fyqr117.value} ${fyqr117.unit}` : '--'}
               </Text>
 
               {fyqr117 && (
@@ -108,7 +108,7 @@ export const SimulatorSchema = observer(() => {
 
           <div className={styles.procentContainer}>
             <Text size="m" weight="bold">
-              {lrca605 ? `${Math.round(lrca605.valuePercent)}%` : '--'}
+              {lrca605 ? `${lrca605.value} ${lrca605.unit}` : '--'}
             </Text>
 
             {lrca605 && (

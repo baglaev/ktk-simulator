@@ -6,12 +6,11 @@ export type OperatingState = 'running' | 'stopped';
 
 export interface Parameter {
   parameterId: string;
-  tag: string;
-  name: string;
-  valuePercent: number;
+  measurementType: string;
+  value: number;
+  unit: string;
   status: ScenarioStatus;
 }
-
 export interface ScenarioComponent {
   componentId: string;
   uiId: string;
@@ -301,12 +300,12 @@ class SimulatorStore {
         if (lastPoint?.time === time) {
           currentHistory[currentHistory.length - 1] = {
             time,
-            value: parameter.valuePercent,
+            value: parameter.value,
           };
         } else {
           currentHistory.push({
             time,
-            value: parameter.valuePercent,
+            value: parameter.value,
           });
         }
 

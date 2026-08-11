@@ -44,6 +44,19 @@ const diagnosisOptions: DiagnosisOption[] = [
   },
 ];
 
+const measurementTypeNames: Record<string, string> = {
+  vibration_velocity: 'Виброскорость',
+  vibration_acceleration: 'Виброускорение',
+  temperature: 'Температура',
+  pressure: 'Давление',
+  flow: 'Расход',
+  level: 'Уровень',
+};
+
+const getMeasurementName = (measurementType: string) => {
+  return measurementTypeNames[measurementType] ?? measurementType;
+};
+
 export const SimulatorInfoPanel = observer(() => {
   const { selectedComponent } = simulatorStore;
 
@@ -142,63 +155,55 @@ export const SimulatorInfoPanel = observer(() => {
         </div>
       )}
 
-      {selectedComponent.parameters.length > 0 && (
-        <div className={styles.parameters}>
-          <Text size="s" weight="semibold" className={styles.parametersTitle}>
-            Диагностические параметры
-          </Text>
+      {selectedComponent.parameters.map((parameter) => {
+        const history = simulatorStore.getParameterHistory(parameter.parameterId);
 
-          {selectedComponent.parameters.map((parameter) => {
-            const history = simulatorStore.getParameterHistory(parameter.parameterId);
+        return (
+          <div key={parameter.parameterId} className={styles.parameter}>
+            <div className={styles.parameterName}>
+              <Badge
+                size="xs"
+                form="round"
+                status={
+                  parameter.status === 'success'
+                    ? 'success'
+                    : parameter.status === 'warning'
+                      ? 'warning'
+                      : 'error'
+                }
+              />
 
-            return (
-              <div key={parameter.parameterId} className={styles.parameter}>
-                <div className={styles.parameterName}>
-                  <Badge
-                    size="xs"
-                    form="round"
-                    status={
-                      parameter.status === 'success'
-                        ? 'success'
-                        : parameter.status === 'warning'
-                          ? 'warning'
-                          : 'error'
-                    }
+              <Text size="xs">{getMeasurementName(parameter.measurementType)}</Text>
+            </div>
+
+            <Text size="s" weight="semibold" className={styles.parameterValue}>
+              {parameter.value} {parameter.unit}
+            </Text>
+
+            <div className={styles.chartContainer}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={history}
+                  margin={{
+                    top: 2,
+                    right: 2,
+                    bottom: 2,
+                    left: 2,
+                  }}
+                >
+                  <Line
+                    type="monotone"
+                    dataKey="value"
+                    strokeWidth={2}
+                    dot={false}
+                    isAnimationActive={false}
                   />
-
-                  <Text size="xs">{parameter.name}</Text>
-                </div>
-
-                <Text size="s" weight="semibold" className={styles.parameterValue}>
-                  {Math.round(parameter.valuePercent)}%
-                </Text>
-
-                <div className={styles.chartContainer}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={history}
-                      margin={{
-                        top: 2,
-                        right: 2,
-                        bottom: 2,
-                        left: 2,
-                      }}
-                    >
-                      <Line
-                        type="monotone"
-                        dataKey="value"
-                        strokeWidth={2}
-                        dot={false}
-                        isAnimationActive={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        );
+      })}
 
       {isPump && !isRunning && selectedComponent.parameters.length === 0 && (
         <div className={styles.stopped}>
