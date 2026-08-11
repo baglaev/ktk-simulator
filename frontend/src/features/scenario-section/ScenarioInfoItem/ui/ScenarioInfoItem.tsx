@@ -3,6 +3,7 @@ import styles from './ScenarioInfoItem.module.css';
 import { Badge } from '@consta/uikit/Badge';
 import { Radio } from '@consta/uikit/Radio';
 import { IconCheck } from '@consta/icons/IconCheck';
+import type { IconComponent } from '@consta/icons/Icon';
 
 interface Props {
   title: string;
@@ -10,7 +11,7 @@ interface Props {
   descriptionWithStatus?: boolean;
   descriptionList?: boolean;
   descriptionSelectedItems?: boolean;
-  icon: string;
+  icon: IconComponent;
 }
 
 export const ScenarioInfoItem = (props: Props) => {
@@ -20,13 +21,13 @@ export const ScenarioInfoItem = (props: Props) => {
     descriptionWithStatus,
     descriptionList,
     descriptionSelectedItems,
-    icon,
+    icon: Icon,
   } = props;
 
   return (
     <div className={styles.container}>
       <div className={styles.item}>
-        <img src={icon} />
+        <Icon size="l" />
         <div className={styles.descriptionContainer}>
           <Text size="l">{title}</Text>
           {description && <Text className={styles.description}>{description}</Text>}

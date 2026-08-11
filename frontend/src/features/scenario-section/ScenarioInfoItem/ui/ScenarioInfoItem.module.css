@@ -43,3 +43,8 @@
 .listContainer {
   margin-top: 12px;
 }
+
+.item {
+  display: flex;
+  column-gap: 12px;
+}

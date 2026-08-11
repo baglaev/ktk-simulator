@@ -4,8 +4,12 @@ import { IconDocFilled } from '@consta/icons/IconDocFilled';
 import { IconDebug } from '@consta/icons/IconDebug';
 import { IconAddToComparison } from '@consta/icons/IconAddToComparison';
 import styles from './ScenarioSection.module.css';
+import { IconPaste } from '@consta/icons/IconPaste';
+import { IconInComparison } from '@consta/icons/IconInComparison';
+import { IconSettingsStroked } from '@consta/icons/IconSettingsStroked';
 
 import { ScenarioInfoItem } from '../../ScenarioInfoItem/ui/ScenarioInfoItem';
+import { IconAlert } from '@consta/icons/IconAlert';
 
 export const ScenarioSection = () => {
   return (
@@ -40,11 +44,19 @@ export const ScenarioSection = () => {
         <ScenarioInfoItem
           title="Учебная задача"
           description="Выявить неисправный насос и предотвратить снижение уровня Е-15"
-          icon="1"
+          icon={IconPaste}
         />
-        <ScenarioInfoItem title="Исходное состояние" descriptionWithStatus icon="2" />
-        <ScenarioInfoItem title="Что учитывается при оценке" descriptionList icon="3" />
-        <ScenarioInfoItem title="Выберите режим" descriptionSelectedItems icon="4" />
+        <ScenarioInfoItem
+          title="Исходное состояние"
+          descriptionWithStatus
+          icon={IconInComparison}
+        />
+        <ScenarioInfoItem title="Что учитывается при оценке" descriptionList icon={IconAlert} />
+        <ScenarioInfoItem
+          title="Выберите режим"
+          descriptionSelectedItems
+          icon={IconSettingsStroked}
+        />
       </div>
     </section>
   );
