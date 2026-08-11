@@ -44,18 +44,18 @@ const diagnosisOptions: DiagnosisOption[] = [
   },
 ];
 
-const measurementTypeNames: Record<string, string> = {
-  vibration_velocity: 'Виброскорость',
-  vibration_acceleration: 'Виброускорение',
-  temperature: 'Температура',
-  pressure: 'Давление',
-  flow: 'Расход',
-  level: 'Уровень',
-};
+// const measurementTypeNames: Record<string, string> = {
+//   vibration_velocity: 'Виброскорость',
+//   vibration_acceleration: 'Виброускорение',
+//   temperature: 'Температура',
+//   pressure: 'Давление',
+//   flow: 'Расход',
+//   level: 'Уровень',
+// };
 
-const getMeasurementName = (measurementType: string) => {
-  return measurementTypeNames[measurementType] ?? measurementType;
-};
+// const getMeasurementName = (measurementType: string) => {
+//   return measurementTypeNames[measurementType] ?? measurementType;
+// };
 
 export const SimulatorInfoPanel = observer(() => {
   const { selectedComponent } = simulatorStore;
@@ -173,7 +173,7 @@ export const SimulatorInfoPanel = observer(() => {
                 }
               />
 
-              <Text size="xs">{getMeasurementName(parameter.measurementType)}</Text>
+              <Text size="xs">{parameter.name}</Text>
             </div>
 
             <Text size="s" weight="semibold" className={styles.parameterValue}>

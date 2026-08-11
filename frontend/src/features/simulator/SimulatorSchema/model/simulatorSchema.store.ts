@@ -10,6 +10,7 @@ export interface Parameter {
   value: number;
   unit: string;
   status: ScenarioStatus;
+  name: string;
 }
 export interface ScenarioComponent {
   componentId: string;
