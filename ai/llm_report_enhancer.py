@@ -65,6 +65,13 @@ class LLMReportEnhancer:
                 "usage": dict(completion.usage),
             }
         )
+        if completion.fallback_used:
+            provenance.update(
+                {
+                    "llmFallbackUsed": True,
+                    "fallbackModel": completion.fallback_model,
+                }
+            )
         enhanced["provenance"] = provenance
         return enhanced
 
