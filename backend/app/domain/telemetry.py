@@ -21,7 +21,7 @@ class ScenarioTiming(APIModel):
     elapsed_ms: int = Field(ge=0)
     total_ms: int = Field(gt=0)
     remaining_ms: int = Field(ge=0)
-    progress_percent: float = Field(ge=0, le=100)
+    progress_percent: int = Field(ge=0, le=100)
 
 
 class ScenarioRuntimeState(APIModel):

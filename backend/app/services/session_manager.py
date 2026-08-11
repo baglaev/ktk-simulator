@@ -179,8 +179,7 @@ class SessionManager:
             except SimulationCompletedError as error:
                 raise InvalidSessionTransitionError(str(error)) from error
             self._sync_model_state(session, snapshot)
-            self._publish_realtime(session_id, snapshot)
-            return snapshot
+            return self._publish_realtime(session_id, snapshot)
 
     def apply_action(
         self,
@@ -211,8 +210,7 @@ class SessionManager:
             recorded_action = self._models[session_id].get_recorded_actions()[-1]
             self._repository.save_action(recorded_action)
             self._sync_model_state(session, snapshot)
-            self._publish_realtime(session_id, snapshot)
-            return snapshot
+            return self._publish_realtime(session_id, snapshot)
 
     def apply_scenario_action(
         self,
@@ -331,15 +329,23 @@ class SessionManager:
         self,
         session_id: UUID,
         snapshot: ModelSnapshot,
-    ) -> None:
-        self._snapshot_publisher(session_id, snapshot)
+    ) -> ModelSnapshot:
         hint = self._hint_service.evaluate(
             snapshot,
             self._models[session_id].get_recorded_actions(),
         )
         if hint is not None:
             self._repository.save_hint(hint)
+            snapshot = self._models[session_id].record_hint(
+                hint_id=hint.hint_id,
+                title=hint.title,
+                message=hint.message,
+                virtual_time_ms=hint.virtual_time_ms,
+            )
+        self._snapshot_publisher(session_id, snapshot)
+        if hint is not None:
             self._event_publisher(session_id, hint)
+        return snapshot
 
     def _sync_model_state(
         self,

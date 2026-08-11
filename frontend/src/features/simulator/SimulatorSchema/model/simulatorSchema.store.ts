@@ -67,7 +67,18 @@ interface ActionResultMessage {
   };
 }
 
-type WebSocketMessage = TelemetryMessage | ActionResultMessage;
+export interface ScenarioHintMessage {
+  type: 'scenario.hint';
+  sessionId: string;
+  virtualTimeMs: number;
+  hintId: string;
+  level: ScenarioStatus;
+  title: string;
+  message: string;
+  displayDurationMs: number;
+}
+
+type WebSocketMessage = TelemetryMessage | ActionResultMessage | ScenarioHintMessage;
 
 class SimulatorStore {
   socket: WebSocket | null = null;
@@ -85,6 +96,10 @@ class SimulatorStore {
   components: ScenarioComponent[] = [];
 
   journal: JournalEntry[] = [];
+
+  activeHint: ScenarioHintMessage | null = null;
+
+  private hintTimeoutId: number | null = null;
 
   history: Record<string, ChartPoint[]> = {};
 
@@ -125,6 +140,11 @@ class SimulatorStore {
           return;
         }
 
+        if (message.type === 'scenario.hint') {
+          this.showHint(message);
+          return;
+        }
+
         if (message.type === 'telemetry.snapshot' || message.type === 'telemetry.update') {
           this.applyTelemetry(message);
         }
@@ -150,6 +170,7 @@ class SimulatorStore {
     this.socket?.close();
     this.socket = null;
     this.isConnected = false;
+    this.dismissHint();
   };
 
   applyTelemetry = (message: TelemetryMessage) => {
@@ -175,6 +196,30 @@ class SimulatorStore {
     }
 
     console.error('Action rejected:', message.error);
+  };
+
+  showHint = (message: ScenarioHintMessage) => {
+    if (this.hintTimeoutId !== null) {
+      window.clearTimeout(this.hintTimeoutId);
+    }
+
+    this.activeHint = message;
+    this.hintTimeoutId = window.setTimeout(() => {
+      runInAction(() => {
+        if (this.activeHint?.hintId === message.hintId) {
+          this.activeHint = null;
+        }
+        this.hintTimeoutId = null;
+      });
+    }, message.displayDurationMs);
+  };
+
+  dismissHint = () => {
+    if (this.hintTimeoutId !== null) {
+      window.clearTimeout(this.hintTimeoutId);
+      this.hintTimeoutId = null;
+    }
+    this.activeHint = null;
   };
 
   sendAction = (actionType: string, targetId?: string, parameters?: Record<string, unknown>) => {

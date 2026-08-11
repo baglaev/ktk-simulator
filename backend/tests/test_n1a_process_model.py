@@ -54,16 +54,19 @@ def test_initial_snapshot_contains_complete_model_state() -> None:
     assert snapshot.model_version == "0.4.0"
     assert len(snapshot.components) == 8
     assert len(parameters) == 22
+    assert all(type(parameter.value) is int for parameter in parameters.values())
+    assert type(snapshot.timing.progress_percent) is int
     assert parameters["PRA351"].value == 100
     assert parameters["FYQR117"].value == 100
-    assert parameters["COMPAX.N1V.VELOCITY"].value == 2.4
+    assert parameters["COMPAX.N1V.VELOCITY"].value == 2
     assert parameters["COMPAX.N1V.VELOCITY"].unit == "мм/с"
     assert parameters["LRCA605"].value == 65
     assert component_map(snapshot)["eq-n1v"].operating_state.value == "running"
     assert component_map(snapshot)["eq-n1b"].operating_state.value == "stopped"
     assert component_map(snapshot)["eq-n1b"].parameters == []
     assert n1a.status is GeneralStatus.SUCCESS
-    assert n1a.state == {"faultSeverityPercent": 0.0}
+    assert n1a.state == {"faultSeverityPercent": 0}
+    assert type(n1a.state["faultSeverityPercent"]) is int
     assert [item.description for item in snapshot.journal] == [
         "Сценарий запущен"
     ]
@@ -76,10 +79,10 @@ def test_model_interpolates_between_keyframes() -> None:
     snapshot = model.step(32_500)
     parameters = parameter_map(snapshot)
 
-    assert parameters["PRA351"].value == 97.5
-    assert parameters["FYQR117"].value == 96.5
-    assert parameters["COMPAX.N1A.VELOCITY"].value == 7.9
-    assert parameters["COMPAX.N1.VELOCITY"].value == 2.4
+    assert parameters["PRA351"].value == 98
+    assert parameters["FYQR117"].value == 97
+    assert parameters["COMPAX.N1A.VELOCITY"].value == 8
+    assert parameters["COMPAX.N1.VELOCITY"].value == 2
     assert component_map(snapshot)["eq-n1a"].status is GeneralStatus.ALERT
 
 

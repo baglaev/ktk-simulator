@@ -19,13 +19,16 @@ def reset_session_manager():
     get_session_broker.cache_clear()
 
 
-def create_session(trainee_id: str = "trainee-001") -> dict:
+def create_session(
+    trainee_id: str = "trainee-001",
+    mode: str = "training",
+) -> dict:
     response = client.post(
         "/api/v1/sessions",
         json={
             "scenarioId": "MVP-SC-01",
             "traineeId": trainee_id,
-            "mode": "training",
+            "mode": mode,
         },
     )
     assert response.status_code == 201
@@ -76,6 +79,11 @@ def test_full_session_lifecycle() -> None:
     assert result.status_code == 200
     assert result.json()["outcome"] == "failed"
     assert "completed_before_stable" in result.json()["errorCodes"]
+    assert all(
+        type(parameter["finalValue"]) is int
+        and type(parameter["minimumValue"]) is int
+        for parameter in result.json()["controlledParameters"]
+    )
 
 
 def test_snapshot_requires_started_session() -> None:

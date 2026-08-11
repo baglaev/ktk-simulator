@@ -85,6 +85,30 @@ def test_two_websocket_clients_receive_the_same_delta() -> None:
     assert first_delta == second_delta
 
 
+def test_training_hint_is_streamed_and_retained_in_journal() -> None:
+    session_id = create_session()
+
+    with client.websocket_connect(
+        f"/ws/v1/sessions/{session_id}"
+    ) as websocket:
+        websocket.receive_json()
+        advanced = client.post(
+            f"/api/v1/sessions/{session_id}/advance",
+            json={"dtMs": 10_000},
+        )
+        update = websocket.receive_json()
+        hint = websocket.receive_json()
+
+    assert advanced.status_code == 200
+    assert update["type"] == "telemetry.update"
+    assert any(
+        item["description"].startswith("Подсказка «Проверьте Н-1А»")
+        for item in update["journal"]
+    )
+    assert hint["type"] == "scenario.hint"
+    assert hint["hintId"] == "inspect-n1a"
+
+
 def test_operator_action_is_streamed_in_journal() -> None:
     session_id = create_session()
     action = {
@@ -107,9 +131,13 @@ def test_operator_action_is_streamed_in_journal() -> None:
     assert update["type"] == "telemetry.update"
     assert update["sequenceNo"] == 1
     assert update["stateVersion"] == 1
-    assert update["journal"][-1]["entryId"] == response["actionId"]
-    assert update["journal"][-1]["time"] == "00:00"
-    assert update["journal"][-1]["description"] == (
+    action_entry = next(
+        item
+        for item in update["journal"]
+        if item["entryId"] == response["actionId"]
+    )
+    assert action_entry["time"] == "00:00"
+    assert action_entry["description"] == (
         "Запущена диагностика компонента Н-1А"
     )
 

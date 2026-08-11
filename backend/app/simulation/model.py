@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from decimal import Decimal, ROUND_HALF_UP
 from uuid import UUID, uuid5
 
 from pydantic import JsonValue
@@ -282,6 +283,25 @@ class N1AProcessModel:
     def get_recorded_actions(self) -> list[RecordedAction]:
         return [item.model_copy(deep=True) for item in self._recorded_actions]
 
+    def record_hint(
+        self,
+        hint_id: str,
+        title: str,
+        message: str,
+        virtual_time_ms: int,
+    ) -> ModelSnapshot:
+        """Add one prepared training hint to the persistent live journal."""
+
+        self._require_initialized()
+        entry = self._system_journal_entry(
+            f"hint:{hint_id}",
+            virtual_time_ms,
+            f"Подсказка «{title}»: {message}",
+        )
+        if all(item.entry_id != entry.entry_id for item in self._journal):
+            self._journal.append(entry)
+        return self.get_snapshot()
+
     def has_safe_configuration(self) -> bool:
         return (
             self._operating_states.get("eq-n1b") is EquipmentStatus.RUNNING
@@ -326,11 +346,11 @@ class N1AProcessModel:
             total_ms=total_ms,
             remaining_ms=remaining_ms,
             progress_percent=(
-                100.0
+                100
                 if self.is_terminal
                 else min(
-                    round(self._elapsed_time_ms / total_ms * 100, 1),
-                    100.0,
+                    _round_display_value(self._elapsed_time_ms / total_ms * 100),
+                    100,
                 )
             ),
         )
@@ -365,13 +385,12 @@ class N1AProcessModel:
             )
             state: dict[str, JsonValue] = {}
             if component_id == self._profile.fault.equipment_id:
-                state["faultSeverityPercent"] = round(
+                state["faultSeverityPercent"] = _round_display_value(
                     _interpolate(
                         self._profile.fault.severity_keyframes,
                         self._elapsed_time_ms,
                     )
-                    * 100,
-                    1,
+                    * 100
                 )
             if component_id == "eq-n1-discharge":
                 state.update(
@@ -474,16 +493,15 @@ class N1AProcessModel:
         self,
         signal_id: str,
         raw_value: float | int | bool | str | None,
-    ) -> float:
+    ) -> int:
         if raw_value is None:
             raise ValueError(f"frontend parameter '{signal_id}' has no value")
         if isinstance(raw_value, bool):
-            return 100.0 if raw_value else 0.0
+            return 100 if raw_value else 0
         if not isinstance(raw_value, (float, int)):
             raise ValueError(f"signal '{signal_id}' cannot be converted to percent")
 
-        definition = self._signal_definitions[signal_id]
-        return round(float(raw_value), definition.precision or 1)
+        return _round_display_value(raw_value)
 
     def _journal_entries_between(
         self,
@@ -948,6 +966,14 @@ def _format_elapsed_time(time_ms: int) -> str:
     total_seconds = time_ms // 1_000
     minutes, seconds = divmod(total_seconds, 60)
     return f"{minutes:02d}:{seconds:02d}"
+
+
+def _round_display_value(value: float | int) -> int:
+    """Round a non-negative model value for the public UI contract."""
+
+    return int(
+        Decimal(str(value)).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+    )
 
 
 def _interpolate(keyframes: list[NumericKeyframe], time_ms: int) -> float:
