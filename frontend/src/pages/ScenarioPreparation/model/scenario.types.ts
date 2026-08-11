@@ -1,3 +1,5 @@
+export type ScenarioMode = 'training' | 'control';
+
 export interface Scenario {
   scenarioId: string;
   scenarioVersion: string;
@@ -9,7 +11,7 @@ export interface CreateSessionRequest {
   scenarioId: string;
   traineeId: string;
   instructorId: string;
-  mode: 'training';
+  mode: ScenarioMode;
 }
 
 export interface CreateSessionResponse {

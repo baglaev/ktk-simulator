@@ -4,6 +4,8 @@ import { Badge } from '@consta/uikit/Badge';
 import { Radio } from '@consta/uikit/Radio';
 import { IconCheck } from '@consta/icons/IconCheck';
 import type { IconComponent } from '@consta/icons/Icon';
+import { observer } from 'mobx-react-lite';
+import { scenarioStore } from '@/pages/ScenarioPreparation/model/scenario.store';
 
 interface Props {
   title: string;
@@ -14,7 +16,7 @@ interface Props {
   icon: IconComponent;
 }
 
-export const ScenarioInfoItem = (props: Props) => {
+export const ScenarioInfoItem = observer((props: Props) => {
   const {
     title,
     description,
@@ -23,6 +25,8 @@ export const ScenarioInfoItem = (props: Props) => {
     descriptionSelectedItems,
     icon: Icon,
   } = props;
+
+  const { mode, setMode } = scenarioStore;
 
   return (
     <div className={styles.container}>
@@ -61,13 +65,26 @@ export const ScenarioInfoItem = (props: Props) => {
           {descriptionSelectedItems && (
             <div>
               <div className={styles.radioContainer}>
-                <Radio label="Обучающий" />
+                <Radio
+                  name="scenarioMode"
+                  label="Обучающий"
+                  checked={mode === 'training'}
+                  onChange={() => setMode('training')}
+                />
+
                 <Text className={styles.radioText} view="secondary">
                   Проактивные ИИ-подсказки во время прохождения
                 </Text>
               </div>
+
               <div className={styles.radioContainer}>
-                <Radio label="Контрольный" />
+                <Radio
+                  name="scenarioMode"
+                  label="Контрольный"
+                  checked={mode === 'control'}
+                  onChange={() => setMode('control')}
+                />
+
                 <Text className={styles.radioText} view="secondary">
                   Прохождение без ИИ-подсказок
                 </Text>
@@ -82,6 +99,6 @@ export const ScenarioInfoItem = (props: Props) => {
       </div>
     </div>
   );
-};
+});
 
 ScenarioInfoItem.displayName = 'ScenarioInfoItem';

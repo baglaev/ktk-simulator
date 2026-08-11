@@ -10,7 +10,7 @@ import { observer } from 'mobx-react-lite';
 import { useNavigate } from 'react-router-dom';
 
 export const ScenarioPreparationPage = observer(() => {
-  const { isStarting, initialize, startSession } = scenarioStore;
+  const { isStarting, isLoading, initialize, startScenario } = scenarioStore;
 
   const navigate = useNavigate();
 
@@ -20,9 +20,7 @@ export const ScenarioPreparationPage = observer(() => {
 
   const handleStartScenario = async () => {
     try {
-      await startSession();
-
-      console.log('Сценарий запущен');
+      await startScenario();
 
       navigate('/simulator');
     } catch (e) {
@@ -53,7 +51,7 @@ export const ScenarioPreparationPage = observer(() => {
               size="l"
               onClick={handleStartScenario}
               loading={isStarting}
-              // disabled={!sessionId || isLoading}
+              disabled={isLoading || isStarting}
             />
           </div>
         </div>

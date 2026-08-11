@@ -1,6 +1,6 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { scenarioApi } from './scenario.api';
-import type { Scenario } from './scenario.types';
+import type { Scenario, ScenarioMode } from './scenario.types';
 
 class ScenarioStore {
   scenarios: Scenario[] = [];
@@ -8,6 +8,8 @@ class ScenarioStore {
   selectedScenario: Scenario | null = null;
 
   sessionId: string | null = null;
+
+  mode: ScenarioMode = 'training';
 
   isLoading = false;
   isStarting = false;
@@ -18,6 +20,10 @@ class ScenarioStore {
     makeAutoObservable(this);
   }
 
+  setMode = (mode: ScenarioMode) => {
+    this.mode = mode;
+  };
+
   fetchAllScenarios = async () => {
     try {
       this.isLoading = true;
@@ -27,8 +33,6 @@ class ScenarioStore {
 
       runInAction(() => {
         this.scenarios = data;
-
-        // Если пока используется первый сценарий
         this.selectedScenario = data[0] ?? null;
       });
     } catch (e) {
@@ -49,47 +53,32 @@ class ScenarioStore {
       throw new Error('Сценарий не выбран');
     }
 
-    try {
-      this.isLoading = true;
-      this.error = null;
+    const { data } = await scenarioApi.createSession({
+      scenarioId: this.selectedScenario.scenarioId,
+      traineeId: 'trainee-1',
+      instructorId: 'instructor-1',
+      mode: this.mode,
+    });
 
-      const { data } = await scenarioApi.createSession({
-        scenarioId: this.selectedScenario.scenarioId,
-        traineeId: 'trainee-1',
-        instructorId: 'instructor-1',
-        mode: 'training',
-      });
+    runInAction(() => {
+      this.sessionId = data.sessionId;
+    });
 
-      runInAction(() => {
-        this.sessionId = data.sessionId;
-      });
-
-      return data.sessionId;
-    } catch (e) {
-      console.error(e);
-
-      runInAction(() => {
-        this.error = 'Не удалось создать сессию';
-      });
-
-      throw e;
-    } finally {
-      runInAction(() => {
-        this.isLoading = false;
-      });
-    }
+    return data.sessionId;
   };
 
-  startSession = async () => {
-    if (!this.sessionId) {
-      throw new Error('Сессия не создана');
-    }
+  startSession = async (sessionId: string) => {
+    await scenarioApi.startSession(sessionId);
+  };
 
+  startScenario = async () => {
     try {
       this.isStarting = true;
       this.error = null;
 
-      await scenarioApi.startSession(this.sessionId);
+      const sessionId = await this.createSession();
+
+      await this.startSession(sessionId);
     } catch (e) {
       console.error(e);
 
@@ -112,8 +101,6 @@ class ScenarioStore {
       if (!this.selectedScenario) {
         throw new Error('Сценарии не найдены');
       }
-
-      await this.createSession();
     } catch (e) {
       console.error(e);
     }
