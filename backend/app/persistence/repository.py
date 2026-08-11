@@ -313,7 +313,9 @@ class SessionRepository:
                 .order_by(IssuedHintRecord.virtual_time_ms, IssuedHintRecord.hint_id)
             ).all()
         return [
-            ScenarioHintMessage.model_validate(item.payload_json)
+            ScenarioHintMessage.model_validate(
+                _adopt_legacy_hint_payload(item.payload_json)
+            )
             for item in records
         ]
 
@@ -335,6 +337,14 @@ class SessionRepository:
         with self._session_factory() as database:
             record = database.get(SessionAIAnalysisRecord, str(session_id))
             return None if record is None else dict(record.payload_json)
+
+
+def _adopt_legacy_hint_payload(value: dict) -> dict:
+    """Remove the retired storage-only mode field from archived hints."""
+
+    payload = dict(value)
+    payload.pop("mode", None)
+    return payload
 
 
 def _aware(value: datetime | None) -> datetime | None:
