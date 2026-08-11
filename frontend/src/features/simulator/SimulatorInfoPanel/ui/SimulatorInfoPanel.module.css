@@ -97,3 +97,22 @@
 
   margin-top: 4px;
 }
+
+.confirmModal {
+  width: 420px;
+  max-width: calc(100vw - 32px);
+}
+
+.confirmModalContent {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  padding: 24px;
+}
+
+.confirmModalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}

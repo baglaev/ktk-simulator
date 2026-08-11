@@ -5,7 +5,7 @@ import { Line, LineChart, ResponsiveContainer } from 'recharts';
 import { Button } from '@consta/uikit/Button';
 import { Text } from '@consta/uikit/Text';
 import { Badge } from '@consta/uikit/Badge';
-
+import { Modal } from '@consta/uikit/Modal';
 import { simulatorStore } from '../../SimulatorSchema/model/simulatorSchema.store';
 
 import styles from './SimulatorInfoPanel.module.css';
@@ -15,6 +15,8 @@ interface DiagnosisOption {
   value: string;
   isCorrect: boolean;
 }
+
+type ConfirmAction = 'diagnosis' | 'startPump' | 'stopPump' | null;
 
 const diagnosisOptions: DiagnosisOption[] = [
   {
@@ -44,25 +46,14 @@ const diagnosisOptions: DiagnosisOption[] = [
   },
 ];
 
-// const measurementTypeNames: Record<string, string> = {
-//   vibration_velocity: 'Виброскорость',
-//   vibration_acceleration: 'Виброускорение',
-//   temperature: 'Температура',
-//   pressure: 'Давление',
-//   flow: 'Расход',
-//   level: 'Уровень',
-// };
-
-// const getMeasurementName = (measurementType: string) => {
-//   return measurementTypeNames[measurementType] ?? measurementType;
-// };
-
 export const SimulatorInfoPanel = observer(() => {
   const { selectedComponent } = simulatorStore;
 
   const [isDiagnosisOpen, setIsDiagnosisOpen] = useState(false);
   const [selectedDiagnosis, setSelectedDiagnosis] = useState<DiagnosisOption | null>(null);
   const [isDiagnosisSubmitted, setIsDiagnosisSubmitted] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
+  const [pendingDiagnosis, setPendingDiagnosis] = useState<DiagnosisOption | null>(null);
 
   if (!selectedComponent) {
     return (
@@ -77,11 +68,11 @@ export const SimulatorInfoPanel = observer(() => {
   const isRunning = selectedComponent.operatingState === 'running';
 
   const handleStartPump = () => {
-    simulatorStore.sendAction('start_pump', selectedComponent.componentId);
+    setConfirmAction('startPump');
   };
 
   const handleStopPump = () => {
-    simulatorStore.sendAction('stop_pump', selectedComponent.componentId);
+    setConfirmAction('stopPump');
   };
 
   const canRunDiagnostics = isPump && selectedComponent.uiId !== 'pump-h1v' && isRunning;
@@ -91,13 +82,69 @@ export const SimulatorInfoPanel = observer(() => {
       return;
     }
 
-    setSelectedDiagnosis(diagnosis);
-    setIsDiagnosisSubmitted(true);
-
-    simulatorStore.sendAction('submit_diagnosis', selectedComponent.componentId, {
-      diagnosis: diagnosis.isCorrect ? '1' : '0',
-    });
+    setPendingDiagnosis(diagnosis);
+    setConfirmAction('diagnosis');
   };
+
+  const handleConfirm = () => {
+    if (confirmAction === 'diagnosis' && pendingDiagnosis) {
+      simulatorStore.sendAction('submit_diagnosis', selectedComponent.componentId, {
+        diagnosis: pendingDiagnosis.isCorrect ? '1' : '0',
+      });
+
+      setSelectedDiagnosis(pendingDiagnosis);
+      setIsDiagnosisSubmitted(true);
+      setPendingDiagnosis(null);
+    }
+
+    if (confirmAction === 'startPump') {
+      simulatorStore.sendAction('start_pump', selectedComponent.componentId);
+    }
+
+    if (confirmAction === 'stopPump') {
+      simulatorStore.sendAction('stop_pump', selectedComponent.componentId);
+    }
+
+    setConfirmAction(null);
+  };
+
+  const handleCancelConfirm = () => {
+    setConfirmAction(null);
+    setPendingDiagnosis(null);
+  };
+
+  const getConfirmTitle = () => {
+    switch (confirmAction) {
+      case 'diagnosis':
+        return 'Подтверждение диагноза';
+
+      case 'startPump':
+        return 'Ввод насоса в работу';
+
+      case 'stopPump':
+        return 'Остановка насоса';
+
+      default:
+        return '';
+    }
+  };
+
+  const getConfirmText = () => {
+    switch (confirmAction) {
+      case 'diagnosis':
+        return `Вы уверены, что хотите выбрать диагноз «${pendingDiagnosis?.label}»? После подтверждения изменить ответ будет нельзя.`;
+
+      case 'startPump':
+        return `Вы уверены, что хотите ввести насос ${selectedComponent.tag} в работу?`;
+
+      case 'stopPump':
+        return `Вы уверены, что хотите вывести насос ${selectedComponent.tag} из работы?`;
+
+      default:
+        return '';
+    }
+  };
+
   return (
     <section className={styles.panel}>
       <div className={styles.header}>
@@ -258,6 +305,28 @@ export const SimulatorInfoPanel = observer(() => {
           )}
         </div>
       )}
+
+      <Modal
+        isOpen={confirmAction !== null}
+        hasOverlay
+        onClickOutside={handleCancelConfirm}
+        onEsc={handleCancelConfirm}
+        className={styles.confirmModal}
+      >
+        <div className={styles.confirmModalContent}>
+          <Text size="xl" weight="semibold">
+            {getConfirmTitle()}
+          </Text>
+
+          <Text size="m">{getConfirmText()}</Text>
+
+          <div className={styles.confirmModalActions}>
+            <Button label="Отмена" view="ghost" onClick={handleCancelConfirm} />
+
+            <Button label="Подтвердить" view="primary" onClick={handleConfirm} />
+          </div>
+        </div>
+      </Modal>
     </section>
   );
 });
