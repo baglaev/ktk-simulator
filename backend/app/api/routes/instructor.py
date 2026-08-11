@@ -1,5 +1,4 @@
 from typing import Annotated
-
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -12,6 +11,7 @@ from app.domain import (
     InstructorTrainee,
     InstructorTraineeList,
     SessionResult,
+    TraineeResultsCollection,
     TraineeResultsPage,
     TrainingMode,
 )
@@ -161,29 +161,12 @@ def _format_virtual_time(value_ms: int) -> str:
 
 @router.get(
     "/results",
-    response_model=TraineeResultsPage,
+    response_model=TraineeResultsCollection,
     summary="Результаты обучаемых",
 )
 async def list_trainee_results(
-    trainee_id: Annotated[
-        str | None,
-        Query(alias="traineeId", min_length=1),
-    ] = None,
-    instructor_id: Annotated[
-        str | None,
-        Query(alias="instructorId", min_length=1),
-    ] = None,
-    mode: TrainingMode | None = None,
-    limit: Annotated[int, Query(ge=1, le=200)] = 100,
-    offset: Annotated[int, Query(ge=0)] = 0,
     manager: SessionManager = Depends(get_session_manager),
-) -> TraineeResultsPage:
-    """List only attempts that already have a deterministic result."""
+) -> TraineeResultsCollection:
+    """Return all completed attempts without required query parameters."""
 
-    return manager.list_trainee_results(
-        trainee_id=trainee_id,
-        instructor_id=instructor_id,
-        mode=mode,
-        limit=limit,
-        offset=offset,
-    )
+    return manager.list_all_trainee_results()

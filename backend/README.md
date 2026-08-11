@@ -297,24 +297,10 @@ GET /api/v1/instructor/trainees/{traineeId}/results/{sessionId}/journal
 }
 ```
 
-Общий список всех завершённых попыток остаётся доступен для таблиц и фильтров:
+Общий список всех завершённых попыток доступен одним запросом без параметров:
 
 ```http
 GET /api/v1/instructor/results
-```
-
-Необязательные query-параметры:
-
-- `traineeId` — отбор по идентификатору обучаемого;
-- `instructorId` — отбор по идентификатору инструктора;
-- `mode` — `training` или `control`;
-- `limit` — размер страницы от 1 до 200, по умолчанию 100;
-- `offset` — смещение, по умолчанию 0.
-
-Пример запроса:
-
-```http
-GET /api/v1/instructor/results?instructorId=instructor-001&mode=training&limit=20&offset=0
 ```
 
 Пример ответа:
@@ -338,9 +324,7 @@ GET /api/v1/instructor/results?instructorId=instructor-001&mode=training&limit=2
       "completedAt": "2026-08-11T12:00:00Z"
     }
   ],
-  "total": 1,
-  "limit": 20,
-  "offset": 0
+  "total": 1
 }
 ```
 
