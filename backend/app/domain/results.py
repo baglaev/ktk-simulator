@@ -156,6 +156,8 @@ def _adopt_result_remark(value):
         error_code = ActionErrorCode(remark.get("code"))
     except (TypeError, ValueError):
         return remark
+    if remark.get("status") == GeneralStatus.WARNING.value:
+        remark["title"] = "Замечание"
     remark["description"] = ACTION_ERROR_DESCRIPTIONS[error_code]
     return remark
 

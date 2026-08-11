@@ -436,7 +436,12 @@ export const SimulatorInfoPanel = observer(() => {
     setConfirmAction('stopPump');
   };
 
-  const canRunDiagnostics = isPump && selectedComponent.uiId !== 'pump-h1v' && isRunning;
+  const canRunDiagnostics = selectedComponent.componentId === 'eq-n1a' && isRunning;
+
+  const handleRunDiagnostics = () => {
+    simulatorStore.sendAction('run_diagnostics', selectedComponent.componentId);
+    setIsDiagnosisOpen(true);
+  };
 
   const handleDiagnosisChange = (diagnosis: DiagnosisOption | null) => {
     if (!diagnosis || isDiagnosisSubmitted) {
@@ -647,7 +652,7 @@ export const SimulatorInfoPanel = observer(() => {
                   width="full"
                   view="secondary"
                   label="Провести диагностику"
-                  onClick={() => setIsDiagnosisOpen(true)}
+                  onClick={handleRunDiagnostics}
                 />
               ) : (
                 <div>

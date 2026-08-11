@@ -93,6 +93,8 @@ def test_archived_technical_remark_is_translated_on_read() -> None:
     assert adopted_remark.description == ACTION_ERROR_DESCRIPTIONS[
         ActionErrorCode(remark["code"])
     ]
+    if adopted_remark.status is GeneralStatus.WARNING:
+        assert adopted_remark.title == "Замечание"
 
 
 def test_legacy_hint_mode_field_is_ignored_on_database_read() -> None:

@@ -430,15 +430,16 @@ def _remarks(
         ActionErrorCode.MULTIPLE_PUMPS_STOPPED,
     }
     for error in sorted(errors, key=lambda item: item.value):
+        is_critical = error in critical_error_codes
         result.append(
             ResultRemark(
                 code=error.value,
                 status=(
                     GeneralStatus.ALERT
-                    if error in critical_error_codes
+                    if is_critical
                     else GeneralStatus.WARNING
                 ),
-                title="Ошибка прохождения",
+                title="Ошибка прохождения" if is_critical else "Замечание",
                 description=ACTION_ERROR_DESCRIPTIONS[error],
             )
         )
