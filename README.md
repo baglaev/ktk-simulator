@@ -118,7 +118,7 @@ npm install
 npm run dev
 ```
 
-Frontend обычно доступен по адресу [http://localhost:5173/](http://localhost:5173/).
+Frontend доступен по адресам [http://localhost:5173/](http://localhost:5173/) [http://127.0.0.1:5173/](http://127.0.0.1:5173/).
 
 ## Проверка
 
