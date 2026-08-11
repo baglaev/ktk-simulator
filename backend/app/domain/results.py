@@ -11,6 +11,7 @@ from app.domain.enums import (
     GeneralStatus,
     ResultStatus,
     ScenarioOutcome,
+    SessionStatus,
     TrainingMode,
 )
 
@@ -94,3 +95,30 @@ class SessionResult(APIModel):
             }
         )
         return payload
+
+
+class TraineeResultSummary(APIModel):
+    """Compact completed-attempt row for the instructor dashboard."""
+
+    session_id: UUID
+    trainee_id: str = Field(min_length=1)
+    instructor_id: str | None = None
+    scenario_id: str = Field(min_length=1)
+    scenario_version: str = Field(min_length=1)
+    mode: TrainingMode
+    session_status: SessionStatus
+    result_status: ResultStatus
+    outcome: ScenarioOutcome
+    total_score: int = Field(ge=0, le=100)
+    max_score: int = Field(gt=0)
+    elapsed_time_ms: int = Field(ge=0)
+    completed_at: AwareDatetime
+
+
+class TraineeResultsPage(APIModel):
+    """Paginated completed results returned to the instructor frontend."""
+
+    items: list[TraineeResultSummary] = Field(default_factory=list)
+    total: int = Field(ge=0)
+    limit: int = Field(gt=0)
+    offset: int = Field(ge=0)

@@ -11,6 +11,7 @@ from app.api.errors import (
 )
 from app.api.routes import (
     auth_router,
+    instructor_router,
     scenarios_router,
     sessions_router,
     websocket_router,
@@ -76,6 +77,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
 
     application.include_router(auth_router)
+    application.include_router(instructor_router)
     application.include_router(scenarios_router)
     application.include_router(sessions_router)
     application.include_router(websocket_router)

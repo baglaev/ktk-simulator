@@ -63,6 +63,8 @@ from app.domain.results import (
     ScoreSection,
     SessionResult,
     TaskExecutionItem,
+    TraineeResultSummary,
+    TraineeResultsPage,
 )
 from app.domain.scenarios import (
     DiagnosisChoice,
@@ -143,6 +145,8 @@ __all__ = [
     "ScenarioRuntimeState",
     "TelemetryUpdate",
     "TaskExecutionItem",
+    "TraineeResultSummary",
+    "TraineeResultsPage",
     "TrainingMode",
     "TrainingSession",
     "UserRole",

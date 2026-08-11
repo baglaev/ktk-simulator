@@ -193,6 +193,7 @@ Backend автоматически продвигает виртуальное �
 | GET | `/api/v1/sessions/{id}/adaptive-plan` | план повторной отработки |
 | POST | `/api/v1/sessions/{id}/assistant/question` | RAG-вопрос после завершения |
 | POST | `/api/v1/sessions/{id}/advance` | только ручной тестовый шаг времени |
+| GET | `/api/v1/instructor/results` | список завершённых результатов обучаемых |
 
 Создание сессии:
 
@@ -207,6 +208,62 @@ Backend автоматически продвигает виртуальное �
 
 `training` включает подготовленные подсказки. `control` соответствует
 экзаменационному режиму и никогда не отправляет подсказки.
+
+### Результаты для страницы инструктора
+
+Frontend получает список завершённых попыток запросом:
+
+```http
+GET /api/v1/instructor/results
+```
+
+Необязательные query-параметры:
+
+- `traineeId` — отбор по идентификатору обучаемого;
+- `instructorId` — отбор по идентификатору инструктора;
+- `mode` — `training` или `control`;
+- `limit` — размер страницы от 1 до 200, по умолчанию 100;
+- `offset` — смещение, по умолчанию 0.
+
+Пример запроса:
+
+```http
+GET /api/v1/instructor/results?instructorId=instructor-001&mode=training&limit=20&offset=0
+```
+
+Пример ответа:
+
+```json
+{
+  "items": [
+    {
+      "sessionId": "f3656f3b-3b2c-44e5-9cb8-46b50ad6f715",
+      "traineeId": "trainee-001",
+      "instructorId": "instructor-001",
+      "scenarioId": "MVP-SC-01",
+      "scenarioVersion": "0.4.0",
+      "mode": "training",
+      "sessionStatus": "completed",
+      "resultStatus": "passed",
+      "outcome": "success",
+      "totalScore": 92,
+      "maxScore": 100,
+      "elapsedTimeMs": 87000,
+      "completedAt": "2026-08-11T12:00:00Z"
+    }
+  ],
+  "total": 1,
+  "limit": 20,
+  "offset": 0
+}
+```
+
+Незавершённые сессии в список не входят. Полную карточку выбранной попытки
+frontend получает по `GET /api/v1/sessions/{sessionId}/result`.
+
+Текущая авторизация демонстрационная и не выдаёт токен, поэтому эта ручка пока
+не проверяет роль вызывающего пользователя. Перед промышленным использованием
+нужно добавить токен и серверную проверку роли `instructor`.
 
 ## WebSocket
 
