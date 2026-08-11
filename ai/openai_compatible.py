@@ -47,7 +47,8 @@ class LLMConfig:
     enabled: bool = False
     api_key: str | None = None
     base_url: str = "https://openrouter.ai/api/v1"
-    model: str = "openrouter/free"
+    model: str = ""
+    fallback_model: str | None = None
     timeout_seconds: float = 45.0
     max_tokens: int = 1200
     temperature: float = 0.2
@@ -65,7 +66,10 @@ class LLMConfig:
             base_url=source.get(
                 "AI_LLM_BASE_URL", "https://openrouter.ai/api/v1"
             ).rstrip("/"),
-            model=source.get("AI_LLM_MODEL", "openrouter/free"),
+            model=source.get("AI_LLM_MODEL", "").strip(),
+            fallback_model=(
+                source.get("AI_LLM_FALLBACK_MODEL", "").strip() or None
+            ),
             timeout_seconds=float(source.get("AI_LLM_TIMEOUT_SECONDS", "45")),
             max_tokens=int(source.get("AI_LLM_MAX_TOKENS", "1200")),
             temperature=float(source.get("AI_LLM_TEMPERATURE", "0.2")),
@@ -105,6 +109,8 @@ class CompletionResult:
     requested_model: str
     resolved_model: str
     usage: Mapping[str, int]
+    fallback_used: bool = False
+    fallback_model: str | None = None
 
 
 UrlOpen = Callable[..., Any]
@@ -129,8 +135,49 @@ class OpenAICompatibleClient:
         user_payload: Mapping[str, Any],
     ) -> CompletionResult:
         self.config.validate()
+        try:
+            return self._complete_json_with_model(
+                model=self.config.model,
+                system_prompt=system_prompt,
+                user_payload=user_payload,
+            )
+        except (LLMRequestError, LLMResponseError) as primary_error:
+            fallback_model = self.config.fallback_model
+            if (
+                not self.config.is_openrouter
+                or not fallback_model
+                or fallback_model == self.config.model
+            ):
+                raise
+            try:
+                fallback = self._complete_json_with_model(
+                    model=fallback_model,
+                    system_prompt=system_prompt,
+                    user_payload=user_payload,
+                )
+            except (LLMRequestError, LLMResponseError) as fallback_error:
+                raise LLMRequestError(
+                    "primary and fallback LLM requests failed: "
+                    f"primary={primary_error}; fallback={fallback_error}"
+                ) from fallback_error
+            return CompletionResult(
+                content=fallback.content,
+                requested_model=self.config.model,
+                resolved_model=fallback.resolved_model,
+                usage=fallback.usage,
+                fallback_used=True,
+                fallback_model=fallback_model,
+            )
+
+    def _complete_json_with_model(
+        self,
+        *,
+        model: str,
+        system_prompt: str,
+        user_payload: Mapping[str, Any],
+    ) -> CompletionResult:
         request_body = {
-            "model": self.config.model,
+            "model": model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {
@@ -174,7 +221,7 @@ class OpenAICompatibleClient:
             payload = json.loads(raw_response)
             choice = payload["choices"][0]
             content = choice["message"]["content"]
-            resolved_model = str(payload.get("model", self.config.model))
+            resolved_model = str(payload.get("model", model))
         except (KeyError, IndexError, TypeError, json.JSONDecodeError) as error:
             raise LLMResponseError("LLM provider returned an invalid response") from error
         if not isinstance(content, str) or not content.strip():
@@ -188,7 +235,7 @@ class OpenAICompatibleClient:
         } if isinstance(raw_usage, Mapping) else {}
         return CompletionResult(
             content=content,
-            requested_model=self.config.model,
+            requested_model=model,
             resolved_model=resolved_model,
             usage=usage,
         )

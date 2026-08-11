@@ -29,15 +29,26 @@ class FakeResponse:
 
 
 class OpenAICompatibleClientTests(unittest.TestCase):
-    def test_config_uses_openrouter_defaults(self) -> None:
-        config = LLMConfig.from_env({"OPENROUTER_API_KEY": "secret"})
+    def test_config_reads_models_from_environment(self) -> None:
+        config = LLMConfig.from_env(
+            {
+                "OPENROUTER_API_KEY": "secret",
+                "AI_LLM_MODEL": "google/gemma-4-26b-a4b-it:free",
+                "AI_LLM_FALLBACK_MODEL": "openrouter/free",
+            }
+        )
         self.assertTrue(config.enabled)
-        self.assertEqual(config.model, "openrouter/free")
+        self.assertEqual(config.model, "google/gemma-4-26b-a4b-it:free")
+        self.assertEqual(config.fallback_model, "openrouter/free")
         self.assertEqual(config.base_url, "https://openrouter.ai/api/v1")
 
     def test_missing_key_is_rejected(self) -> None:
         with self.assertRaises(LLMConfigurationError):
-            LLMConfig(enabled=True).validate()
+            LLMConfig(enabled=True, model="test-model").validate()
+
+    def test_missing_model_is_rejected(self) -> None:
+        with self.assertRaisesRegex(LLMConfigurationError, "AI_LLM_MODEL"):
+            LLMConfig(enabled=True, api_key="secret").validate()
 
     def test_openai_compatible_request_and_response(self) -> None:
         captured = {}
@@ -58,6 +69,8 @@ class OpenAICompatibleClientTests(unittest.TestCase):
         config = LLMConfig(
             enabled=True,
             api_key="secret",
+            model="google/gemma-4-26b-a4b-it:free",
+            fallback_model="openrouter/free",
             site_url="https://example.test",
         )
         result = OpenAICompatibleClient(
@@ -67,7 +80,9 @@ class OpenAICompatibleClientTests(unittest.TestCase):
         self.assertEqual(
             captured["url"], "https://openrouter.ai/api/v1/chat/completions"
         )
-        self.assertEqual(captured["body"]["model"], "openrouter/free")
+        self.assertEqual(
+            captured["body"]["model"], "google/gemma-4-26b-a4b-it:free"
+        )
         self.assertEqual(
             captured["body"]["response_format"], {"type": "json_object"}
         )
@@ -77,6 +92,48 @@ class OpenAICompatibleClientTests(unittest.TestCase):
         self.assertEqual(result.resolved_model, "openai/gpt-oss-20b:free")
         self.assertEqual(result.usage["prompt_tokens"], 10)
         self.assertNotIn("secret", json.dumps(captured["body"]))
+
+    def test_openrouter_free_router_is_used_when_primary_model_fails(self) -> None:
+        requested_models = []
+
+        def fake_urlopen(request, timeout):
+            body = json.loads(request.data.decode("utf-8"))
+            requested_models.append(body["model"])
+            if len(requested_models) == 1:
+                raise HTTPError(
+                    request.full_url,
+                    503,
+                    "Unavailable",
+                    {},
+                    BytesIO(b"{}"),
+                )
+            return FakeResponse(
+                {
+                    "model": "openai/gpt-oss-20b:free",
+                    "choices": [{"message": {"content": "{\"ok\": true}"}}],
+                }
+            )
+
+        result = OpenAICompatibleClient(
+            LLMConfig(
+                enabled=True,
+                api_key="secret",
+                model="google/gemma-4-26b-a4b-it:free",
+                fallback_model="openrouter/free",
+            ),
+            urlopen_impl=fake_urlopen,
+        ).complete_json(system_prompt="system", user_payload={})
+
+        self.assertEqual(
+            requested_models,
+            ["google/gemma-4-26b-a4b-it:free", "openrouter/free"],
+        )
+        self.assertEqual(
+            result.requested_model, "google/gemma-4-26b-a4b-it:free"
+        )
+        self.assertEqual(result.resolved_model, "openai/gpt-oss-20b:free")
+        self.assertTrue(result.fallback_used)
+        self.assertEqual(result.fallback_model, "openrouter/free")
 
     def test_openrouter_fields_are_not_sent_to_another_provider(self) -> None:
         captured = {}
@@ -107,7 +164,12 @@ class OpenAICompatibleClientTests(unittest.TestCase):
             raise URLError(f"unavailable after {timeout}")
 
         client = OpenAICompatibleClient(
-            LLMConfig(enabled=True, api_key="secret"),
+            LLMConfig(
+                enabled=True,
+                api_key="secret",
+                model="test-model",
+                fallback_model="openrouter/free",
+            ),
             urlopen_impl=failing_urlopen,
         )
         with self.assertRaises(LLMRequestError):
@@ -130,7 +192,12 @@ class OpenAICompatibleClientTests(unittest.TestCase):
             raise HTTPError(request.full_url, 403, "Forbidden", {}, BytesIO(body))
 
         client = OpenAICompatibleClient(
-            LLMConfig(enabled=True, api_key="secret"),
+            LLMConfig(
+                enabled=True,
+                api_key="secret",
+                model="test-model",
+                fallback_model="openrouter/free",
+            ),
             urlopen_impl=failing_urlopen,
         )
         with self.assertRaises(LLMRequestError) as raised:

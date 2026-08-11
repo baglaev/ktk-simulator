@@ -139,20 +139,28 @@ class RAGAssistant:
             source for source in candidates if source.label in used_labels
         )
         answer = _ensure_inline_citations(str(candidate["answer"]), used_labels)
+        provenance = {
+            "method": "local_retrieval_plus_llm",
+            "llmAttempted": True,
+            "llmUsed": True,
+            "requestedModel": completion.requested_model,
+            "resolvedModel": completion.resolved_model,
+            "usage": dict(completion.usage),
+            "sourceRefs": [source.result.chunk.source_ref for source in sources],
+        }
+        if completion.fallback_used:
+            provenance.update(
+                {
+                    "llmFallbackUsed": True,
+                    "fallbackModel": completion.fallback_model,
+                }
+            )
         return RAGAnswer(
             question=normalized_question,
             answer=answer,
             insufficient_evidence=bool(candidate["insufficientEvidence"]),
             sources=sources,
-            provenance={
-                "method": "local_retrieval_plus_llm",
-                "llmAttempted": True,
-                "llmUsed": True,
-                "requestedModel": completion.requested_model,
-                "resolvedModel": completion.resolved_model,
-                "usage": dict(completion.usage),
-                "sourceRefs": [source.result.chunk.source_ref for source in sources],
-            },
+            provenance=provenance,
         )
 
     def _build_context(self, sources: tuple[RAGSource, ...]) -> list[dict[str, Any]]:

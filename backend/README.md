@@ -19,7 +19,10 @@ Backend реализует учебный сценарий `MVP-SC-01`: live-м�
 
 ## Запуск
 
-Из корня репозитория:
+Backend и AI запускаются одним процессом: AI подключён к FastAPI как Python-модуль,
+поэтому отдельный AI-сервер не требуется.
+
+Первичная установка:
 
 ```bash
 cd backend
@@ -27,6 +30,34 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 cp .env.example .env  # только если .env ещё нет
+cd ..
+cp ai/.env.example ai/.env  # только если ai/.env ещё нет
+```
+
+Впишите `OPENROUTER_API_KEY` в `ai/.env`, затем из корня репозитория запускайте:
+
+```bash
+./run_backend_ai.sh
+```
+
+Скрипт загружает настройки AI, проверяет обязательные переменные, выполняет
+`alembic upgrade head` и запускает Uvicorn. Модель и резервная модель задаются
+только в `ai/.env`. Backend-настройки читает из `backend/.env`.
+
+Необязательные настройки самого скрипта:
+
+```bash
+KTK_HOST=127.0.0.1 KTK_PORT=8001 KTK_RELOAD=false ./run_backend_ai.sh
+```
+
+Ручной эквивалент запуска:
+
+```bash
+set -a
+source ai/.env
+set +a
+export PYTHONPATH="$PWD${PYTHONPATH:+:$PYTHONPATH}"
+cd backend
 alembic upgrade head
 uvicorn app.main:app --reload
 ```
