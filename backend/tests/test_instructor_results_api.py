@@ -77,6 +77,55 @@ def test_instructor_can_list_completed_trainee_results() -> None:
     assert all(item["sessionStatus"] == "failed" for item in payload["items"])
     assert all(type(item["totalScore"]) is int for item in payload["items"])
     assert all(item["completedAt"] for item in payload["items"])
+    assert all(
+        item["traineeName"] == item["traineeId"]
+        for item in payload["items"]
+    )
+    assert all(
+        all(entry["kind"] in {"action", "hint"} for entry in item["journal"])
+        for item in payload["items"]
+    )
+    control_item = next(
+        item for item in payload["items"] if item["mode"] == "control"
+    )
+    assert control_item["journal"] == []
+
+
+def test_instructor_results_include_full_name_and_journal() -> None:
+    manager = build_manager()
+    trainee_id = "Matveev.AD@gazprom-neft.ru"
+    session = manager.create_session(
+        CreateSessionRequest(
+            scenario_id="MVP-SC-01",
+            trainee_id=trainee_id,
+            instructor_id="instructor",
+            mode=TrainingMode.TRAINING,
+        )
+    )
+    manager.start_session(session.session_id)
+    manager.apply_scenario_action(
+        session.session_id,
+        ScenarioActionRequest(
+            action_type=ActionType.VIEW_SIGNAL,
+            target_id="PRA351",
+        ),
+    )
+    manager.complete_session(session.session_id)
+    app.dependency_overrides[get_session_manager] = lambda: manager
+    try:
+        response = TestClient(app).get("/api/v1/instructor/results")
+    finally:
+        app.dependency_overrides.pop(get_session_manager, None)
+
+    assert response.status_code == 200
+    item = response.json()["items"][0]
+    assert item["traineeName"] == "Матвеев Александр Дмитриевич"
+    assert item["journal"][0] == {
+        "time": "00:00",
+        "virtualTimeMs": 0,
+        "kind": "action",
+        "description": "Просмотрен параметр PRA 351",
+    }
 
 
 def test_selected_trainee_results_support_mode_and_pagination() -> None:

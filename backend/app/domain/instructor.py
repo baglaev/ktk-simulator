@@ -24,6 +24,18 @@ class InstructorAttemptJournal(APIModel):
     items: list[InstructorJournalItem] = Field(default_factory=list)
 
 
+class InstructorResultItem(TraineeResultSummary):
+    """Completed attempt enriched for the common instructor results table."""
+
+    trainee_name: str = Field(min_length=1)
+    journal: list[InstructorJournalItem] = Field(default_factory=list)
+
+
+class InstructorResultsCollection(APIModel):
+    items: list[InstructorResultItem] = Field(default_factory=list)
+    total: int = Field(ge=0)
+
+
 class InstructorTrainee(APIModel):
     """Sanitized trainee directory entry enriched with result statistics."""
 

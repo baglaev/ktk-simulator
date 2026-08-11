@@ -56,6 +56,8 @@ from app.domain.instructor import (
     InstructorAttemptJournal,
     InstructorJournalItem,
     InstructorOverview,
+    InstructorResultItem,
+    InstructorResultsCollection,
     InstructorTrainee,
     InstructorTraineeList,
 )
@@ -122,6 +124,8 @@ __all__ = [
     "InstructorAttemptJournal",
     "InstructorJournalItem",
     "InstructorOverview",
+    "InstructorResultItem",
+    "InstructorResultsCollection",
     "InstructorTrainee",
     "InstructorTraineeList",
     "HintProvenance",
