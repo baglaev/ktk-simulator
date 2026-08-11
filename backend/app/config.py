@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     app_name: str = "KTK ELOU-AVT Backend"
-    app_version: str = "0.3.0"
+    app_version: str = "0.4.0"
     environment: str = "development"
     cors_allowed_origins: list[str] = Field(
         default_factory=lambda: [

@@ -50,7 +50,7 @@ def _action(
 
 def _values(snapshot) -> dict[str, float]:
     return {
-        item.parameter_id: item.value_percent
+        item.parameter_id: item.value
         for component in snapshot.components
         for item in component.parameters
     }
@@ -65,15 +65,17 @@ def _perform_switch(
     _action(manager, session_id, ActionType.OPEN_EQUIPMENT_CARD, "eq-n1a")
     _action(manager, session_id, ActionType.VIEW_SIGNAL, "PRA351")
     _action(manager, session_id, ActionType.VIEW_SIGNAL, "FYQR117")
+    _action(manager, session_id, ActionType.RUN_DIAGNOSTICS, "eq-n1a")
     _action(
         manager,
         session_id,
         ActionType.SUBMIT_DIAGNOSIS,
         "eq-n1a",
-        {
-            "conclusion": "fault_detected" if correct_diagnosis else "no_fault",
-            "reason": "bearing_wear" if correct_diagnosis else "unknown",
-        },
+        (
+            {"conclusion": "fault_detected", "reason": "bearing_wear"}
+            if correct_diagnosis
+            else {"conclusion": "no_fault"}
+        ),
     )
     _action(manager, session_id, ActionType.START_PUMP, "eq-n1b")
     _action(manager, session_id, ActionType.STOP_PUMP, "eq-n1a")
@@ -113,15 +115,13 @@ def test_correct_path_recovers_in_30_seconds_and_scores_100() -> None:
     assert values["ELOU.STAGE1.LEVEL"] == 100
     assert values["ELOU.STAGE2.LEVEL"] == 100
     assert values["LRCA605"] == 65
-    assert manager.get_session(session_id).status is SessionStatus.READY_TO_COMPLETE
-
-    completed = manager.complete_session(session_id)
+    completed = manager.get_session(session_id)
     result = manager.get_result(session_id)
     assert completed.status is SessionStatus.COMPLETED
     assert result.outcome.value == "success"
     assert result.total_score == 100
     assert result.error_codes == []
-    assert len(manager.list_actions(session_id)) == 11
+    assert len(manager.list_actions(session_id)) == 12
 
 
 def test_wrong_diagnosis_does_not_block_physical_recovery() -> None:
@@ -131,10 +131,9 @@ def test_wrong_diagnosis_does_not_block_physical_recovery() -> None:
     _perform_consequence_checks(manager, session_id)
     manager.advance_session(session_id, 30_000)
 
-    manager.complete_session(session_id)
     result = manager.get_result(session_id)
 
-    assert result.outcome.value == "success"
+    assert result.outcome.value == "failed"
     assert result.total_score < 100
     assert "fault_not_detected" in {item.value for item in result.error_codes}
     assert "switch_before_diagnosis" in {item.value for item in result.error_codes}
@@ -146,12 +145,13 @@ def test_wrong_diagnosis_then_correction_gets_half_diagnosis_credit() -> None:
     _action(manager, session_id, ActionType.OPEN_EQUIPMENT_CARD, "eq-n1a")
     _action(manager, session_id, ActionType.VIEW_SIGNAL, "PRA351")
     _action(manager, session_id, ActionType.VIEW_SIGNAL, "FYQR117")
+    _action(manager, session_id, ActionType.RUN_DIAGNOSTICS, "eq-n1a")
     _action(
         manager,
         session_id,
         ActionType.SUBMIT_DIAGNOSIS,
         "eq-n1a",
-        {"conclusion": "no_fault", "reason": "unknown"},
+        {"conclusion": "no_fault"},
     )
     _action(
         manager,
@@ -164,8 +164,6 @@ def test_wrong_diagnosis_then_correction_gets_half_diagnosis_credit() -> None:
     _action(manager, session_id, ActionType.STOP_PUMP, "eq-n1a")
     _perform_consequence_checks(manager, session_id)
     manager.advance_session(session_id, 30_000)
-    manager.complete_session(session_id)
-
     result = manager.get_result(session_id)
     error_codes = {item.value for item in result.error_codes}
 
@@ -224,8 +222,13 @@ def test_recovery_can_finish_after_120_seconds_if_started_above_limit() -> None:
 
     assert snapshot.timing.elapsed_ms == 149_000
     assert snapshot.timing.progress_percent == 100
+    assert snapshot.timing.remaining_ms == 0
     assert _values(snapshot)["LRCA605"] == 65
-    assert manager.get_session(session_id).status is SessionStatus.READY_TO_COMPLETE
+    assert manager.get_session(session_id).status is SessionStatus.COMPLETED
+    assert not any(
+        "критической границы" in item.description
+        for item in snapshot.journal
+    )
 
 
 def test_no_switch_reaches_lrca_limit_and_fails_automatically() -> None:

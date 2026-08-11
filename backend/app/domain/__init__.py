@@ -8,6 +8,14 @@ from app.domain.actions import (
     RecordedAction,
     ScenarioActionRequest,
 )
+from app.domain.ai import (
+    AIAnalysisProvenance,
+    AIErrorCard,
+    AdaptivePlanItem,
+    AdaptiveRepetitionPlan,
+    AssistantQuestionRequest,
+    SessionAIAnalysis,
+)
 from app.domain.auth import (
     LoginFailureResponse,
     LoginRequest,
@@ -18,6 +26,7 @@ from app.domain.enums import (
     ActionType,
     ActionErrorCode,
     AuthRole,
+    CompletionReason,
     DiagnosisConclusion,
     DiagnosisReason,
     EquipmentStatus,
@@ -28,6 +37,8 @@ from app.domain.enums import (
     ParameterOrigin,
     SessionStatus,
     ScenarioOutcome,
+    ResultStatus,
+    ScenarioRuntimeStatus,
     TrainingMode,
     UserRole,
 )
@@ -36,13 +47,26 @@ from app.domain.equipment import (
     EquipmentDefinition,
     EquipmentParameterDefinition,
 )
+from app.domain.hints import (
+    HintEvidence,
+    HintProvenance,
+    ScenarioHintMessage,
+)
 from app.domain.sessions import (
     AdvanceSessionRequest,
     CreateSessionRequest,
     TrainingSession,
 )
-from app.domain.results import ScoreSection, SessionResult
+from app.domain.results import (
+    ResultParameter,
+    ResultRemark,
+    ScoreSection,
+    SessionResult,
+    TaskExecutionItem,
+)
 from app.domain.scenarios import (
+    DiagnosisChoice,
+    DiagnosisFormConfig,
     EducationalAssumption,
     EquipmentConnection,
     ScenarioConfig,
@@ -54,11 +78,16 @@ from app.domain.telemetry import (
     JournalEntry,
     ModelSnapshot,
     ScenarioTiming,
+    ScenarioRuntimeState,
     TelemetryUpdate,
 )
 
 __all__ = [
     "APIModel",
+    "AIAnalysisProvenance",
+    "AIErrorCard",
+    "AdaptivePlanItem",
+    "AdaptiveRepetitionPlan",
     "AdvanceSessionRequest",
     "ActionAcceptedMessage",
     "ActionErrorDetail",
@@ -66,7 +95,10 @@ __all__ = [
     "ActionType",
     "ActionErrorCode",
     "AuthRole",
+    "AssistantQuestionRequest",
+    "CompletionReason",
     "CreateSessionRequest",
+    "DiagnosisChoice",
     "ComponentParameterValue",
     "ComponentState",
     "EquipmentDefinition",
@@ -76,7 +108,10 @@ __all__ = [
     "EquipmentType",
     "EventSeverity",
     "GeneralStatus",
+    "HintEvidence",
+    "HintProvenance",
     "DiagnosisConclusion",
+    "DiagnosisFormConfig",
     "DiagnosisReason",
     "EducationalAssumption",
     "MeasurementType",
@@ -87,19 +122,27 @@ __all__ = [
     "ModelSnapshot",
     "OperatorAction",
     "RecordedAction",
+    "ResultParameter",
+    "ResultRemark",
+    "ResultStatus",
     "ParameterOrigin",
     "Provenance",
     "ScenarioConfig",
     "ScenarioActionRequest",
     "ScenarioSummary",
     "ScenarioOutcome",
+    "ScenarioRuntimeStatus",
+    "ScenarioHintMessage",
     "ScoreSection",
     "SessionResult",
+    "SessionAIAnalysis",
     "SessionStatus",
     "SignalDefinition",
     "SourceReference",
     "ScenarioTiming",
+    "ScenarioRuntimeState",
     "TelemetryUpdate",
+    "TaskExecutionItem",
     "TrainingMode",
     "TrainingSession",
     "UserRole",

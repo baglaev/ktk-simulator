@@ -5,9 +5,11 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.domain import RecordedAction, SessionResult, TrainingSession
+from app.domain import RecordedAction, ScenarioHintMessage, SessionResult, TrainingSession
 from app.persistence.models import (
     OperatorActionRecord,
+    IssuedHintRecord,
+    SessionAIAnalysisRecord,
     SessionResultRecord,
     TrainingSessionRecord,
 )
@@ -124,6 +126,48 @@ class SessionRepository:
             if record is None:
                 return None
             return SessionResult.model_validate(record.payload_json)
+
+    def save_hint(self, item: ScenarioHintMessage) -> None:
+        record = IssuedHintRecord(
+            hint_record_id=f"{item.session_id}:{item.hint_id}",
+            session_id=str(item.session_id),
+            hint_id=item.hint_id,
+            virtual_time_ms=item.virtual_time_ms,
+            payload_json=item.model_dump(mode="json", by_alias=True),
+        )
+        with self._session_factory.begin() as database:
+            database.merge(record)
+
+    def list_hints(self, session_id) -> list[ScenarioHintMessage]:
+        with self._session_factory() as database:
+            records = database.scalars(
+                select(IssuedHintRecord)
+                .where(IssuedHintRecord.session_id == str(session_id))
+                .order_by(IssuedHintRecord.virtual_time_ms, IssuedHintRecord.hint_id)
+            ).all()
+        return [
+            ScenarioHintMessage.model_validate(item.payload_json)
+            for item in records
+        ]
+
+    def save_ai_analysis(
+        self,
+        session_id,
+        payload: dict,
+        created_at: datetime,
+    ) -> None:
+        record = SessionAIAnalysisRecord(
+            session_id=str(session_id),
+            payload_json=payload,
+            created_at=created_at,
+        )
+        with self._session_factory.begin() as database:
+            database.merge(record)
+
+    def get_ai_analysis(self, session_id) -> dict | None:
+        with self._session_factory() as database:
+            record = database.get(SessionAIAnalysisRecord, str(session_id))
+            return None if record is None else dict(record.payload_json)
 
 
 def _aware(value: datetime | None) -> datetime | None:

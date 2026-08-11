@@ -19,6 +19,8 @@ from app.domain import (
     ParameterOrigin,
     Provenance,
     ScenarioActionRequest,
+    ScenarioRuntimeState,
+    ScenarioRuntimeStatus,
     ScenarioTiming,
     SessionStatus,
     SignalDefinition,
@@ -40,6 +42,10 @@ def test_snapshot_serializes_to_frontend_camel_case() -> None:
         model_version="0.1.0",
         sequence_no=15,
         state_version=8,
+        mode=TrainingMode.TRAINING,
+        scenario_state=ScenarioRuntimeState(
+            status=ScenarioRuntimeStatus.ACTIVE,
+        ),
         timing=ScenarioTiming(
             elapsed_ms=120_000,
             total_ms=120_000,
@@ -60,7 +66,9 @@ def test_snapshot_serializes_to_frontend_camel_case() -> None:
                         parameter_id="COMPAX.N1A.VELOCITY",
                         tag="COMPAX.N1A.VELOCITY",
                         name="Виброскорость Н-1А",
-                        value_percent=491.7,
+                        measurement_type=MeasurementType.VIBRATION_VELOCITY,
+                        value=11.8,
+                        unit="мм/с",
                         status=GeneralStatus.ALERT,
                     )
                 ],
@@ -77,7 +85,8 @@ def test_snapshot_serializes_to_frontend_camel_case() -> None:
     assert payload["timing"]["mode"] == "live"
     assert payload["timing"]["elapsedMs"] == 120_000
     assert payload["components"][0]["componentId"] == "eq-n1a"
-    assert payload["components"][0]["parameters"][0]["valuePercent"] == 491.7
+    assert payload["components"][0]["parameters"][0]["value"] == 11.8
+    assert payload["components"][0]["parameters"][0]["unit"] == "мм/с"
 
 
 def test_contract_accepts_camel_case_input() -> None:
@@ -86,7 +95,9 @@ def test_contract_accepts_camel_case_input() -> None:
             "parameterId": "FYQR117",
             "tag": "FYQR 117",
             "name": "Расход",
-            "valuePercent": 90.0,
+            "measurementType": "flow_rate",
+            "value": 90.0,
+            "unit": "%",
             "status": "warning",
         }
     )
@@ -102,7 +113,9 @@ def test_contract_rejects_unknown_fields() -> None:
                 "parameterId": "PRA351",
                 "tag": "PRA 351",
                 "name": "Давление",
-                "valuePercent": 86.0,
+                "measurementType": "pressure",
+                "value": 86.0,
+                "unit": "%",
                 "status": "success",
                 "unexpected": True,
             }
@@ -212,6 +225,10 @@ def test_telemetry_update_without_components_is_rejected() -> None:
             model_version="0.1.0",
             sequence_no=2,
             state_version=2,
+            mode=TrainingMode.TRAINING,
+            scenario_state=ScenarioRuntimeState(
+                status=ScenarioRuntimeStatus.ACTIVE,
+            ),
             timing=ScenarioTiming(
                 elapsed_ms=1_000,
                 total_ms=120_000,

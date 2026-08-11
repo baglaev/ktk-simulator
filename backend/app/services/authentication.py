@@ -5,6 +5,7 @@ from hmac import compare_digest
 
 from app.config import Settings
 from app.domain.enums import AuthRole
+from app.services.demo_corporate_accounts import DEMO_CORPORATE_ACCOUNTS
 
 
 @dataclass(frozen=True)
@@ -15,14 +16,14 @@ class AuthenticatedPrincipal:
 
 
 class SimpleAuthenticationService:
-    """Validate the two configurable educational demo accounts.
+    """Validate local educational demo accounts.
 
     This intentionally does not issue a token or create a server-side session.
     It is suitable only for the current demonstration frontend flow.
     """
 
     def __init__(self, settings: Settings) -> None:
-        self._accounts = (
+        base_accounts = (
             (
                 settings.auth_user_login,
                 settings.auth_user_password.get_secret_value(),
@@ -36,6 +37,16 @@ class SimpleAuthenticationService:
                 settings.auth_instructor_redirect_to,
             ),
         )
+        corporate_accounts = tuple(
+            (
+                login,
+                password,
+                AuthRole.USER,
+                settings.auth_user_redirect_to,
+            )
+            for login, password in DEMO_CORPORATE_ACCOUNTS
+        )
+        self._accounts = base_accounts + corporate_accounts
 
     def authenticate(
         self,

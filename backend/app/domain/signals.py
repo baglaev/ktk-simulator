@@ -24,10 +24,12 @@ class SignalDefinition(APIModel):
 
 
 class ComponentParameterValue(APIModel):
-    """Frontend-ready component parameter normalized to percent."""
+    """Frontend-ready value in its configured engineering unit."""
 
     parameter_id: str = Field(min_length=1)
     tag: str = Field(min_length=1)
     name: str = Field(min_length=1)
-    value_percent: float
+    measurement_type: MeasurementType
+    value: float
+    unit: str = Field(min_length=1)
     status: GeneralStatus

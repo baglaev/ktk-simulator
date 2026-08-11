@@ -17,6 +17,7 @@ def get_session_manager() -> SessionManager:
 
     return SessionManager(
         snapshot_publisher=get_session_broker().publish,
+        event_publisher=get_session_broker().publish_event,
         repository=get_session_repository(),
     )
 

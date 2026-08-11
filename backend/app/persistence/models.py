@@ -53,3 +53,21 @@ class SessionResultRecord(Base):
     total_score: Mapped[int] = mapped_column(Integer)
     payload_json: Mapped[dict] = mapped_column(JSON)
     completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class IssuedHintRecord(Base):
+    __tablename__ = "issued_hints"
+
+    hint_record_id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    session_id: Mapped[str] = mapped_column(String(36), index=True)
+    hint_id: Mapped[str] = mapped_column(String(128), index=True)
+    virtual_time_ms: Mapped[int] = mapped_column(Integer)
+    payload_json: Mapped[dict] = mapped_column(JSON)
+
+
+class SessionAIAnalysisRecord(Base):
+    __tablename__ = "session_ai_analyses"
+
+    session_id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    payload_json: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

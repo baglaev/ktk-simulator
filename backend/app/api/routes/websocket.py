@@ -10,6 +10,7 @@ from app.domain import (
     ActionAcceptedMessage,
     ActionErrorDetail,
     ActionRejectedMessage,
+    ModelSnapshot,
     ScenarioActionRequest,
 )
 from app.realtime import SessionSnapshotBroker, build_telemetry_update
@@ -66,6 +67,9 @@ async def stream_session_telemetry(
             nonlocal previous
             while True:
                 current = await queue.get()
+                if not isinstance(current, ModelSnapshot):
+                    await send_message(current)
+                    continue
                 if current.sequence_no <= previous.sequence_no:
                     continue
 

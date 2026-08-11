@@ -1,14 +1,14 @@
 {
   "schemaVersion": "1.0",
   "modelId": "n1a-deterministic-training-model",
-  "modelVersion": "0.3.0",
+  "modelVersion": "0.4.0",
   "scenarioId": "MVP-SC-01",
   "componentIds": [
     "eq-n1", "eq-n1a", "eq-n1b", "eq-n1v",
     "eq-n1-discharge", "eq-t1-t11", "eq-elou", "eq-e15"
   ],
   "tickMs": 1000,
-  "totalDurationMs": 120000,
+  "totalDurationMs": 180000,
   "fault": {
     "equipmentId": "eq-n1a",
     "severityKeyframes": [
@@ -200,13 +200,14 @@
     {"componentId": "eq-e15", "keyframes": [{"timeMs": 0, "status": "success"}, {"timeMs": 80000, "status": "warning"}, {"timeMs": 110000, "status": "alert"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-04"}}
   ],
   "scheduledEvents": [
-    {"eventKey": "scenario-initialized", "timeMs": 0, "eventType": "scenario_initialized", "severity": "info", "sourceId": "MVP-SC-01", "description": "Сценарий запущен", "payload": {"modelVersion": "0.3.0"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
+    {"eventKey": "scenario-initialized", "timeMs": 0, "eventType": "scenario_initialized", "severity": "info", "sourceId": "MVP-SC-01", "description": "Сценарий запущен", "payload": {"modelVersion": "0.4.0"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
     {"eventKey": "compax-warning", "timeMs": 10000, "eventType": "diagnostic_warning", "severity": "warning", "sourceId": "eq-n1a", "description": "Параметры диагностики Н-1А перешли в состояние warning", "payload": {"diagnosticStatus": "warning"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
     {"eventKey": "compax-critical", "timeMs": 25000, "eventType": "diagnostic_critical", "severity": "critical", "sourceId": "eq-n1a", "description": "Параметры диагностики Н-1А перешли в состояние alert", "payload": {"diagnosticStatus": "alert"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-02"}},
     {"eventKey": "line-decline", "timeMs": 40000, "eventType": "feed_parameters_declining", "severity": "warning", "sourceId": "eq-n1-discharge", "description": "Снижаются PRA 351 и FYQR 117", "payload": {}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-03"}},
     {"eventKey": "elou-decline", "timeMs": 55000, "eventType": "elou_level_declining", "severity": "warning", "sourceId": "eq-elou", "description": "Снижается уровень I ступени ЭЛОУ", "payload": {}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-11"}},
     {"eventKey": "e15-decline", "timeMs": 80000, "eventType": "e15_level_declining", "severity": "warning", "sourceId": "eq-e15", "description": "Снижается уровень LRCA 605 в Е-15", "payload": {}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-04"}},
     {"eventKey": "elou-low-level", "timeMs": 110000, "eventType": "training_low_level_signal", "severity": "critical", "sourceId": "eq-elou", "description": "Достигнута учебная граница низкого уровня I ступени ЭЛОУ", "payload": {"scope": "first_stage"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-14"}},
-    {"eventKey": "scenario-boundary", "timeMs": 120000, "eventType": "training_scenario_boundary_reached", "severity": "critical", "sourceId": "eq-e15", "description": "Общее время сценария завершено", "payload": {"reason": "configured_training_boundary"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-04"}}
+    {"eventKey": "critical-boundary", "timeMs": 120000, "eventType": "critical_limit_reached", "severity": "critical", "sourceId": "eq-e15", "description": "LRCA 605 достиг учебной критической границы", "payload": {"reason": "critical_training_boundary"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-04"}},
+    {"eventKey": "scenario-boundary", "timeMs": 180000, "eventType": "training_scenario_boundary_reached", "severity": "critical", "sourceId": "eq-e15", "description": "Истекло максимальное учебное время сценария", "payload": {"reason": "configured_training_boundary"}, "provenance": {"origin": "educational_assumption", "assumptionId": "A-04"}}
   ]
 }

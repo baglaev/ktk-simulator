@@ -7,6 +7,7 @@ from pydantic import JsonValue
 from app.domain import (
     ActionErrorCode,
     ActionType,
+    CompletionReason,
     ComponentParameterValue,
     ComponentState,
     DiagnosisConclusion,
@@ -20,7 +21,10 @@ from app.domain import (
     Provenance,
     RecordedAction,
     ScenarioConfig,
+    ScenarioRuntimeState,
+    ScenarioRuntimeStatus,
     ScenarioTiming,
+    TrainingMode,
 )
 from app.simulation.config import (
     ModelProfile,
@@ -54,6 +58,7 @@ class N1AProcessModel:
             item.equipment_id: item for item in scenario.equipment
         }
         self._session_id: UUID | None = None
+        self._mode = TrainingMode.TRAINING
         self._elapsed_time_ms = 0
         self._sequence_no = 0
         self._state_version = 0
@@ -64,10 +69,17 @@ class N1AProcessModel:
         self._recovery_start_values: dict[str, float] = {}
         self._stabilized = False
         self._failure_reason: str | None = None
+        self._completion_reason: CompletionReason | None = None
         self._min_lrca_605 = 65.0
+        self._min_signal_values: dict[str, float] = {}
 
-    def initialize(self, session_id: UUID) -> ModelSnapshot:
+    def initialize(
+        self,
+        session_id: UUID,
+        mode: TrainingMode = TrainingMode.TRAINING,
+    ) -> ModelSnapshot:
         self._session_id = session_id
+        self._mode = mode
         self._elapsed_time_ms = 0
         self._sequence_no = 0
         self._state_version = 0
@@ -81,7 +93,13 @@ class N1AProcessModel:
         self._recovery_start_values = {}
         self._stabilized = False
         self._failure_reason = None
+        self._completion_reason = None
         self._min_lrca_605 = 65.0
+        self._min_signal_values = {
+            key: float(value)
+            for key, value in self._raw_signal_values().items()
+            if isinstance(value, (int, float)) and not isinstance(value, bool)
+        }
         return self.get_snapshot()
 
     def step(self, dt_ms: int) -> ModelSnapshot:
@@ -93,11 +111,6 @@ class N1AProcessModel:
 
         previous_time = self._elapsed_time_ms
         boundary_ms = self._profile.total_duration_ms
-        if self._recovery_started_ms is not None:
-            boundary_ms = max(
-                boundary_ms,
-                self._recovery_started_ms + _RECOVERY_DURATION_MS,
-            )
         self._elapsed_time_ms = min(
             previous_time + dt_ms,
             boundary_ms,
@@ -108,6 +121,7 @@ class N1AProcessModel:
             self._journal_entries_between(previous_time, self._elapsed_time_ms)
         )
         raw_values = self._raw_signal_values()
+        self._update_minimums(raw_values)
         self._min_lrca_605 = min(
             self._min_lrca_605,
             float(raw_values["LRCA605"]),
@@ -119,6 +133,7 @@ class N1AProcessModel:
         )
         if recovery_end_ms is not None and self._elapsed_time_ms >= recovery_end_ms:
             self._stabilized = True
+            self._completion_reason = CompletionReason.OBJECTIVES_COMPLETED
             self._journal.append(
                 self._system_journal_entry(
                     "recovery-completed",
@@ -126,11 +141,9 @@ class N1AProcessModel:
                     "Параметры стабилизированы после переключения на Н-1Б",
                 )
             )
-        elif (
-            self._recovery_started_ms is None
-            and self._elapsed_time_ms >= self._profile.total_duration_ms
-        ):
+        elif float(raw_values["LRCA605"]) <= 20:
             self._failure_reason = "LRCA 605 достиг учебной границы 20%"
+            self._completion_reason = CompletionReason.CRITICAL_LIMIT_REACHED
             self._journal.append(
                 self._system_journal_entry(
                     "safety-limit-reached",
@@ -138,6 +151,35 @@ class N1AProcessModel:
                     "Сценарий завершён: LRCA 605 достиг учебной границы 20%",
                 )
             )
+        elif self._elapsed_time_ms >= self._profile.total_duration_ms:
+            self._failure_reason = "Истекло максимальное учебное время сценария"
+            self._completion_reason = CompletionReason.TIME_LIMIT_REACHED
+            self._journal.append(
+                self._system_journal_entry(
+                    "time-limit-reached",
+                    self._elapsed_time_ms,
+                    "Сценарий завершён: истекло максимальное учебное время",
+                )
+            )
+        return self.get_snapshot()
+
+    def terminate_before_stabilization(self) -> ModelSnapshot:
+        """Finalize a manual early completion as a failed training attempt."""
+
+        self._require_initialized()
+        if self.is_terminal:
+            return self.get_snapshot()
+        self._failure_reason = "Сценарий завершён до стабилизации параметров"
+        self._completion_reason = CompletionReason.COMPLETED_BEFORE_STABILIZATION
+        self._sequence_no += 1
+        self._state_version += 1
+        self._journal.append(
+            self._system_journal_entry(
+                "completed-before-stabilization",
+                self._elapsed_time_ms,
+                "Сценарий завершён пользователем до стабилизации параметров",
+            )
+        )
         return self.get_snapshot()
 
     def apply_action(self, action: OperatorAction) -> ModelSnapshot:
@@ -198,8 +240,44 @@ class N1AProcessModel:
         return self._failure_reason
 
     @property
+    def completion_reason(self) -> CompletionReason | None:
+        return self._completion_reason
+
+    @property
     def min_lrca_605(self) -> float:
         return self._min_lrca_605
+
+    @property
+    def min_signal_values(self) -> dict[str, float]:
+        return dict(self._min_signal_values)
+
+    def get_all_parameter_values(self) -> list[ComponentParameterValue]:
+        """Return result-screen values even for a pump stopped by the trainee."""
+
+        raw_values = self._raw_signal_values()
+        status_timelines = {
+            item.component_id: item for item in self._profile.component_statuses
+        }
+        result: list[ComponentParameterValue] = []
+        for component_id in self._profile.component_ids:
+            operating_state = self._operating_states.get(
+                component_id,
+                EquipmentStatus.UNKNOWN,
+            )
+            component_status = self._component_status(
+                component_id,
+                operating_state,
+                raw_values,
+                status_timelines,
+            )
+            result.extend(
+                self._component_parameters(
+                    component_id,
+                    component_status,
+                    raw_values,
+                )
+            )
+        return result
 
     def get_recorded_actions(self) -> list[RecordedAction]:
         return [item.model_copy(deep=True) for item in self._recorded_actions]
@@ -222,6 +300,15 @@ class N1AProcessModel:
             model_version=self._profile.model_version,
             sequence_no=self._sequence_no,
             state_version=self._state_version,
+            mode=self._mode,
+            scenario_state=ScenarioRuntimeState(
+                status=(
+                    ScenarioRuntimeStatus.COMPLETED
+                    if self.is_terminal
+                    else ScenarioRuntimeStatus.ACTIVE
+                ),
+                completion_reason=self._completion_reason,
+            ),
             timing=self._timing(),
             components=self._component_states(),
             journal=list(self._journal),
@@ -229,14 +316,22 @@ class N1AProcessModel:
 
     def _timing(self) -> ScenarioTiming:
         total_ms = self._profile.total_duration_ms
-        remaining_ms = max(total_ms - self._elapsed_time_ms, 0)
+        remaining_ms = (
+            0
+            if self.is_terminal
+            else max(total_ms - self._elapsed_time_ms, 0)
+        )
         return ScenarioTiming(
             elapsed_ms=self._elapsed_time_ms,
             total_ms=total_ms,
             remaining_ms=remaining_ms,
-            progress_percent=min(
-                round(self._elapsed_time_ms / total_ms * 100, 1),
-                100.0,
+            progress_percent=(
+                100.0
+                if self.is_terminal
+                else min(
+                    round(self._elapsed_time_ms / total_ms * 100, 1),
+                    100.0,
+                )
             ),
         )
 
@@ -361,10 +456,11 @@ class N1AProcessModel:
                     parameter_id=definition.signal_id,
                     tag=definition.tag,
                     name=definition.name,
-                    value_percent=self._to_percent(
-                        definition.signal_id,
-                        raw_values[definition.signal_id],
+                    measurement_type=definition.measurement_type,
+                    value=self._frontend_value(
+                        definition.signal_id, raw_values[definition.signal_id]
                     ),
+                    unit=_DISPLAY_UNITS.get(definition.unit, definition.unit or "1"),
                     status=self._parameter_status(
                         definition.signal_id,
                         raw_values[definition.signal_id],
@@ -374,31 +470,20 @@ class N1AProcessModel:
             )
         return result
 
-    def _to_percent(
+    def _frontend_value(
         self,
         signal_id: str,
         raw_value: float | int | bool | str | None,
     ) -> float:
         if raw_value is None:
-            raise ValueError(
-                f"frontend parameter '{signal_id}' must have a percent value"
-            )
+            raise ValueError(f"frontend parameter '{signal_id}' has no value")
         if isinstance(raw_value, bool):
             return 100.0 if raw_value else 0.0
         if not isinstance(raw_value, (float, int)):
             raise ValueError(f"signal '{signal_id}' cannot be converted to percent")
 
         definition = self._signal_definitions[signal_id]
-        value = float(raw_value)
-        if definition.unit != "percent_of_baseline":
-            trajectory = next(
-                item
-                for item in self._profile.numeric_trajectories
-                if item.signal_id == signal_id
-            )
-            baseline = trajectory.keyframes[0].value
-            value = value / baseline * 100 if baseline else 0.0
-        return round(value, definition.precision or 1)
+        return round(float(raw_value), definition.precision or 1)
 
     def _journal_entries_between(
         self,
@@ -423,6 +508,7 @@ class N1AProcessModel:
                     "elou-decline",
                     "e15-decline",
                     "elou-low-level",
+                    "critical-boundary",
                     "scenario-boundary",
                 }
                 and self._recovery_started_ms is not None
@@ -442,6 +528,11 @@ class N1AProcessModel:
             target_name = signal.tag if signal is not None else action.target_id
         if action.action_type is ActionType.SUBMIT_DIAGNOSIS:
             conclusion = DiagnosisConclusion(action.parameters["conclusion"])
+            if conclusion is DiagnosisConclusion.NO_FAULT:
+                return (
+                    f"Диагноз {target_name}: "
+                    f"{_DIAGNOSIS_CONCLUSIONS[conclusion]}"
+                )
             reason = DiagnosisReason(action.parameters["reason"])
             return (
                 f"Диагноз {target_name}: "
@@ -472,6 +563,11 @@ class N1AProcessModel:
         elif action.action_type is ActionType.SUBMIT_DIAGNOSIS:
             if action.target_id not in _PUMP_IDS:
                 raise ValueError(f"unknown pump '{action.target_id}'")
+        elif action.action_type is ActionType.RUN_DIAGNOSTICS:
+            if action.target_id != "eq-n1a":
+                raise ValueError(
+                    "run_diagnostics is available only for 'eq-n1a'"
+                )
 
     def _update_recovery_state(self) -> None:
         if self.has_safe_configuration():
@@ -524,7 +620,12 @@ class N1AProcessModel:
 
         if action.action_type is ActionType.SUBMIT_DIAGNOSIS:
             conclusion = DiagnosisConclusion(action.parameters["conclusion"])
-            reason = DiagnosisReason(action.parameters["reason"])
+            reason_value = action.parameters.get("reason")
+            reason = (
+                DiagnosisReason(reason_value)
+                if reason_value is not None
+                else None
+            )
             if action.target_id != "eq-n1a":
                 errors.add(ActionErrorCode.HEALTHY_PUMP_SELECTED)
             if conclusion is not DiagnosisConclusion.FAULT_DETECTED:
@@ -658,6 +759,19 @@ class N1AProcessModel:
             description=description,
         )
 
+    def _update_minimums(
+        self,
+        values: dict[str, float | int | bool | str | None],
+    ) -> None:
+        for signal_id, value in values.items():
+            if not isinstance(value, (int, float)) or isinstance(value, bool):
+                continue
+            numeric = float(value)
+            self._min_signal_values[signal_id] = min(
+                self._min_signal_values.get(signal_id, numeric),
+                numeric,
+            )
+
     def _require_initialized(self) -> UUID:
         if self._session_id is None:
             raise ModelNotInitializedError("model must be initialized first")
@@ -777,6 +891,13 @@ _COMPAX_THRESHOLDS = {
     "DISPLACEMENT": (80.0, 160.0),
     "CURRENT": (105.0, 115.0),
 }
+_DISPLAY_UNITS = {
+    "degC": "°C",
+    "mm/s": "мм/с",
+    "m/s2": "м/с²",
+    "um": "мкм",
+    "percent_of_baseline": "%",
+}
 _DIAGNOSIS_CONCLUSIONS = {
     DiagnosisConclusion.FAULT_DETECTED: "неисправность выявлена",
     DiagnosisConclusion.NO_FAULT: "неисправность не выявлена",
@@ -785,6 +906,10 @@ _DIAGNOSIS_REASONS = {
     DiagnosisReason.BEARING_WEAR: "развивающийся износ подшипника",
     DiagnosisReason.CAVITATION: "кавитация",
     DiagnosisReason.ELECTRICAL_OVERLOAD: "электрическая перегрузка",
+    DiagnosisReason.SUCTION_SUPPLY_DISRUPTION: (
+        "нарушение подачи на всасывающей линии"
+    ),
+    DiagnosisReason.COMPAX_SENSOR_FAULT: "неисправность датчика системы КОМПАКС",
     DiagnosisReason.UNKNOWN: "причина не определена",
 }
 
