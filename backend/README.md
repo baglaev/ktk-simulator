@@ -311,6 +311,7 @@ GET /api/v1/instructor/results
     {
       "sessionId": "f3656f3b-3b2c-44e5-9cb8-46b50ad6f715",
       "traineeId": "trainee-001",
+      "traineeName": "trainee-001",
       "instructorId": "instructor-001",
       "scenarioId": "MVP-SC-01",
       "scenarioVersion": "0.4.0",
@@ -321,7 +322,15 @@ GET /api/v1/instructor/results
       "totalScore": 92,
       "maxScore": 100,
       "elapsedTimeMs": 87000,
-      "completedAt": "2026-08-11T12:00:00Z"
+      "completedAt": "2026-08-11T12:00:00Z",
+      "journal": [
+        {
+          "time": "00:31",
+          "virtualTimeMs": 31000,
+          "kind": "action",
+          "description": "Просмотрен параметр PRA 351"
+        }
+      ]
     }
   ],
   "total": 1

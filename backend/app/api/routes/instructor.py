@@ -8,10 +8,10 @@ from app.domain import (
     InstructorAttemptJournal,
     InstructorJournalItem,
     InstructorOverview,
+    InstructorResultsCollection,
     InstructorTrainee,
     InstructorTraineeList,
     SessionResult,
-    TraineeResultsCollection,
     TraineeResultsPage,
     TrainingMode,
 )
@@ -161,12 +161,13 @@ def _format_virtual_time(value_ms: int) -> str:
 
 @router.get(
     "/results",
-    response_model=TraineeResultsCollection,
+    response_model=InstructorResultsCollection,
     summary="Результаты обучаемых",
 )
 async def list_trainee_results(
+    request: Request,
     manager: SessionManager = Depends(get_session_manager),
-) -> TraineeResultsCollection:
+) -> InstructorResultsCollection:
     """Return all completed attempts without required query parameters."""
 
-    return manager.list_all_trainee_results()
+    return _dashboard(request, manager).list_results()
