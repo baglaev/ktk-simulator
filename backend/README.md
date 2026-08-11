@@ -193,6 +193,12 @@ Backend автоматически продвигает виртуальное �
 | GET | `/api/v1/sessions/{id}/adaptive-plan` | план повторной отработки |
 | POST | `/api/v1/sessions/{id}/assistant/question` | RAG-вопрос после завершения |
 | POST | `/api/v1/sessions/{id}/advance` | только ручной тестовый шаг времени |
+| GET | `/api/v1/instructor/overview` | сводные показатели инструктора |
+| GET | `/api/v1/instructor/trainees` | полный список назначенных обучаемых |
+| GET | `/api/v1/instructor/trainees/{traineeId}` | карточка обучаемого |
+| GET | `/api/v1/instructor/trainees/{traineeId}/results` | попытки обучаемого |
+| GET | `/api/v1/instructor/trainees/{traineeId}/results/{sessionId}` | полный результат попытки |
+| GET | `/api/v1/instructor/trainees/{traineeId}/results/{sessionId}/journal` | журнал действий и подсказок |
 | GET | `/api/v1/instructor/results` | список завершённых результатов обучаемых |
 
 Создание сессии:
@@ -211,7 +217,87 @@ Backend автоматически продвигает виртуальное �
 
 ### Результаты для страницы инструктора
 
-Frontend получает список завершённых попыток запросом:
+При открытии страницы frontend сначала запрашивает:
+
+```http
+GET /api/v1/instructor/overview
+GET /api/v1/instructor/trainees
+```
+
+`/trainees` сразу возвращает всех назначенных обучаемых: базового `user`, 20
+синтетических корпоративных демо-учёток и дополнительные идентификаторы,
+обнаруженные в сохранённой истории. Для текущего MVP используется один
+инструктор, поэтому все демо-обучаемые по умолчанию назначены `instructor`.
+Пароли API никогда не возвращает.
+
+У каждого обучаемого есть агрегаты и `latestResult`. Если попыток ещё не было,
+`attemptsCount` равен `0`, а `latestResult` равен `null`. После прохождения
+`latestResult` содержит `sessionId`, режим, статус, балл и время завершения:
+
+```json
+{
+  "traineeId": "Matveev.AD@gazprom-neft.ru",
+  "login": "Matveev.AD@gazprom-neft.ru",
+  "fullName": "Матвеев Александр Дмитриевич",
+  "assignedInstructorId": "instructor",
+  "accountSource": "demo_directory",
+  "attemptsCount": 1,
+  "successfulAttemptsCount": 1,
+  "averageScore": 92,
+  "bestScore": 92,
+  "lastCompletedAt": "2026-08-11T12:00:00Z",
+  "latestResult": {
+    "sessionId": "f3656f3b-3b2c-44e5-9cb8-46b50ad6f715",
+    "traineeId": "Matveev.AD@gazprom-neft.ru",
+    "instructorId": "instructor",
+    "scenarioId": "MVP-SC-01",
+    "scenarioVersion": "0.4.0",
+    "mode": "training",
+    "sessionStatus": "completed",
+    "resultStatus": "passed",
+    "outcome": "success",
+    "totalScore": 92,
+    "maxScore": 100,
+    "elapsedTimeMs": 87000,
+    "completedAt": "2026-08-11T12:00:00Z"
+  }
+}
+```
+
+История выбранного обучаемого:
+
+```http
+GET /api/v1/instructor/trainees/{traineeId}/results
+```
+
+Поддерживает `mode`, `limit` и `offset`. Полный результат и журнал выбранной
+попытки frontend получает отдельно:
+
+```http
+GET /api/v1/instructor/trainees/{traineeId}/results/{sessionId}
+GET /api/v1/instructor/trainees/{traineeId}/results/{sessionId}/journal
+```
+
+Журнал имеет стабильный формат «время — описание» и содержит принятые действия
+обучаемого, а в режиме `training` также реально показанные подсказки:
+
+```json
+{
+  "sessionId": "f3656f3b-3b2c-44e5-9cb8-46b50ad6f715",
+  "traineeId": "Matveev.AD@gazprom-neft.ru",
+  "mode": "training",
+  "items": [
+    {
+      "time": "00:31",
+      "virtualTimeMs": 31000,
+      "kind": "action",
+      "description": "Просмотрен сигнал PRA 351"
+    }
+  ]
+}
+```
+
+Общий список всех завершённых попыток остаётся доступен для таблиц и фильтров:
 
 ```http
 GET /api/v1/instructor/results
@@ -258,8 +344,8 @@ GET /api/v1/instructor/results?instructorId=instructor-001&mode=training&limit=2
 }
 ```
 
-Незавершённые сессии в список не входят. Полную карточку выбранной попытки
-frontend получает по `GET /api/v1/sessions/{sessionId}/result`.
+Незавершённые сессии в результаты не входят, но сам обучаемый остаётся в полном
+списке `/trainees`.
 
 Текущая авторизация демонстрационная и не выдаёт токен, поэтому эта ручка пока
 не проверяет роль вызывающего пользователя. Перед промышленным использованием

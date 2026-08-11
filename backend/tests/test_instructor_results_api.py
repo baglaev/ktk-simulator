@@ -1,7 +1,12 @@
 from fastapi.testclient import TestClient
 
 from app.api.dependencies import get_session_manager
-from app.domain import CreateSessionRequest, TrainingMode
+from app.domain import (
+    ActionType,
+    CreateSessionRequest,
+    ScenarioActionRequest,
+    TrainingMode,
+)
 from app.main import app
 from app.persistence import SessionRepository, create_database
 from app.services import SessionManager
@@ -131,3 +136,118 @@ def test_instructor_results_returns_empty_page_before_completion() -> None:
         "limit": 100,
         "offset": 0,
     }
+
+
+def test_instructor_receives_full_trainee_directory_before_attempts() -> None:
+    manager = build_manager()
+    app.dependency_overrides[get_session_manager] = lambda: manager
+    try:
+        response = TestClient(app).get("/api/v1/instructor/trainees")
+    finally:
+        app.dependency_overrides.pop(get_session_manager, None)
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["total"] == 21
+    assert len(payload["items"]) == 21
+    assert {
+        "user",
+        "Matveev.AD@gazprom-neft.ru",
+        "Voronov.NK@gazprom-neft.ru",
+    }.issubset({item["traineeId"] for item in payload["items"]})
+    assert all(item["attemptsCount"] == 0 for item in payload["items"])
+    assert "password" not in response.text.lower()
+
+
+def test_trainee_directory_is_enriched_from_persisted_results() -> None:
+    manager = build_manager()
+    trainee_id = "Matveev.AD@gazprom-neft.ru"
+    session = manager.create_session(
+        CreateSessionRequest(
+            scenario_id="MVP-SC-01",
+            trainee_id=trainee_id,
+            instructor_id="instructor",
+            mode=TrainingMode.TRAINING,
+        )
+    )
+    manager.start_session(session.session_id)
+    manager.apply_scenario_action(
+        session.session_id,
+        ScenarioActionRequest(
+            action_type=ActionType.VIEW_SIGNAL,
+            target_id="PRA351",
+        ),
+    )
+    manager.complete_session(session.session_id)
+    session_id = str(session.session_id)
+    app.dependency_overrides[get_session_manager] = lambda: manager
+    try:
+        client = TestClient(app)
+        profile_response = client.get(
+            f"/api/v1/instructor/trainees/{trainee_id}"
+        )
+        history_response = client.get(
+            f"/api/v1/instructor/trainees/{trainee_id}/results"
+        )
+        result_response = client.get(
+            f"/api/v1/instructor/trainees/{trainee_id}/results/{session_id}"
+        )
+        journal_response = client.get(
+            f"/api/v1/instructor/trainees/{trainee_id}/results/"
+            f"{session_id}/journal"
+        )
+        overview_response = client.get("/api/v1/instructor/overview")
+    finally:
+        app.dependency_overrides.pop(get_session_manager, None)
+
+    assert profile_response.status_code == 200
+    profile = profile_response.json()
+    assert profile["fullName"] == "Матвеев Александр Дмитриевич"
+    assert profile["assignedInstructorId"] == "instructor"
+    assert profile["attemptsCount"] == 1
+    assert type(profile["averageScore"]) is int
+    assert type(profile["bestScore"]) is int
+    assert profile["latestResult"]["sessionId"] == session_id
+    assert profile["latestResult"]["mode"] == "training"
+    assert profile["latestResult"]["resultStatus"] == "failed"
+
+    assert history_response.status_code == 200
+    assert history_response.json()["total"] == 1
+    assert history_response.json()["items"][0]["sessionId"] == session_id
+
+    assert result_response.status_code == 200
+    assert result_response.json()["sessionId"] == session_id
+
+    assert journal_response.status_code == 200
+    journal = journal_response.json()
+    assert journal["traineeId"] == trainee_id
+    assert journal["mode"] == "training"
+    assert journal["items"][0]["kind"] == "action"
+    assert journal["items"][0]["time"] == "00:00"
+    assert "PRA 351" in journal["items"][0]["description"]
+
+    assert overview_response.status_code == 200
+    overview = overview_response.json()
+    assert overview["totalTrainees"] == 21
+    assert overview["traineesWithAttempts"] == 1
+    assert overview["completedAttempts"] == 1
+
+
+def test_instructor_result_detail_checks_trainee_ownership() -> None:
+    manager = build_manager()
+    session_id = complete_attempt(
+        manager,
+        trainee_id="trainee-owner",
+        instructor_id="instructor",
+        mode=TrainingMode.TRAINING,
+    )
+    app.dependency_overrides[get_session_manager] = lambda: manager
+    try:
+        response = TestClient(app).get(
+            "/api/v1/instructor/trainees/another-trainee/"
+            f"results/{session_id}"
+        )
+    finally:
+        app.dependency_overrides.pop(get_session_manager, None)
+
+    assert response.status_code == 404
