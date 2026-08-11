@@ -2,6 +2,8 @@ from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 from app.domain import (
+    ACTION_ERROR_DESCRIPTIONS,
+    ActionErrorCode,
     ActionType,
     CreateSessionRequest,
     OperatorAction,
@@ -9,6 +11,14 @@ from app.domain import (
     TrainingMode,
 )
 from app.services import SessionManager
+
+
+def test_every_action_error_has_a_human_readable_result_description() -> None:
+    assert set(ACTION_ERROR_DESCRIPTIONS) == set(ActionErrorCode)
+    assert all(
+        description != code.value
+        for code, description in ACTION_ERROR_DESCRIPTIONS.items()
+    )
 
 
 def _started_manager() -> tuple[SessionManager, UUID]:

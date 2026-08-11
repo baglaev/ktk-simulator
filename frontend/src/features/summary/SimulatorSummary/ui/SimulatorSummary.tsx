@@ -26,7 +26,12 @@ export const SimulatorSummary = observer(() => {
     );
   }
 
-  const isPassed = result.outcome === 'passed';
+  const isFailed = result.status === 'failed' || result.outcome === 'failed';
+  const resultTitle = isFailed
+    ? 'Сценарий не пройден'
+    : result.status === 'passed_with_remarks'
+      ? 'Сценарий пройден с замечаниями'
+      : 'Сценарий пройден';
 
   const handleAiAnalysis = async () => {
     if (!scenarioStore.sessionId) {
@@ -51,11 +56,11 @@ export const SimulatorSummary = observer(() => {
         summaryEnabled
       />
       <div className={styles.titleContainer}>
-        <IconCheck size="l" view={isPassed ? 'success' : 'alert'} />
+        <IconCheck size="l" view={isFailed ? 'alert' : 'success'} />
 
         <div>
-          <Text size="2xl" className={styles.title} view={isPassed ? 'success' : 'alert'}>
-            {isPassed ? 'Сценарий пройден' : 'Сценарий не пройден'}
+          <Text size="2xl" className={styles.title} view={isFailed ? 'alert' : 'success'}>
+            {resultTitle}
           </Text>
 
           <Text view="secondary">{result.summary}</Text>

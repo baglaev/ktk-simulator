@@ -86,7 +86,13 @@ export const InstructorPage = observer(() => {
           {results.map((result) => {
             const isOpen = openedSessionId === result.sessionId;
 
-            const isPassed = result.outcome === 'passed';
+            const isFailed =
+              result.resultStatus === 'failed' || result.outcome === 'failed';
+            const statusLabel = isFailed
+              ? 'Не пройден'
+              : result.resultStatus === 'passed_with_remarks'
+                ? 'С замечаниями'
+                : 'Пройден';
 
             return (
               <section key={result.sessionId} className={styles.resultCard}>
@@ -126,7 +132,7 @@ export const InstructorPage = observer(() => {
                       Балл
                     </Text>
 
-                    <Text size="xl" weight="semibold" view={isPassed ? 'success' : 'alert'}>
+                    <Text size="xl" weight="semibold" view={isFailed ? 'alert' : 'success'}>
                       {result.totalScore}
                       <span className={styles.maxScore}>/{result.maxScore}</span>
                     </Text>
@@ -138,8 +144,8 @@ export const InstructorPage = observer(() => {
                     </Text>
 
                     <Badge
-                      label={isPassed ? 'Пройден' : 'Не пройден'}
-                      status={isPassed ? 'success' : 'error'}
+                      label={statusLabel}
+                      status={isFailed ? 'error' : 'success'}
                     />
                   </div>
                 </div>

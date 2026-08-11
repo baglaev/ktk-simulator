@@ -50,7 +50,12 @@ export const AiAnalysis = observer(() => {
     );
   }
 
-  const isPassed = analysis.resultStatus === 'passed';
+  const isFailed = analysis.resultStatus === 'failed';
+  const resultTitle = isFailed
+    ? 'Разбор ошибок прохождения'
+    : analysis.resultStatus === 'passed_with_remarks'
+      ? 'Сценарий пройден с замечаниями'
+      : 'Сценарий пройден';
 
   return (
     <section className={styles.section}>
@@ -62,11 +67,11 @@ export const AiAnalysis = observer(() => {
 
       <div className={styles.content}>
         <div className={styles.titleContainer}>
-          {isPassed ? <IconCheck size="l" view="success" /> : <IconWarning size="l" view="alert" />}
+          {isFailed ? <IconWarning size="l" view="alert" /> : <IconCheck size="l" view="success" />}
 
           <div className={styles.titleText}>
-            <Text size="2xl" weight="semibold" view={isPassed ? 'success' : 'alert'}>
-              {isPassed ? 'Сценарий пройден' : 'Разбор ошибок прохождения'}
+            <Text size="2xl" weight="semibold" view={isFailed ? 'alert' : 'success'}>
+              {resultTitle}
             </Text>
 
             <Text size="s" view="secondary">

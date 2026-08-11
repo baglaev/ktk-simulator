@@ -17,6 +17,36 @@ from app.domain.enums import (
 )
 
 
+ACTION_ERROR_DESCRIPTIONS = {
+    ActionErrorCode.SWITCH_BEFORE_DIAGNOSIS: "Переключение начато до корректного диагноза.",
+    ActionErrorCode.HEALTHY_PUMP_SELECTED: "В качестве неисправного выбран исправный насос.",
+    ActionErrorCode.FAULT_NOT_DETECTED: "Неисправность Н-1А не выявлена.",
+    ActionErrorCode.WRONG_DIAGNOSIS_REASON: "Выбран неверный вариант диагностики.",
+    ActionErrorCode.DIAGNOSIS_TOO_LATE: "Диагноз зафиксирован слишком поздно.",
+    ActionErrorCode.DIAGNOSIS_WITHOUT_PRA_CHECK: "Диагноз поставлен без предварительной проверки PRA 351.",
+    ActionErrorCode.DIAGNOSIS_WITHOUT_FYQR_CHECK: "Диагноз поставлен без предварительной проверки FYQR 117.",
+    ActionErrorCode.WRONG_DIAGNOSIS_CORRECTED: "Первоначально неверный диагноз был исправлен.",
+    ActionErrorCode.DIAGNOSTICS_NOT_RUN: "Форма учебной диагностики не была запущена.",
+    ActionErrorCode.PUMP_COMMAND_BEFORE_WARNING: "Команда насосу отправлена до появления предупреждения.",
+    ActionErrorCode.N1A_STOPPED_BEFORE_N1B: "Н-1А остановлен до запуска резервного Н-1Б.",
+    ActionErrorCode.N1A_STOPPED_WITHOUT_DIAGNOSIS: "Н-1А остановлен без подтверждённого диагноза.",
+    ActionErrorCode.HEALTHY_PUMP_STOPPED: "Остановлен исправный насос.",
+    ActionErrorCode.N1A_LEFT_RUNNING: "После запуска Н-1Б неисправный Н-1А оставлен в работе.",
+    ActionErrorCode.N1B_STOPPED_AFTER_START: "Резервный Н-1Б повторно остановлен после запуска.",
+    ActionErrorCode.N1A_RESTARTED_AFTER_SWITCH: "Н-1А повторно запущен после его остановки.",
+    ActionErrorCode.MULTIPLE_PUMPS_STOPPED: "Н-1А остановлен, пока резервный Н-1Б ещё не был запущен.",
+    ActionErrorCode.UNNECESSARY_REPEATED_SWITCHING: "Повторно отправлена команда, уже соответствующая состоянию насоса.",
+    ActionErrorCode.WARNING_IGNORED: "Предупреждение о неисправности оставлено без подтверждённого диагноза.",
+    ActionErrorCode.PRA_NOT_CHECKED: "Не просмотрен тренд PRA 351.",
+    ActionErrorCode.FYQR_NOT_CHECKED: "Не просмотрен тренд FYQR 117.",
+    ActionErrorCode.ELOU_NOT_CHECKED_AFTER_SWITCH: "После переключения не проверен блок ЭЛОУ.",
+    ActionErrorCode.E15_NOT_CHECKED_AFTER_SWITCH: "После переключения не проверена Е-15.",
+    ActionErrorCode.LRCA_RECOVERY_NOT_CONFIRMED: "Восстановление LRCA 605 не подтверждено.",
+    ActionErrorCode.COMPLETED_BEFORE_STABLE: "Сценарий завершён до стабилизации.",
+    ActionErrorCode.E15_SAFETY_LIMIT_REACHED: "LRCA 605 достиг учебной критической границы.",
+}
+
+
 class ScoreSection(APIModel):
     score: int = Field(ge=0)
     max_score: int = Field(gt=0)
@@ -91,6 +121,12 @@ class SessionResult(APIModel):
                 for parameter in parameters
             ]
 
+        remarks = payload.get("remarks")
+        if isinstance(remarks, list):
+            payload["remarks"] = [
+                _adopt_result_remark(remark) for remark in remarks
+            ]
+
         if "status" in payload or "resultStatus" in payload:
             return payload
         outcome = payload.get("outcome", "failed")
@@ -108,6 +144,20 @@ class SessionResult(APIModel):
             }
         )
         return payload
+
+
+def _adopt_result_remark(value):
+    """Replace archived technical error codes with current user-facing text."""
+
+    if not isinstance(value, dict):
+        return value
+    remark = dict(value)
+    try:
+        error_code = ActionErrorCode(remark.get("code"))
+    except (TypeError, ValueError):
+        return remark
+    remark["description"] = ACTION_ERROR_DESCRIPTIONS[error_code]
+    return remark
 
 
 def _adopt_legacy_parameter(value):

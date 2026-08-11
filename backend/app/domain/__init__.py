@@ -67,6 +67,7 @@ from app.domain.sessions import (
     TrainingSession,
 )
 from app.domain.results import (
+    ACTION_ERROR_DESCRIPTIONS,
     ResultParameter,
     ResultRemark,
     ScoreSection,

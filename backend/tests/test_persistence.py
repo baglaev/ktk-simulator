@@ -1,4 +1,6 @@
 from app.domain import (
+    ACTION_ERROR_DESCRIPTIONS,
+    ActionErrorCode,
     CreateSessionRequest,
     GeneralStatus,
     HintProvenance,
@@ -59,6 +61,38 @@ def test_legacy_fractional_result_parameters_are_rounded_on_read() -> None:
 
     assert adopted.controlled_parameters[0].final_value == 5
     assert adopted.controlled_parameters[0].minimum_value == 100
+
+
+def test_archived_technical_remark_is_translated_on_read() -> None:
+    _, factory = create_database("sqlite+pysqlite:///:memory:")
+    manager = SessionManager(repository=SessionRepository(factory))
+    created = manager.create_session(
+        CreateSessionRequest(
+            scenario_id="MVP-SC-01",
+            trainee_id="legacy-remark-trainee",
+            mode=TrainingMode.TRAINING,
+        )
+    )
+    manager.start_session(created.session_id)
+    manager.advance_session(created.session_id, 120_000)
+    payload = manager.get_result(created.session_id).model_dump(
+        mode="json",
+        by_alias=True,
+    )
+    known_codes = {item.value for item in ActionErrorCode}
+    remark = next(
+        item for item in payload["remarks"] if item["code"] in known_codes
+    )
+    remark["description"] = remark["code"]
+
+    adopted = SessionResult.model_validate(payload)
+    adopted_remark = next(
+        item for item in adopted.remarks if item.code == remark["code"]
+    )
+
+    assert adopted_remark.description == ACTION_ERROR_DESCRIPTIONS[
+        ActionErrorCode(remark["code"])
+    ]
 
 
 def test_legacy_hint_mode_field_is_ignored_on_database_read() -> None:

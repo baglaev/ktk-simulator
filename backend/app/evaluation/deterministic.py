@@ -5,6 +5,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from uuid import UUID
 
 from app.domain import (
+    ACTION_ERROR_DESCRIPTIONS,
     ActionErrorCode,
     ActionType,
     DiagnosisConclusion,
@@ -438,7 +439,7 @@ def _remarks(
                     else GeneralStatus.WARNING
                 ),
                 title="Ошибка прохождения",
-                description=_ERROR_DESCRIPTIONS.get(error, error.value),
+                description=ACTION_ERROR_DESCRIPTIONS[error],
             )
         )
     return result
@@ -451,21 +452,6 @@ def _summary(status: ResultStatus, score: int, completed_at: datetime) -> str:
         ResultStatus.FAILED: "Сценарий не пройден",
     }
     return f"{labels[status]}. Итоговая оценка: {score}/100."
-
-
-_ERROR_DESCRIPTIONS = {
-    ActionErrorCode.DIAGNOSTICS_NOT_RUN: "Форма учебной диагностики не была запущена.",
-    ActionErrorCode.PRA_NOT_CHECKED: "Не просмотрен тренд PRA 351.",
-    ActionErrorCode.FYQR_NOT_CHECKED: "Не просмотрен тренд FYQR 117.",
-    ActionErrorCode.ELOU_NOT_CHECKED_AFTER_SWITCH: "После переключения не проверен блок ЭЛОУ.",
-    ActionErrorCode.E15_NOT_CHECKED_AFTER_SWITCH: "После переключения не проверена Е-15.",
-    ActionErrorCode.LRCA_RECOVERY_NOT_CONFIRMED: "Восстановление LRCA 605 не подтверждено.",
-    ActionErrorCode.COMPLETED_BEFORE_STABLE: "Сценарий завершён до стабилизации.",
-    ActionErrorCode.E15_SAFETY_LIMIT_REACHED: "LRCA 605 достиг учебной критической границы.",
-    ActionErrorCode.WRONG_DIAGNOSIS_REASON: "Выбран неверный вариант диагностики.",
-    ActionErrorCode.FAULT_NOT_DETECTED: "Неисправность Н-1А не выявлена.",
-    ActionErrorCode.SWITCH_BEFORE_DIAGNOSIS: "Переключение начато до корректного диагноза.",
-}
 
 
 def _correct_diagnosis(action: RecordedAction) -> bool:
