@@ -43,7 +43,22 @@ else
   echo "Предупреждение: ai/.env не найден; backend запустится без внешнего LLM."
 fi
 
-LLM_KEY="${AI_LLM_API_KEY:-${OPENROUTER_API_KEY:-}}"
+LLM_PROVIDER="${AI_LLM_PROVIDER:-openrouter}"
+case "$LLM_PROVIDER" in
+  openrouter)
+    LLM_KEY="${AI_LLM_API_KEY:-${OPENROUTER_API_KEY:-}}"
+    LLM_MODEL="${AI_LLM_MODEL:-}"
+    ;;
+  vk|vkcloud|vk_cloud|vk-cloud)
+    LLM_PROVIDER="vk_cloud"
+    LLM_KEY="${AI_VK_CLOUD_API_KEY:-}"
+    LLM_MODEL="${AI_VK_CLOUD_MODEL:-}"
+    ;;
+  *)
+    echo "Ошибка: AI_LLM_PROVIDER должен быть openrouter или vk_cloud."
+    exit 1
+    ;;
+esac
 LLM_ENABLED=false
 case "${AI_LLM_ENABLED:-}" in
   1|true|TRUE|yes|YES|on|ON) LLM_ENABLED=true ;;
@@ -61,11 +76,11 @@ esac
 
 if [[ "$LLM_ENABLED" == true ]]; then
   if [[ -z "$LLM_KEY" ]]; then
-    echo "Ошибка: включён LLM, но не задан OPENROUTER_API_KEY."
+    echo "Ошибка: включён LLM, но не задан API-ключ провайдера $LLM_PROVIDER."
     exit 1
   fi
-  if [[ -z "${AI_LLM_MODEL:-}" ]]; then
-    echo "Ошибка: включён LLM, но не задан AI_LLM_MODEL."
+  if [[ -z "$LLM_MODEL" ]]; then
+    echo "Ошибка: включён LLM, но не задана модель провайдера $LLM_PROVIDER."
     exit 1
   fi
 fi
@@ -94,8 +109,13 @@ echo "Применение миграций базы данных..."
 echo "Backend: http://$HOST:$PORT"
 echo "Swagger: http://$HOST:$PORT/docs"
 if [[ "$LLM_ENABLED" == true ]]; then
-  echo "AI-модель: $AI_LLM_MODEL"
-  echo "AI fallback: ${AI_LLM_FALLBACK_MODEL:-отключён}"
+  echo "AI-провайдер: $LLM_PROVIDER"
+  echo "AI-модель: $LLM_MODEL"
+  if [[ "$LLM_PROVIDER" == "openrouter" ]]; then
+    echo "AI fallback: ${AI_LLM_FALLBACK_MODEL:-отключён}"
+  else
+    echo "AI endpoint: ${AI_VK_CLOUD_BASE_URL:-http://127.0.0.1:8001/v1}"
+  fi
 else
   echo "AI: внешний LLM отключён; доступен детерминированный анализ."
 fi

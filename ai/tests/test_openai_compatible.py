@@ -38,9 +38,47 @@ class OpenAICompatibleClientTests(unittest.TestCase):
             }
         )
         self.assertTrue(config.enabled)
+        self.assertEqual(config.provider, "openrouter")
         self.assertEqual(config.model, "google/gemma-4-26b-a4b-it:free")
         self.assertEqual(config.fallback_model, "openrouter/free")
         self.assertEqual(config.base_url, "https://openrouter.ai/api/v1")
+
+    def test_vk_cloud_profile_reads_separate_environment(self) -> None:
+        config = LLMConfig.from_env(
+            {
+                "AI_LLM_PROVIDER": "vk_cloud",
+                "AI_VK_CLOUD_API_KEY": "vk-secret",
+                "AI_VK_CLOUD_BASE_URL": "http://10.0.0.5:8001/v1/",
+                "AI_VK_CLOUD_MODEL": "ktk-qwen",
+            }
+        )
+
+        self.assertTrue(config.enabled)
+        self.assertEqual(config.provider, "vk_cloud")
+        self.assertEqual(config.api_key, "vk-secret")
+        self.assertEqual(config.base_url, "http://10.0.0.5:8001/v1")
+        self.assertEqual(config.model, "ktk-qwen")
+        self.assertIsNone(config.fallback_model)
+
+    def test_vk_cloud_alias_is_supported(self) -> None:
+        config = LLMConfig.from_env(
+            {
+                "AI_LLM_PROVIDER": "vkcloud",
+                "AI_VK_CLOUD_API_KEY": "vk-secret",
+                "AI_VK_CLOUD_MODEL": "ktk-qwen",
+                "AI_LLM_BASE_URL": "https://openrouter.ai/api/v1",
+                "AI_LLM_MODEL": "external-model",
+                "AI_LLM_FALLBACK_MODEL": "openrouter/free",
+            }
+        )
+        self.assertEqual(config.provider, "vk_cloud")
+        self.assertEqual(config.base_url, "http://127.0.0.1:8001/v1")
+        self.assertEqual(config.model, "ktk-qwen")
+        self.assertIsNone(config.fallback_model)
+
+    def test_unknown_provider_is_rejected(self) -> None:
+        with self.assertRaisesRegex(LLMConfigurationError, "AI_LLM_PROVIDER"):
+            LLMConfig.from_env({"AI_LLM_PROVIDER": "unknown"})
 
     def test_missing_key_is_rejected(self) -> None:
         with self.assertRaises(LLMConfigurationError):
@@ -139,7 +177,9 @@ class OpenAICompatibleClientTests(unittest.TestCase):
         captured = {}
 
         def fake_urlopen(request, timeout):
+            captured["url"] = request.full_url
             captured["body"] = json.loads(request.data.decode("utf-8"))
+            captured["headers"] = dict(request.header_items())
             return FakeResponse(
                 {
                     "model": "local-model",
@@ -150,14 +190,22 @@ class OpenAICompatibleClientTests(unittest.TestCase):
         client = OpenAICompatibleClient(
             LLMConfig(
                 enabled=True,
+                provider="vk_cloud",
                 api_key="secret",
                 base_url="http://127.0.0.1:1234/v1",
                 model="local-model",
+                site_url="https://must-not-be-sent.test",
+                app_name="must-not-be-sent",
             ),
             urlopen_impl=fake_urlopen,
         )
         client.complete_json(system_prompt="system", user_payload={})
+        self.assertEqual(
+            captured["url"], "http://127.0.0.1:1234/v1/chat/completions"
+        )
         self.assertNotIn("provider", captured["body"])
+        self.assertNotIn("Http-referer", captured["headers"])
+        self.assertNotIn("X-openrouter-title", captured["headers"])
 
     def test_network_failure_is_wrapped(self) -> None:
         def failing_urlopen(_request, timeout):

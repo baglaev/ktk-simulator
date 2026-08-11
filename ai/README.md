@@ -168,7 +168,13 @@ backend и AI выполняется из корня репозитория:
 
 Сторонние Python-зависимости для прототипа не нужны.
 
-## OpenRouter
+## LLM-провайдеры
+
+Провайдер выбирается переменной `AI_LLM_PROVIDER`. Текущий демонстрационный
+профиль — `openrouter`; подготовленный, но пока не активный профиль для
+локальной модели на ВМ VK Cloud — `vk_cloud`.
+
+### OpenRouter
 
 В `ai/.env.example` основной моделью задана
 `google/gemma-4-26b-a4b-it:free`. Она выбрана для воспроизводимой демонстрации и
@@ -218,6 +224,7 @@ python3 -m ai.examples.openrouter_report
 | Переменная | Назначение | Значение по умолчанию |
 |---|---|---|
 | `AI_LLM_ENABLED` | включить внешний вызов | включается при наличии ключа |
+| `AI_LLM_PROVIDER` | профиль подключения: `openrouter` или `vk_cloud` | `openrouter` |
 | `AI_LLM_BASE_URL` | базовый URL совместимого API | `https://openrouter.ai/api/v1` |
 | `AI_LLM_MODEL` | основная модель, обязательна при включённом LLM | отсутствует |
 | `AI_LLM_FALLBACK_MODEL` | резерв при ошибке основной модели; пустое значение отключает резерв | отсутствует |
@@ -242,6 +249,41 @@ API не отправляются `sessionId`, `traineeId` и `instructorId`. Н
 - [OpenRouter: использование OpenAI SDK и совместимого API](https://openrouter.ai/docs/guides/community/openai-sdk);
 - [OpenRouter: бесплатный маршрутизатор](https://openrouter.ai/docs/guides/routing/routers/free-router);
 - [OpenRouter: политики провайдеров](https://openrouter.ai/docs/guides/privacy/provider-logging).
+
+### Локальная модель в VK Cloud
+
+Профиль предназначен для vLLM, развёрнутого на GPU-ВМ VK Cloud и открывающего
+OpenAI-совместимый endpoint `/v1/chat/completions`. После развёртывания модели
+замените настройки в локальном `ai/.env`:
+
+```dotenv
+AI_LLM_ENABLED=true
+AI_LLM_PROVIDER=vk_cloud
+AI_VK_CLOUD_BASE_URL=http://127.0.0.1:8001/v1
+AI_VK_CLOUD_MODEL=ktk-qwen
+AI_VK_CLOUD_API_KEY=секретный-ключ-vllm
+```
+
+Имена `ktk-qwen` и порт `8001` являются конфигурационными примерами. Фактическое
+имя должно совпадать с `--served-model-name`, а ключ — с `--api-key` при запуске
+vLLM. Если backend расположен на другой ВМ, вместо `127.0.0.1` используется
+приватный адрес сервера модели. Публичный endpoint без TLS, API-ключа и сетевого
+ограничения использовать нельзя.
+
+Этот профиль выбирается явно и не является автоматическим fallback для
+OpenRouter. Это исключает случайную отправку производственного контекста во
+внешний сервис после ошибки локальной модели.
+
+Переменные профиля:
+
+| Переменная | Назначение |
+|---|---|
+| `AI_VK_CLOUD_BASE_URL` | базовый URL vLLM, заканчивающийся на `/v1` |
+| `AI_VK_CLOUD_MODEL` | имя модели, опубликованное vLLM |
+| `AI_VK_CLOUD_API_KEY` | Bearer-ключ endpoint модели |
+
+vLLM реализует OpenAI-совместимый Chat Completions API, поэтому код построения
+отчёта и RAG при переключении провайдера не меняется.
 
 ## Минимальный RAG по документам
 
