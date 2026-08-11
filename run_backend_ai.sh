@@ -5,16 +5,33 @@ set -Eeuo pipefail
 REPOSITORY_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="$REPOSITORY_ROOT/backend"
 AI_ENV_FILE="$REPOSITORY_ROOT/ai/.env"
+REQUIREMENTS_FILE="$BACKEND_DIR/requirements.txt"
 PYTHON_BIN="$BACKEND_DIR/.venv/bin/python"
 
 if [[ ! -x "$PYTHON_BIN" ]]; then
-  echo "Ошибка: не найдено Python-окружение backend/.venv."
-  echo "Выполните:"
-  echo "  cd \"$BACKEND_DIR\""
-  echo "  python3 -m venv .venv"
-  echo "  source .venv/bin/activate"
-  echo "  python -m pip install -r requirements.txt"
-  exit 1
+  echo "Python-окружение backend/.venv не найдено. Создание..."
+  "${KTK_PYTHON:-python3}" -m venv "$BACKEND_DIR/.venv"
+fi
+
+INSTALL_DEPENDENCIES="${KTK_INSTALL_DEPENDENCIES:-true}"
+case "$INSTALL_DEPENDENCIES" in
+  1|true|TRUE|yes|YES|on|ON)
+    echo "Проверка и установка зависимостей backend и AI..."
+    "$PYTHON_BIN" -m pip install --disable-pip-version-check \
+      -r "$REQUIREMENTS_FILE"
+    ;;
+  0|false|FALSE|no|NO|off|OFF)
+    echo "Установка зависимостей пропущена (KTK_INSTALL_DEPENDENCIES=false)."
+    ;;
+  *)
+    echo "Ошибка: KTK_INSTALL_DEPENDENCIES должен быть true или false."
+    exit 1
+    ;;
+esac
+
+if ! command -v pdftotext >/dev/null 2>&1; then
+  echo "Предупреждение: pdftotext не найден; индексация PDF для RAG недоступна."
+  echo "На macOS установите Poppler: brew install poppler"
 fi
 
 if [[ -f "$AI_ENV_FILE" ]]; then

@@ -2,10 +2,17 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.domain import RecordedAction, ScenarioHintMessage, SessionResult, TrainingSession
+from app.domain import (
+    RecordedAction,
+    ScenarioHintMessage,
+    SessionResult,
+    TraineeResultSummary,
+    TrainingMode,
+    TrainingSession,
+)
 from app.persistence.models import (
     OperatorActionRecord,
     IssuedHintRecord,
@@ -126,6 +133,76 @@ class SessionRepository:
             if record is None:
                 return None
             return SessionResult.model_validate(record.payload_json)
+
+    def list_result_summaries(
+        self,
+        *,
+        trainee_id: str | None = None,
+        instructor_id: str | None = None,
+        mode: TrainingMode | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> tuple[list[TraineeResultSummary], int]:
+        """Return completed attempts ordered from newest to oldest."""
+
+        filters = []
+        if trainee_id is not None:
+            filters.append(TrainingSessionRecord.trainee_id == trainee_id)
+        if instructor_id is not None:
+            filters.append(TrainingSessionRecord.instructor_id == instructor_id)
+        if mode is not None:
+            filters.append(TrainingSessionRecord.mode == mode.value)
+
+        joined = (
+            select(TrainingSessionRecord, SessionResultRecord)
+            .join(
+                SessionResultRecord,
+                SessionResultRecord.session_id
+                == TrainingSessionRecord.session_id,
+            )
+            .where(*filters)
+        )
+        count_query = (
+            select(func.count())
+            .select_from(TrainingSessionRecord)
+            .join(
+                SessionResultRecord,
+                SessionResultRecord.session_id
+                == TrainingSessionRecord.session_id,
+            )
+            .where(*filters)
+        )
+
+        with self._session_factory() as database:
+            total = int(database.scalar(count_query) or 0)
+            records = database.execute(
+                joined
+                .order_by(SessionResultRecord.completed_at.desc())
+                .limit(limit)
+                .offset(offset)
+            ).all()
+
+        items: list[TraineeResultSummary] = []
+        for session_record, result_record in records:
+            result = SessionResult.model_validate(result_record.payload_json)
+            items.append(
+                TraineeResultSummary(
+                    session_id=session_record.session_id,
+                    trainee_id=session_record.trainee_id,
+                    instructor_id=session_record.instructor_id,
+                    scenario_id=session_record.scenario_id,
+                    scenario_version=session_record.scenario_version,
+                    mode=session_record.mode,
+                    session_status=session_record.status,
+                    result_status=result.status,
+                    outcome=result.outcome,
+                    total_score=result.total_score,
+                    max_score=result.max_score,
+                    elapsed_time_ms=result.elapsed_time_ms,
+                    completed_at=_aware(result_record.completed_at),
+                )
+            )
+        return items, total
 
     def save_hint(self, item: ScenarioHintMessage) -> None:
         record = IssuedHintRecord(

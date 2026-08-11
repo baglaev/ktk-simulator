@@ -6,6 +6,7 @@ from threading import RLock
 from uuid import UUID, uuid4
 
 from app.domain import (
+    AdaptiveRepetitionPlan,
     CreateSessionRequest,
     JournalEntry,
     ModelSnapshot,
@@ -14,18 +15,19 @@ from app.domain import (
     ScenarioActionRequest,
     ScenarioHintMessage,
     SessionAIAnalysis,
-    AdaptiveRepetitionPlan,
     SessionResult,
     SessionStatus,
+    TraineeResultsPage,
+    TrainingMode,
     TrainingSession,
 )
 from app.evaluation import evaluate_session
 from app.persistence import SessionRepository, create_database
 from app.scenarios import load_n1a_scenario
-from app.services.hint_service import ScenarioHintService
 from app.services.ai_analysis import SessionAIAnalysisService
-from app.services.rag_gateway import PostSessionRAGGateway
+from app.services.hint_service import ScenarioHintService
 from app.services.llm_analysis_gateway import PostSessionLLMAnalysisGateway
+from app.services.rag_gateway import PostSessionRAGGateway
 from app.simulation import (
     N1AProcessModel,
     SimulationCompletedError,
@@ -271,6 +273,32 @@ class SessionManager:
                     "session result is available after completion"
                 )
             return result
+
+    def list_trainee_results(
+        self,
+        *,
+        trainee_id: str | None = None,
+        instructor_id: str | None = None,
+        mode: TrainingMode | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> TraineeResultsPage:
+        """Return persisted terminal results for the instructor dashboard."""
+
+        with self._lock:
+            items, total = self._repository.list_result_summaries(
+                trainee_id=trainee_id,
+                instructor_id=instructor_id,
+                mode=mode,
+                limit=limit,
+                offset=offset,
+            )
+        return TraineeResultsPage(
+            items=items,
+            total=total,
+            limit=limit,
+            offset=offset,
+        )
 
     def generate_ai_analysis(self, session_id: UUID) -> SessionAIAnalysis:
         with self._lock:
