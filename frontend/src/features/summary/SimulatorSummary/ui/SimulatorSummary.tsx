@@ -10,6 +10,8 @@ import { Button } from '@consta/uikit/Button';
 import { useNavigate } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { resultStore } from '../../model/result.store';
+import { aiAnalysisStore } from '@/features/ai-analysis/model/aiAnalysis.store';
+import { scenarioStore } from '@/pages/ScenarioPreparation/model/scenario.store';
 
 export const SimulatorSummary = observer(() => {
   const navigate = useNavigate();
@@ -25,6 +27,21 @@ export const SimulatorSummary = observer(() => {
   }
 
   const isPassed = result.outcome === 'passed';
+
+  const handleAiAnalysis = async () => {
+    if (!scenarioStore.sessionId) {
+      console.error('sessionId отсутствует');
+      return;
+    }
+
+    try {
+      await aiAnalysisStore.fetchAnalysis(scenarioStore.sessionId);
+
+      navigate('/ai-analysis');
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <section className={styles.section}>
@@ -66,7 +83,13 @@ export const SimulatorSummary = observer(() => {
           size="l"
           onClick={() => navigate('/preparation')}
         />
-        <Button label="Перейти к ИИ-разбору" size="l" />
+        <Button
+          label="Перейти к ИИ-разбору"
+          size="l"
+          loading={aiAnalysisStore.isLoading}
+          disabled={aiAnalysisStore.isLoading}
+          onClick={handleAiAnalysis}
+        />
       </div>
     </section>
   );

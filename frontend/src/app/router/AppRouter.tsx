@@ -4,7 +4,7 @@ import { MainPage } from '@/pages/MainPage/ui/MainPage';
 import { ScenarioPreparationPage } from '@/pages/ScenarioPreparation/ui/ScenarioPreparation';
 import { SimlatorPage } from '@/pages/SimlatorPage/ui/SimlatorPage';
 import { SummaryResultPage } from '@/pages/SummaryResultPage/ui/SummaryResultPage';
-
+import { AiAnalysisPage } from '@/pages/AiAnalysisPage/ui/AiAnalysisPage';
 import { LoginPage } from '@/pages/LoginPage/ui/LoginPage';
 import { ProtectedRoute } from './ProtectedRouter';
 import { InstructorPage } from '@/pages/InstructoPage/ui/InstrucotrPage';
@@ -20,6 +20,7 @@ export const AppRouter = () => {
           <Route path="/preparation" element={<ScenarioPreparationPage />} />
           <Route path="/simulator" element={<SimlatorPage />} />
           <Route path="/summary-results" element={<SummaryResultPage />} />
+          <Route path="/ai-analysis" element={<AiAnalysisPage />} />
         </Route>
 
         <Route element={<ProtectedRoute allowedRole="instructor" />}>
