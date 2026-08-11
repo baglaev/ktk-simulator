@@ -128,6 +128,7 @@ def test_in_memory_database_is_initialized_for_isolated_tests() -> None:
     engine, _ = create_database("sqlite+pysqlite:///:memory:")
 
     assert set(inspect(engine).get_table_names()) == {
+        "app_users",
         "issued_hints",
         "operator_actions",
         "session_ai_analyses",

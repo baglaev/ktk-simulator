@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from app.config import Settings
 from app.domain import (
     InstructorJournalItem,
     InstructorOverview,
@@ -9,35 +8,37 @@ from app.domain import (
     InstructorTrainee,
     InstructorTraineeList,
 )
-from app.services.demo_corporate_accounts import DEMO_CORPORATE_TRAINEES
 from app.services.session_manager import SessionManager
 
 
 class InstructorDashboardService:
     """Build instructor views without exposing demo account passwords."""
 
-    def __init__(self, manager: SessionManager, settings: Settings) -> None:
+    def __init__(self, manager: SessionManager) -> None:
         self._manager = manager
-        self._settings = settings
 
     def list_trainees(self) -> InstructorTraineeList:
         statistics = self._manager.list_trainee_result_statistics()
         directory = self._trainee_directory()
-        for trainee_id in statistics:
+        for trainee_id, aggregate in statistics.items():
             directory.setdefault(
                 trainee_id,
-                (trainee_id, "session_history"),
+                (
+                    trainee_id,
+                    "session_history",
+                    aggregate.latest_result.instructor_id or "Petrov.PP",
+                ),
             )
 
         items = []
-        for trainee_id, (full_name, source) in directory.items():
+        for trainee_id, (full_name, source, instructor_id) in directory.items():
             aggregate = statistics.get(trainee_id)
             items.append(
                 InstructorTrainee(
                     trainee_id=trainee_id,
                     login=trainee_id,
                     full_name=full_name,
-                    assigned_instructor_id=self._settings.auth_instructor_login,
+                    assigned_instructor_id=instructor_id,
                     account_source=source,
                     attempts_count=(aggregate.attempts_count if aggregate else 0),
                     successful_attempts_count=(
@@ -87,7 +88,11 @@ class InstructorDashboardService:
             journal.sort(key=lambda item: (item.virtual_time_ms, item.kind))
             trainee_name = directory.get(
                 result.trainee_id,
-                (result.trainee_id, "session_history"),
+                (
+                    result.trainee_id,
+                    "session_history",
+                    result.instructor_id or "Petrov.PP",
+                ),
             )[0]
             items.append(
                 InstructorResultItem(
@@ -98,16 +103,14 @@ class InstructorDashboardService:
             )
         return InstructorResultsCollection(items=items, total=results.total)
 
-    def _trainee_directory(self) -> dict[str, tuple[str, str]]:
+    def _trainee_directory(self) -> dict[str, tuple[str, str, str]]:
         return {
-            self._settings.auth_user_login: (
-                "Демо-обучаемый",
-                "demo_directory",
-            ),
-            **{
-                trainee.login: (trainee.full_name, "demo_directory")
-                for trainee in DEMO_CORPORATE_TRAINEES
-            },
+            trainee.login: (
+                trainee.full_name,
+                "database",
+                trainee.assigned_instructor_id or "Petrov.PP",
+            )
+            for trainee in self._manager.list_user_directory()
         }
 
     def get_trainee(self, trainee_id: str) -> InstructorTrainee | None:

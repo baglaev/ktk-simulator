@@ -22,6 +22,9 @@ class LoginSuccessResponse(APIModel):
 
     login: Literal[True] = True
     role: AuthRole
+    username: str = Field(min_length=1)
+    display_name: str = Field(min_length=1)
+    assigned_instructor_id: str | None = None
     redirect_to: str = Field(min_length=1)
 
 

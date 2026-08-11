@@ -2,12 +2,28 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import JSON, DateTime, Integer, String, Text
+from sqlalchemy import Boolean, JSON, DateTime, Integer, String, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Base(DeclarativeBase):
     pass
+
+
+class AppUserRecord(Base):
+    __tablename__ = "app_users"
+
+    login: Mapped[str] = mapped_column(String(128), primary_key=True)
+    password_hash: Mapped[str] = mapped_column(String(255))
+    role: Mapped[str] = mapped_column(String(32), index=True)
+    full_name: Mapped[str] = mapped_column(String(255))
+    assigned_instructor_id: Mapped[str | None] = mapped_column(
+        String(128),
+        nullable=True,
+        index=True,
+    )
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
 class TrainingSessionRecord(Base):

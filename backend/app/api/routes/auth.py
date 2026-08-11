@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 
 from app.domain import (
@@ -9,13 +9,20 @@ from app.domain import (
     LoginSuccessResponse,
 )
 from app.services import SimpleAuthenticationService
+from app.api.dependencies import get_session_repository
+from app.persistence import SessionRepository
 
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 
-def get_authentication_service(request: Request) -> SimpleAuthenticationService:
-    return SimpleAuthenticationService(request.app.state.settings)
+def get_authentication_service(
+    repository: Annotated[
+        SessionRepository,
+        Depends(get_session_repository),
+    ],
+) -> SimpleAuthenticationService:
+    return SimpleAuthenticationService(repository)
 
 
 @router.post(
@@ -50,5 +57,8 @@ async def login(
         )
     return LoginSuccessResponse(
         role=principal.role,
+        username=principal.username,
+        display_name=principal.display_name,
+        assigned_instructor_id=principal.assigned_instructor_id,
         redirect_to=principal.redirect_to,
     )

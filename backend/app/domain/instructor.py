@@ -43,7 +43,7 @@ class InstructorTrainee(APIModel):
     login: str = Field(min_length=1)
     full_name: str = Field(min_length=1)
     assigned_instructor_id: str = Field(min_length=1)
-    account_source: Literal["demo_directory", "session_history"]
+    account_source: Literal["database", "session_history"]
     attempts_count: int = Field(ge=0)
     successful_attempts_count: int = Field(ge=0)
     average_score: int | None = Field(default=None, ge=0, le=100)

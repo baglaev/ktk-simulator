@@ -14,7 +14,15 @@ from app.services import SessionManager
 
 def build_manager() -> SessionManager:
     _, factory = create_database("sqlite+pysqlite:///:memory:")
-    return SessionManager(repository=SessionRepository(factory))
+    repository = SessionRepository(factory)
+    repository.save_user_account(
+        login="Ivanov.II",
+        password_hash="not-used-by-dashboard-tests",
+        role="user",
+        full_name="Иванов И. И.",
+        assigned_instructor_id="Petrov.PP",
+    )
+    return SessionManager(repository=repository)
 
 
 def complete_attempt(
@@ -93,12 +101,12 @@ def test_instructor_can_list_completed_trainee_results() -> None:
 
 def test_instructor_results_include_full_name_and_journal() -> None:
     manager = build_manager()
-    trainee_id = "Matveev.AD@gazprom-neft.ru"
+    trainee_id = "Ivanov.II"
     session = manager.create_session(
         CreateSessionRequest(
             scenario_id="MVP-SC-01",
             trainee_id=trainee_id,
-            instructor_id="instructor",
+            instructor_id="Petrov.PP",
             mode=TrainingMode.TRAINING,
         )
     )
@@ -119,7 +127,7 @@ def test_instructor_results_include_full_name_and_journal() -> None:
 
     assert response.status_code == 200
     item = response.json()["items"][0]
-    assert item["traineeName"] == "Матвеев Александр Дмитриевич"
+    assert item["traineeName"] == "Иванов И. И."
     assert item["journal"][0] == {
         "time": "00:00",
         "virtualTimeMs": 0,
@@ -195,25 +203,23 @@ def test_instructor_receives_full_trainee_directory_before_attempts() -> None:
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["total"] == 21
-    assert len(payload["items"]) == 21
-    assert {
-        "user",
-        "Matveev.AD@gazprom-neft.ru",
-        "Voronov.NK@gazprom-neft.ru",
-    }.issubset({item["traineeId"] for item in payload["items"]})
+    assert payload["total"] == 1
+    assert len(payload["items"]) == 1
+    assert {item["traineeId"] for item in payload["items"]} == {
+        "Ivanov.II"
+    }
     assert all(item["attemptsCount"] == 0 for item in payload["items"])
     assert "password" not in response.text.lower()
 
 
 def test_trainee_directory_is_enriched_from_persisted_results() -> None:
     manager = build_manager()
-    trainee_id = "Matveev.AD@gazprom-neft.ru"
+    trainee_id = "Ivanov.II"
     session = manager.create_session(
         CreateSessionRequest(
             scenario_id="MVP-SC-01",
             trainee_id=trainee_id,
-            instructor_id="instructor",
+            instructor_id="Petrov.PP",
             mode=TrainingMode.TRAINING,
         )
     )
@@ -249,8 +255,8 @@ def test_trainee_directory_is_enriched_from_persisted_results() -> None:
 
     assert profile_response.status_code == 200
     profile = profile_response.json()
-    assert profile["fullName"] == "Матвеев Александр Дмитриевич"
-    assert profile["assignedInstructorId"] == "instructor"
+    assert profile["fullName"] == "Иванов И. И."
+    assert profile["assignedInstructorId"] == "Petrov.PP"
     assert profile["attemptsCount"] == 1
     assert type(profile["averageScore"]) is int
     assert type(profile["bestScore"]) is int
@@ -275,7 +281,7 @@ def test_trainee_directory_is_enriched_from_persisted_results() -> None:
 
     assert overview_response.status_code == 200
     overview = overview_response.json()
-    assert overview["totalTrainees"] == 21
+    assert overview["totalTrainees"] == 1
     assert overview["traineesWithAttempts"] == 1
     assert overview["completedAttempts"] == 1
 

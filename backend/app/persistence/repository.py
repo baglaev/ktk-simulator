@@ -15,6 +15,7 @@ from app.domain import (
     TrainingSession,
 )
 from app.persistence.models import (
+    AppUserRecord,
     OperatorActionRecord,
     IssuedHintRecord,
     SessionAIAnalysisRecord,
@@ -33,11 +34,84 @@ class TraineeResultStatistics:
     latest_result: TraineeResultSummary
 
 
+@dataclass(frozen=True)
+class StoredUserAccount:
+    login: str
+    password_hash: str
+    role: str
+    full_name: str
+    assigned_instructor_id: str | None
+    is_active: bool
+
+
+@dataclass(frozen=True)
+class UserDirectoryEntry:
+    login: str
+    full_name: str
+    assigned_instructor_id: str | None
+
+
 class SessionRepository:
     """Synchronous audit repository used inside the manager's process lock."""
 
     def __init__(self, session_factory: sessionmaker[Session]) -> None:
         self._session_factory = session_factory
+
+    def get_user_account(self, login: str) -> StoredUserAccount | None:
+        with self._session_factory() as database:
+            item = database.get(AppUserRecord, login)
+            if item is None:
+                return None
+            return StoredUserAccount(
+                login=item.login,
+                password_hash=item.password_hash,
+                role=item.role,
+                full_name=item.full_name,
+                assigned_instructor_id=item.assigned_instructor_id,
+                is_active=item.is_active,
+            )
+
+    def list_user_directory(self, role: str) -> list[UserDirectoryEntry]:
+        with self._session_factory() as database:
+            records = database.scalars(
+                select(AppUserRecord)
+                .where(
+                    AppUserRecord.role == role,
+                    AppUserRecord.is_active.is_(True),
+                )
+                .order_by(AppUserRecord.full_name, AppUserRecord.login)
+            ).all()
+        return [
+            UserDirectoryEntry(
+                login=item.login,
+                full_name=item.full_name,
+                assigned_instructor_id=item.assigned_instructor_id,
+            )
+            for item in records
+        ]
+
+    def save_user_account(
+        self,
+        *,
+        login: str,
+        password_hash: str,
+        role: str,
+        full_name: str,
+        assigned_instructor_id: str | None = None,
+        is_active: bool = True,
+        created_at: datetime | None = None,
+    ) -> None:
+        record = AppUserRecord(
+            login=login,
+            password_hash=password_hash,
+            role=role,
+            full_name=full_name,
+            assigned_instructor_id=assigned_instructor_id,
+            is_active=is_active,
+            created_at=created_at or datetime.now(timezone.utc),
+        )
+        with self._session_factory.begin() as database:
+            database.merge(record)
 
     def save_session(self, item: TrainingSession) -> None:
         payload = item.model_dump(mode="python")

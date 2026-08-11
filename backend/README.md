@@ -87,18 +87,39 @@ KTK_DATABASE_URL=postgresql+psycopg://ktk:ktk@localhost:5432/ktk_simulator
 
 `POST /api/v1/auth/login` принимает `login` и `password`.
 
-Обучаемый: `user` / `user`. Инструктор: `instructor` / `instructor`.
+В учебной базе создаются два активных аккаунта:
+
+- `Ivanov.II` — обучаемый;
+- `Petrov.PP` — инструктор.
+
+Пароли не задаются через Python-код или `.env`: миграция сохраняет только
+Argon2id-хеши. Исходные демонстрационные пароли передаются участникам отдельно
+и никогда не возвращаются API.
 
 Успешный ответ:
 
 ```json
-{"login": true, "role": "user", "redirectTo": "/"}
+{
+  "login": true,
+  "role": "user",
+  "username": "Ivanov.II",
+  "displayName": "Иванов И. И.",
+  "assignedInstructorId": "Petrov.PP",
+  "redirectTo": "/"
+}
 ```
 
 или:
 
 ```json
-{"login": true, "role": "instructor", "redirectTo": "/instructor"}
+{
+  "login": true,
+  "role": "instructor",
+  "username": "Petrov.PP",
+  "displayName": "Петров П. П.",
+  "assignedInstructorId": null,
+  "redirectTo": "/instructor"
+}
 ```
 
 Ошибка возвращает HTTP 401:
@@ -110,39 +131,6 @@ KTK_DATABASE_URL=postgresql+psycopg://ktk:ktk@localhost:5432/ktk_simulator
 Frontend сам выполняет переход на `redirectTo`. Это демонстрационная
 аутентификация без JWT и защиты остальных маршрутов; для production она не
 подходит.
-
-### Учебные корпоративные учётные записи
-
-Дополнительно доступны 20 корпоративно оформленных demo-аккаунтов. Все они
-имеют роль `user` и после успешного входа возвращают `redirectTo: "/"`.
-
-| Логин | Пароль |
-|---|---|
-| `Matveev.AD@gazprom-neft.ru` | `GpnDemo#Mat26` |
-| `Voronov.NK@gazprom-neft.ru` | `GpnDemo#Vor26` |
-| `Sokolov.IV@gazprom-neft.ru` | `GpnDemo#Sok26` |
-| `Kuznetsov.MA@gazprom-neft.ru` | `GpnDemo#Kuz26` |
-| `Popov.ES@gazprom-neft.ru` | `GpnDemo#Pop26` |
-| `Smirnova.OV@gazprom-neft.ru` | `GpnDemo#Smi26` |
-| `Petrova.AN@gazprom-neft.ru` | `GpnDemo#Pet26` |
-| `Volkov.DS@gazprom-neft.ru` | `GpnDemo#Vol26` |
-| `Fedorov.PM@gazprom-neft.ru` | `GpnDemo#Fed26` |
-| `Morozova.EV@gazprom-neft.ru` | `GpnDemo#Mor26` |
-| `Lebedev.RA@gazprom-neft.ru` | `GpnDemo#Leb26` |
-| `Novikova.TS@gazprom-neft.ru` | `GpnDemo#Nov26` |
-| `Orlov.KV@gazprom-neft.ru` | `GpnDemo#Orl26` |
-| `Pavlov.SI@gazprom-neft.ru` | `GpnDemo#Pav26` |
-| `Semenova.NA@gazprom-neft.ru` | `GpnDemo#Sem26` |
-| `Golubev.VP@gazprom-neft.ru` | `GpnDemo#Gol26` |
-| `Vinogradova.MI@gazprom-neft.ru` | `GpnDemo#Vin26` |
-| `Bogdanov.AL@gazprom-neft.ru` | `GpnDemo#Bog26` |
-| `Komarova.ER@gazprom-neft.ru` | `GpnDemo#Kom26` |
-| `Zakharov.DN@gazprom-neft.ru` | `GpnDemo#Zak26` |
-
-Пароли содержат не менее 12 символов. Фамилии и инициалы являются синтетическим
-demo-набором; весь список предназначен только для демонстрации. Это не
-подключение к корпоративному AD/SSO, и такие учётные данные нельзя использовать
-в production.
 
 ## Жизненный цикл сценария
 
@@ -224,11 +212,10 @@ GET /api/v1/instructor/overview
 GET /api/v1/instructor/trainees
 ```
 
-`/trainees` сразу возвращает всех назначенных обучаемых: базового `user`, 20
-синтетических корпоративных демо-учёток и дополнительные идентификаторы,
-обнаруженные в сохранённой истории. Для текущего MVP используется один
-инструктор, поэтому все демо-обучаемые по умолчанию назначены `instructor`.
-Пароли API никогда не возвращает.
+`/trainees` сразу возвращает активных обучаемых из таблицы `app_users` и
+дополнительные идентификаторы, обнаруженные в сохранённой истории. В начальной
+учебной базе `Ivanov.II` назначен инструктору `Petrov.PP`. Хеши паролей API
+никогда не возвращает.
 
 У каждого обучаемого есть агрегаты и `latestResult`. Если попыток ещё не было,
 `attemptsCount` равен `0`, а `latestResult` равен `null`. После прохождения
@@ -236,11 +223,11 @@ GET /api/v1/instructor/trainees
 
 ```json
 {
-  "traineeId": "Matveev.AD@gazprom-neft.ru",
-  "login": "Matveev.AD@gazprom-neft.ru",
-  "fullName": "Матвеев Александр Дмитриевич",
-  "assignedInstructorId": "instructor",
-  "accountSource": "demo_directory",
+  "traineeId": "Ivanov.II",
+  "login": "Ivanov.II",
+  "fullName": "Иванов И. И.",
+  "assignedInstructorId": "Petrov.PP",
+  "accountSource": "database",
   "attemptsCount": 1,
   "successfulAttemptsCount": 1,
   "averageScore": 92,
@@ -248,8 +235,8 @@ GET /api/v1/instructor/trainees
   "lastCompletedAt": "2026-08-11T12:00:00Z",
   "latestResult": {
     "sessionId": "f3656f3b-3b2c-44e5-9cb8-46b50ad6f715",
-    "traineeId": "Matveev.AD@gazprom-neft.ru",
-    "instructorId": "instructor",
+    "traineeId": "Ivanov.II",
+    "instructorId": "Petrov.PP",
     "scenarioId": "MVP-SC-01",
     "scenarioVersion": "0.4.0",
     "mode": "training",
@@ -284,7 +271,7 @@ GET /api/v1/instructor/trainees/{traineeId}/results/{sessionId}/journal
 ```json
 {
   "sessionId": "f3656f3b-3b2c-44e5-9cb8-46b50ad6f715",
-  "traineeId": "Matveev.AD@gazprom-neft.ru",
+  "traineeId": "Ivanov.II",
   "mode": "training",
   "items": [
     {

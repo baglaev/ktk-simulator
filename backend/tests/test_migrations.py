@@ -56,14 +56,19 @@ def test_initial_migration_adopts_pre_alembic_sqlite_schema(
         revision = connection.execute(
             text("SELECT version_num FROM alembic_version")
         ).scalar_one()
+        users_count = connection.execute(
+            text("SELECT COUNT(*) FROM app_users")
+        ).scalar_one()
 
     assert {"model_id", "model_version"}.issubset(columns)
     assert set(inspector.get_table_names()) == {
         "alembic_version",
+        "app_users",
         "issued_hints",
         "operator_actions",
         "session_ai_analyses",
         "session_results",
         "training_sessions",
     }
-    assert revision == "20260811_02"
+    assert revision == "20260811_03"
+    assert users_count == 2

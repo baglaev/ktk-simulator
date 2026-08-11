@@ -19,7 +19,10 @@ interface Props {
 }
 
 export const Header = observer((props: Props) => {
-  const { userName = 'Демо-профиль', userInfo = 'Обучаемый' } = props;
+  const {
+    userName = authStore.displayName ?? authStore.username ?? 'Пользователь',
+    userInfo = authStore.role === 'instructor' ? 'Инструктор' : 'Обучаемый',
+  } = props;
 
   const navigate = useNavigate();
 

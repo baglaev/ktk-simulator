@@ -11,6 +11,9 @@ export interface LoginRequest {
 export interface LoginResponse {
   login: boolean;
   role: UserRole;
+  username: string;
+  displayName: string;
+  assignedInstructorId: string | null;
   redirectTo: string;
 }
 

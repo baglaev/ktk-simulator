@@ -1,66 +1,66 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from hmac import compare_digest
 
-from app.config import Settings
+from argon2 import PasswordHasher
+from argon2.exceptions import InvalidHashError, VerificationError
+
 from app.domain.enums import AuthRole
-from app.services.demo_corporate_accounts import DEMO_CORPORATE_ACCOUNTS
+from app.persistence import SessionRepository
 
 
 @dataclass(frozen=True)
 class AuthenticatedPrincipal:
     username: str
+    display_name: str
     role: AuthRole
+    assigned_instructor_id: str | None
     redirect_to: str
 
 
 class SimpleAuthenticationService:
-    """Validate local educational demo accounts.
+    """Validate database-backed educational accounts.
 
     This intentionally does not issue a token or create a server-side session.
     It is suitable only for the current demonstration frontend flow.
     """
 
-    def __init__(self, settings: Settings) -> None:
-        base_accounts = (
-            (
-                settings.auth_user_login,
-                settings.auth_user_password.get_secret_value(),
-                AuthRole.USER,
-                settings.auth_user_redirect_to,
-            ),
-            (
-                settings.auth_instructor_login,
-                settings.auth_instructor_password.get_secret_value(),
-                AuthRole.INSTRUCTOR,
-                settings.auth_instructor_redirect_to,
-            ),
-        )
-        corporate_accounts = tuple(
-            (
-                login,
-                password,
-                AuthRole.USER,
-                settings.auth_user_redirect_to,
-            )
-            for login, password in DEMO_CORPORATE_ACCOUNTS
-        )
-        self._accounts = base_accounts + corporate_accounts
+    _DUMMY_PASSWORD_HASH = (
+        "$argon2id$v=19$m=65536,t=3,p=4$JOomL9mbRXxPgurMdde0OA$"
+        "ENLrI6I/fVrmEn+G791vxhLSAGSvI9iaZHmwdRWIhIA"
+    )
+
+    def __init__(self, repository: SessionRepository) -> None:
+        self._repository = repository
+        self._password_hasher = PasswordHasher()
 
     def authenticate(
         self,
         login: str,
         password: str,
     ) -> AuthenticatedPrincipal | None:
-        matched: AuthenticatedPrincipal | None = None
-        for expected_login, expected_password, role, redirect_to in self._accounts:
-            login_matches = compare_digest(login, expected_login)
-            password_matches = compare_digest(password, expected_password)
-            if login_matches and password_matches:
-                matched = AuthenticatedPrincipal(
-                    username=expected_login,
-                    role=role,
-                    redirect_to=redirect_to,
-                )
-        return matched
+        account = self._repository.get_user_account(login)
+        password_hash = (
+            account.password_hash
+            if account is not None
+            else self._DUMMY_PASSWORD_HASH
+        )
+        try:
+            password_matches = self._password_hasher.verify(
+                password_hash,
+                password,
+            )
+        except (InvalidHashError, VerificationError):
+            password_matches = False
+
+        if account is None or not account.is_active or not password_matches:
+            return None
+
+        role = AuthRole(account.role)
+        return AuthenticatedPrincipal(
+            username=account.login,
+            display_name=account.full_name,
+            role=role,
+            assigned_instructor_id=account.assigned_instructor_id,
+            redirect_to="/instructor" if role is AuthRole.INSTRUCTOR else "/",
+        )

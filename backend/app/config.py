@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import Field, SecretStr
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,14 +19,6 @@ class Settings(BaseSettings):
     simulation_auto_run: bool = True
     simulation_tick_interval_ms: int = Field(default=1_000, gt=0)
     database_url: str = "sqlite+pysqlite:///./ktk_simulator.sqlite3"
-    # Educational demo accounts. Override through KTK_AUTH_* variables outside MVP.
-    auth_user_login: str = "user"
-    auth_user_password: SecretStr = SecretStr("user")
-    auth_user_redirect_to: str = "/"
-    auth_instructor_login: str = "instructor"
-    auth_instructor_password: SecretStr = SecretStr("instructor")
-    auth_instructor_redirect_to: str = "/instructor"
-
     model_config = SettingsConfigDict(
         env_file=".env",
         env_prefix="KTK_",

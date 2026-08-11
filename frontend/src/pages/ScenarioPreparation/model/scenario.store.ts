@@ -1,6 +1,7 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { scenarioApi } from './scenario.api';
 import type { Scenario, ScenarioMode } from './scenario.types';
+import { authStore } from '@/features/auth/model/auth.api.store';
 
 class ScenarioStore {
   scenarios: Scenario[] = [];
@@ -54,11 +55,14 @@ class ScenarioStore {
     if (!this.selectedScenario) {
       throw new Error('Сценарий не выбран');
     }
+    if (!authStore.username || !authStore.assignedInstructorId) {
+      throw new Error('Учётная запись обучаемого не определена');
+    }
 
     const { data } = await scenarioApi.createSession({
       scenarioId: this.selectedScenario.scenarioId,
-      traineeId: 'trainee-1',
-      instructorId: 'instructor-1',
+      traineeId: authStore.username,
+      instructorId: authStore.assignedInstructorId,
       mode: this.mode,
     });
 

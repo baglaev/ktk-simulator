@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import get_session_manager
 from app.domain import (
@@ -22,10 +22,9 @@ router = APIRouter(prefix="/api/v1/instructor", tags=["instructor"])
 
 
 def _dashboard(
-    request: Request,
     manager: SessionManager,
 ) -> InstructorDashboardService:
-    return InstructorDashboardService(manager, request.app.state.settings)
+    return InstructorDashboardService(manager)
 
 
 @router.get(
@@ -34,10 +33,9 @@ def _dashboard(
     summary="Сводка страницы инструктора",
 )
 async def get_instructor_overview(
-    request: Request,
     manager: SessionManager = Depends(get_session_manager),
 ) -> InstructorOverview:
-    return _dashboard(request, manager).get_overview()
+    return _dashboard(manager).get_overview()
 
 
 @router.get(
@@ -46,10 +44,9 @@ async def get_instructor_overview(
     summary="Полный список обучаемых",
 )
 async def list_trainees(
-    request: Request,
     manager: SessionManager = Depends(get_session_manager),
 ) -> InstructorTraineeList:
-    return _dashboard(request, manager).list_trainees()
+    return _dashboard(manager).list_trainees()
 
 
 @router.get(
@@ -59,10 +56,9 @@ async def list_trainees(
 )
 async def get_trainee(
     trainee_id: str,
-    request: Request,
     manager: SessionManager = Depends(get_session_manager),
 ) -> InstructorTrainee:
-    trainee = _dashboard(request, manager).get_trainee(trainee_id)
+    trainee = _dashboard(manager).get_trainee(trainee_id)
     if trainee is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -165,9 +161,8 @@ def _format_virtual_time(value_ms: int) -> str:
     summary="Результаты обучаемых",
 )
 async def list_trainee_results(
-    request: Request,
     manager: SessionManager = Depends(get_session_manager),
 ) -> InstructorResultsCollection:
     """Return all completed attempts without required query parameters."""
 
-    return _dashboard(request, manager).list_results()
+    return _dashboard(manager).list_results()

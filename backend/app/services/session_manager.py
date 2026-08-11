@@ -307,6 +307,12 @@ class SessionManager:
         with self._lock:
             return self._repository.list_trainee_result_statistics()
 
+    def list_user_directory(self):
+        """Return active trainees without credential data."""
+
+        with self._lock:
+            return self._repository.list_user_directory("user")
+
     def list_all_trainee_results(self) -> TraineeResultsCollection:
         """Return all terminal results for the common instructor table."""
 
