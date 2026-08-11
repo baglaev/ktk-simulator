@@ -15,3 +15,4 @@ const baseApiConfig = (endPoint: string) => {
 
 export const apiSessions = baseApiConfig('/sessions');
 export const apiScenarios = baseApiConfig('/scenarios');
+export const apiInstructor = baseApiConfig('/instructor');

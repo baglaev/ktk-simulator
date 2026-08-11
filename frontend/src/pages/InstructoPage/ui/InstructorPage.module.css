@@ -1,0 +1,156 @@
+.page {
+  min-height: 100vh;
+  padding: 12px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  padding-top: 40px;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pageDescription {
+  margin-top: 4px;
+}
+
+.loaderContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 400px;
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.resultCard {
+  overflow: hidden;
+
+  background: var(--color-bg-secondary);
+
+  border: 1px solid var(--color-bg-border);
+  border-radius: 8px;
+}
+
+.resultMainInfo {
+  display: grid;
+  grid-template-columns:
+    minmax(180px, 1.5fr)
+    minmax(120px, 1fr)
+    100px
+    100px
+    120px;
+
+  align-items: center;
+  gap: 16px;
+
+  padding: 12px 16px;
+}
+
+.traineeContainer,
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.maxScore {
+  margin-left: 2px;
+
+  font-size: 14px;
+  font-weight: 400;
+
+  opacity: 0.6;
+}
+
+.journalButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+
+  padding: 8px 16px;
+
+  color: inherit;
+
+  text-align: left;
+
+  background: transparent;
+
+  border: 0;
+  border-top: 1px solid var(--color-bg-border);
+
+  cursor: pointer;
+}
+
+.journalButton:hover {
+  background: var(--color-bg-ghost);
+}
+
+.journalButtonTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.arrow {
+  transition: transform 0.2s ease;
+}
+
+.arrowOpen {
+  transform: rotate(180deg);
+
+  transition: transform 0.2s ease;
+}
+
+.journalContainer {
+  display: flex;
+  flex-direction: column;
+
+  max-height: 400px;
+
+  overflow-y: auto;
+
+  border-top: 1px solid var(--color-bg-border);
+}
+
+.journalItem {
+  display: grid;
+  grid-template-columns: 60px 90px 1fr;
+  align-items: center;
+  gap: 8px;
+
+  min-height: 38px;
+
+  padding: 7px 16px;
+
+  border-bottom: 1px solid var(--color-bg-border);
+}
+
+.journalItem:last-child {
+  border-bottom: 0;
+}
+
+.journalTime {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1000px) {
+  .resultMainInfo {
+    grid-template-columns: 1fr 1fr;
+  }
+}

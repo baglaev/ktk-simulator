@@ -3,18 +3,21 @@ import { WarningInfo } from '@/widgets/WarningInfo/ui/WarningInfo';
 
 interface Props {
   children?: React.ReactNode;
+
+  userName?: string;
+  userInfo?: string;
+
+  showWarning?: boolean;
 }
 
-export const MainLayout = (props: Props) => {
-  const { children } = props;
-
+export const MainLayout = ({ children, userName, userInfo, showWarning = true }: Props) => {
   return (
     <div>
-      <Header />
+      <Header userName={userName} userInfo={userInfo} />
+
       {children}
-      <WarningInfo />
+
+      {showWarning && <WarningInfo />}
     </div>
   );
 };
-
-MainLayout.displayName = 'MainLayout';
