@@ -44,13 +44,46 @@ export const SimulatorSchema = observer(() => {
     }
   };
 
+  const handleSignalClick = (targetId: string) => {
+    simulatorStore.sendAction('view_signal', targetId);
+  };
+
   return (
     <div className={styles.simulatorSchema}>
       <div className={styles.schemeSvgContainer}>
         <SchemeSvg onClick={handleSchemeClick} className={styles.schemeSvg} />
 
         <div className={styles.valueContainer}>
-          <div className={`${styles.valueItem} ${styles.pra}`}>
+          {/* <div className={`${styles.valueItem} ${styles.pra}`}>
+            <Text>PRA 351</Text>
+
+            <div className={styles.procentContainer}>
+              <Text size="m" weight="bold">
+                {pra351 ? `${pra351.value} ${pra351.unit}` : '--'}
+              </Text>
+
+              {pra351 && (
+                <Badge
+                  status={
+                    pra351.status === 'success'
+                      ? 'success'
+                      : pra351.status === 'warning'
+                        ? 'warning'
+                        : 'error'
+                  }
+                  form="round"
+                  size="xs"
+                />
+              )}
+            </div>
+
+            <Text size="xs">От исходного</Text>
+          </div> */}
+
+          <div
+            className={`${styles.valueItem} ${styles.pra}`}
+            onClick={() => handleSignalClick('PRA351')}
+          >
             <Text>PRA 351</Text>
 
             <div className={styles.procentContainer}>
@@ -76,7 +109,10 @@ export const SimulatorSchema = observer(() => {
             <Text size="xs">От исходного</Text>
           </div>
 
-          <div className={`${styles.valueItem} ${styles.fyqr}`}>
+          <div
+            className={`${styles.valueItem} ${styles.fyqr}`}
+            onClick={() => handleSignalClick('FYQR117')}
+          >
             <Text>FYQR 117</Text>
 
             <div className={styles.procentContainer}>
@@ -101,9 +137,62 @@ export const SimulatorSchema = observer(() => {
 
             <Text size="xs">От исходного</Text>
           </div>
+
+          {/* <div className={`${styles.valueItem} ${styles.fyqr}`}>
+            <Text>FYQR 117</Text>
+
+            <div className={styles.procentContainer}>
+              <Text size="m" weight="bold">
+                {fyqr117 ? `${fyqr117.value} ${fyqr117.unit}` : '--'}
+              </Text>
+
+              {fyqr117 && (
+                <Badge
+                  status={
+                    fyqr117.status === 'success'
+                      ? 'success'
+                      : fyqr117.status === 'warning'
+                        ? 'warning'
+                        : 'error'
+                  }
+                  form="round"
+                  size="xs"
+                />
+              )}
+            </div>
+
+            <Text size="xs">От исходного</Text>
+          </div> */}
         </div>
 
-        <div className={`${styles.valueItem} ${styles.lrca}`}>
+        {/* <div className={`${styles.valueItem} ${styles.lrca}`}>
+          <Text>LRCA 605</Text>
+
+          <div className={styles.procentContainer}>
+            <Text size="m" weight="bold">
+              {lrca605 ? `${lrca605.value} ${lrca605.unit}` : '--'}
+            </Text>
+
+            {lrca605 && (
+              <Badge
+                status={
+                  lrca605.status === 'success'
+                    ? 'success'
+                    : lrca605.status === 'warning'
+                      ? 'warning'
+                      : 'error'
+                }
+                form="round"
+                size="xs"
+              />
+            )}
+          </div>
+        </div> */}
+
+        <div
+          className={`${styles.valueItem} ${styles.lrca}`}
+          onClick={() => handleSignalClick('LRCA605')}
+        >
           <Text>LRCA 605</Text>
 
           <div className={styles.procentContainer}>

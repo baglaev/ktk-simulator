@@ -41,3 +41,35 @@
   position: absolute;
   bottom: -3%;
 }
+
+.valueItem {
+  display: flex;
+  flex-direction: column;
+  row-gap: 4px;
+
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  padding: 8px;
+  border: 1px solid var(--color-bg-border);
+
+  width: fit-content;
+  align-items: center;
+}
+
+.pra,
+.fyqr {
+  cursor: pointer;
+}
+
+.pra:hover,
+.fyqr:hover {
+  background: var(--color-bg-ghost);
+}
+
+.lrca {
+  cursor: pointer;
+}
+
+.lrca:hover {
+  background: var(--color-bg-ghost);
+}
