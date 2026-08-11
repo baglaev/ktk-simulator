@@ -15,4 +15,12 @@ export const scenarioApi = {
 
   aiAnalysis: (sessionId: string) =>
     apiSessions.post<AiSessionAnalysis>(`/${sessionId}/ai-analysis`),
+
+  downloadAiAnalysisReport: (sessionId: string) =>
+    apiSessions.get(`/${sessionId}/ai-analysis/report.pdf`, {
+      responseType: 'blob',
+      headers: {
+        Accept: 'application/pdf',
+      },
+    }),
 };

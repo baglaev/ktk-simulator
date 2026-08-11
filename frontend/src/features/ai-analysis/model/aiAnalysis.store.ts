@@ -8,7 +8,7 @@ class AiAnalysisStore {
   analysis: AiSessionAnalysis | null = null;
 
   isLoading = false;
-
+  isReportLoading = false;
   error: string | null = null;
 
   constructor() {
@@ -45,6 +45,42 @@ class AiAnalysisStore {
   reset = () => {
     this.analysis = null;
     this.error = null;
+  };
+
+  downloadReport = async (sessionId: string) => {
+    try {
+      this.isReportLoading = true;
+      this.error = null;
+
+      const { data } = await scenarioApi.downloadAiAnalysisReport(sessionId);
+
+      const url = window.URL.createObjectURL(data);
+
+      const link = document.createElement('a');
+
+      link.href = url;
+      link.download = `ai-analysis-${sessionId}.pdf`;
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+
+      runInAction(() => {
+        this.error = 'Не удалось скачать PDF-отчёт';
+      });
+
+      throw error;
+    } finally {
+      runInAction(() => {
+        this.isReportLoading = false;
+      });
+    }
   };
 }
 

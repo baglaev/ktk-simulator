@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useNavigate } from 'react-router-dom';
-
+import { scenarioStore } from '@/pages/ScenarioPreparation/model/scenario.store';
 import { Text } from '@consta/uikit/Text';
 import { Badge } from '@consta/uikit/Badge';
 import { Button } from '@consta/uikit/Button';
@@ -22,6 +22,19 @@ export const AiAnalysis = observer(() => {
   const [openedErrorCode, setOpenedErrorCode] = useState<string | null>(null);
 
   const { analysis } = aiAnalysisStore;
+
+  const handleDownloadReport = async () => {
+    if (!scenarioStore.sessionId) {
+      console.error('sessionId отсутствует');
+      return;
+    }
+
+    try {
+      await aiAnalysisStore.downloadReport(scenarioStore.sessionId);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   if (!analysis) {
     return (
@@ -201,6 +214,15 @@ export const AiAnalysis = observer(() => {
             view="secondary"
             size="l"
             onClick={() => navigate('/summary-results')}
+          />
+
+          <Button
+            label="Скачать PDF"
+            view="secondary"
+            size="l"
+            loading={aiAnalysisStore.isReportLoading}
+            disabled={aiAnalysisStore.isReportLoading}
+            onClick={handleDownloadReport}
           />
 
           <Button label="Повторить сценарий" size="l" onClick={() => navigate('/preparation')} />
