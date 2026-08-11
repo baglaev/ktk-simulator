@@ -7,8 +7,11 @@ import { TasksDoneContainer } from './TasksDoneContainer';
 import { ParametrsControlled } from './ParametrsControlled';
 import { RecordedComments } from './RecordedComments';
 import { Button } from '@consta/uikit/Button';
+import { useNavigate } from 'react-router-dom';
 
 export const SimulatorSummary = () => {
+  const navigate = useNavigate();
+
   return (
     <section className={styles.section}>
       <HeaderSimulator
@@ -32,8 +35,13 @@ export const SimulatorSummary = () => {
       <RecordedComments />
 
       <div className={styles.buttonsContainer}>
-        <Button label="На главную" view="secondary" size="l" />
-        <Button label="Повторить сценарий" view="secondary" size="l" />
+        <Button label="На главную" view="secondary" size="l" onClick={() => navigate('/')} />
+        <Button
+          label="Повторить сценарий"
+          view="secondary"
+          size="l"
+          onClick={() => navigate('/preparation')}
+        />
         <Button label="Перейти к ИИ-разбору" size="l" />
       </div>
     </section>

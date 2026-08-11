@@ -22,7 +22,7 @@ export const IdentifiedFaults = () => {
       </div>
       <Text size="l">Раннее выявление неисправности насоса Н-1</Text>
       <div className={styles.previewContainer}>
-        <Picture src="../../../../../public/main-pic.jpg" className={styles.mainPic} />
+        <Picture src="../../../../../public/mp.png" className={styles.mainPic} />
         <div>
           <div className={styles.previewStats}>
             <div className={styles.statItem}>
