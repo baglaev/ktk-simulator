@@ -41,6 +41,10 @@ export const SimulatorSchema = observer(() => {
       console.log('Нажат объект:', id);
 
       setSelectedElement(id);
+
+      if (id === 'e15') {
+        simulatorStore.sendAction('view_signal', 'LRCA605');
+      }
     }
   };
 
