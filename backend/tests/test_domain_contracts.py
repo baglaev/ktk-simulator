@@ -67,7 +67,7 @@ def test_snapshot_serializes_to_frontend_camel_case() -> None:
                         tag="COMPAX.N1A.VELOCITY",
                         name="Виброскорость Н-1А",
                         measurement_type=MeasurementType.VIBRATION_VELOCITY,
-                        value=11.8,
+                        value=12,
                         unit="мм/с",
                         status=GeneralStatus.ALERT,
                     )
@@ -85,7 +85,7 @@ def test_snapshot_serializes_to_frontend_camel_case() -> None:
     assert payload["timing"]["mode"] == "live"
     assert payload["timing"]["elapsedMs"] == 120_000
     assert payload["components"][0]["componentId"] == "eq-n1a"
-    assert payload["components"][0]["parameters"][0]["value"] == 11.8
+    assert payload["components"][0]["parameters"][0]["value"] == 12
     assert payload["components"][0]["parameters"][0]["unit"] == "мм/с"
 
 
@@ -233,6 +233,6 @@ def test_telemetry_update_without_components_is_rejected() -> None:
                 elapsed_ms=1_000,
                 total_ms=120_000,
                 remaining_ms=119_000,
-                progress_percent=0.8,
+                progress_percent=1,
             ),
         )

@@ -31,8 +31,8 @@ class TaskExecutionItem(APIModel):
 class ResultParameter(APIModel):
     parameter_id: str = Field(min_length=1)
     name: str = Field(min_length=1)
-    final_value: float
-    minimum_value: float
+    final_value: int
+    minimum_value: int
     unit: str = Field(min_length=1)
     status: GeneralStatus
 

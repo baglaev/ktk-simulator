@@ -4,6 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { HeaderSimulator } from '@/widgets/HeaderSimulator/ui/HeaderSimulator';
 import { SimulatorEventLog } from '../../SimulatorEventLog/ui/SimulatorEventLog';
 import { SimulatorInfoPanel } from '../../SimulatorInfoPanel/ui/SimulatorInfoPanel';
+import { SimulatorHint } from '../../SimulatorHint/ui/SimulatorHint';
 import { SimulatorSchema } from '../../SimulatorSchema/ui/SimulatorSchema';
 
 import { scenarioStore } from '@/pages/ScenarioPreparation/model/scenario.store';
@@ -41,6 +42,7 @@ export const SimulatorMain = observer(() => {
       </div>
 
       <SimulatorEventLog />
+      <SimulatorHint />
     </section>
   );
 });

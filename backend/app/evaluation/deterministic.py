@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal, ROUND_HALF_UP
 from uuid import UUID
 
 from app.domain import (
@@ -391,9 +392,15 @@ def _controlled_parameters(
             parameter_id=parameter.parameter_id,
             name=parameter.name,
             final_value=parameter.value,
-            minimum_value=round(
-                minimum_values.get(parameter.parameter_id, parameter.value),
-                3,
+            minimum_value=int(
+                Decimal(
+                    str(
+                        minimum_values.get(
+                            parameter.parameter_id,
+                            parameter.value,
+                        )
+                    )
+                ).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
             ),
             unit=parameter.unit,
             status=parameter.status,

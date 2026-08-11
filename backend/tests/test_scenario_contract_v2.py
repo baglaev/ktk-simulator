@@ -59,19 +59,27 @@ def test_training_mode_emits_hint_and_control_mode_does_not() -> None:
         event_publisher=lambda _session_id, event: training_events.append(event)
     )
     training_id = _session(training)
-    training.advance_session(training_id, 10_000)
+    training_snapshot = training.advance_session(training_id, 10_000)
 
     control_events: list[ScenarioHintMessage] = []
     control = SessionManager(
         event_publisher=lambda _session_id, event: control_events.append(event)
     )
     control_id = _session(control, TrainingMode.CONTROL)
-    control.advance_session(control_id, 10_000)
+    control_snapshot = control.advance_session(control_id, 10_000)
 
     assert [item.hint_id for item in training_events] == ["inspect-n1a"]
     assert training.list_hints(training_id)[0].virtual_time_ms == 10_000
+    assert any(
+        item.description.startswith("Подсказка «Проверьте Н-1А»")
+        for item in training_snapshot.journal
+    )
     assert control_events == []
     assert control.list_hints(control_id) == []
+    assert all(
+        not item.description.startswith("Подсказка")
+        for item in control_snapshot.journal
+    )
 
 
 def test_critical_limit_auto_completes_with_extended_result() -> None:

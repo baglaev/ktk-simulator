@@ -30,6 +30,6 @@ class ComponentParameterValue(APIModel):
     tag: str = Field(min_length=1)
     name: str = Field(min_length=1)
     measurement_type: MeasurementType
-    value: float
+    value: int
     unit: str = Field(min_length=1)
     status: GeneralStatus
