@@ -42,6 +42,11 @@ export interface ChartPoint {
   value: number;
 }
 
+export interface ScenarioState {
+  status: string;
+  completionReason: string | null;
+}
+
 interface TelemetryMessage {
   type: 'telemetry.snapshot' | 'telemetry.update';
 
@@ -50,6 +55,9 @@ interface TelemetryMessage {
   stateVersion: number;
 
   timing: Timing;
+
+  scenarioState: ScenarioState;
+
   components: ScenarioComponent[];
   journal: JournalEntry[];
 }
@@ -90,6 +98,11 @@ class SimulatorStore {
     totalMs: 120000,
     remainingMs: 120000,
     progressPercent: 0,
+  };
+
+  scenarioState: ScenarioState = {
+    status: 'active',
+    completionReason: null,
   };
 
   components: ScenarioComponent[] = [];
@@ -181,6 +194,9 @@ class SimulatorStore {
       this.lastSequenceNo = message.sequenceNo;
 
       this.timing = message.timing;
+
+      this.scenarioState = message.scenarioState;
+
       this.components = message.components;
       this.journal = message.journal;
 
@@ -327,6 +343,34 @@ class SimulatorStore {
     const seconds = totalSeconds % 60;
 
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
+
+  get scenarioStatusText() {
+    switch (this.scenarioState.status) {
+      case 'completed':
+        return 'Сценарий завершён';
+
+      case 'active':
+        return 'Сценарий активен';
+
+      default:
+        return this.scenarioState.status;
+    }
+  }
+
+  get scenarioStatusBadge() {
+    if (
+      this.scenarioState.status === 'completed' &&
+      this.scenarioState.completionReason === 'critical_limit_reached'
+    ) {
+      return 'error' as const;
+    }
+
+    if (this.scenarioState.status === 'completed') {
+      return 'success' as const;
+    }
+
+    return 'success' as const;
   }
 }
 

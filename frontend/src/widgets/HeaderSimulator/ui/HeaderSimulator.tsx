@@ -47,8 +47,9 @@ export const HeaderSimulator = observer((props: Props) => {
           </div>
           <Badge title="Обучающий режим" view="stroked" status="disabled" />
           <div className={styles.statusContainer}>
-            <Badge form="round" status="success" size="xs" />
-            <Text>Сценарий активен</Text>
+            <Badge form="round" status={simulatorStore.scenarioStatusBadge} size="xs" />
+
+            <Text>{simulatorStore.scenarioStatusText}</Text>
           </div>
           <Button label="Завершить сценарий" view="secondary" />
         </div>
