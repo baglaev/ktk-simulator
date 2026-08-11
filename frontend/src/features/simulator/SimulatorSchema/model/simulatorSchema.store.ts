@@ -12,6 +12,11 @@ export interface Parameter {
   status: ScenarioStatus;
   name: string;
 }
+export interface ComponentState {
+  detailsTitle?: string;
+  composition?: string[];
+}
+
 export interface ScenarioComponent {
   componentId: string;
   uiId: string;
@@ -21,7 +26,7 @@ export interface ScenarioComponent {
   status: ScenarioStatus;
   operatingState?: OperatingState;
   parameters: Parameter[];
-  state?: Record<string, unknown>;
+  state?: ComponentState;
 }
 
 export interface JournalEntry {
