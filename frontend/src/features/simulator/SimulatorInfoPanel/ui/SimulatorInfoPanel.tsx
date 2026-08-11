@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
-
+import { useState } from 'react';
+import { Select } from '@consta/uikit/Select';
 import { Line, LineChart, ResponsiveContainer } from 'recharts';
-
 import { Button } from '@consta/uikit/Button';
 import { Text } from '@consta/uikit/Text';
 import { Badge } from '@consta/uikit/Badge';
@@ -10,8 +10,46 @@ import { simulatorStore } from '../../SimulatorSchema/model/simulatorSchema.stor
 
 import styles from './SimulatorInfoPanel.module.css';
 
+interface DiagnosisOption {
+  label: string;
+  value: string;
+  isCorrect: boolean;
+}
+
+const diagnosisOptions: DiagnosisOption[] = [
+  {
+    label: 'Развивающийся износ подшипника',
+    value: 'bearing-wear',
+    isCorrect: true,
+  },
+  {
+    label: 'Кавитационный режим работы',
+    value: 'cavitation',
+    isCorrect: false,
+  },
+  {
+    label: 'Электрическая перегрузка двигателя',
+    value: 'motor-overload',
+    isCorrect: false,
+  },
+  {
+    label: 'Нарушение подачи на всасывающей линии',
+    value: 'suction-line',
+    isCorrect: false,
+  },
+  {
+    label: 'Неисправность датчика системы КОМПАКС',
+    value: 'kompaks-sensor',
+    isCorrect: false,
+  },
+];
+
 export const SimulatorInfoPanel = observer(() => {
   const { selectedComponent } = simulatorStore;
+
+  const [isDiagnosisOpen, setIsDiagnosisOpen] = useState(false);
+  const [selectedDiagnosis, setSelectedDiagnosis] = useState<DiagnosisOption | null>(null);
+  const [isDiagnosisSubmitted, setIsDiagnosisSubmitted] = useState(false);
 
   if (!selectedComponent) {
     return (
@@ -35,10 +73,18 @@ export const SimulatorInfoPanel = observer(() => {
 
   const canRunDiagnostics = isPump && selectedComponent.uiId !== 'pump-h1v' && isRunning;
 
-  const handleRunDiagnostics = () => {
-    simulatorStore.sendAction('run_diagnostics', selectedComponent.componentId);
-  };
+  const handleDiagnosisChange = (diagnosis: DiagnosisOption | null) => {
+    if (!diagnosis || isDiagnosisSubmitted) {
+      return;
+    }
 
+    setSelectedDiagnosis(diagnosis);
+    setIsDiagnosisSubmitted(true);
+
+    simulatorStore.sendAction('submit_diagnosis', selectedComponent.componentId, {
+      diagnosis: diagnosis.isCorrect ? '1' : '0',
+    });
+  };
   return (
     <section className={styles.panel}>
       <div className={styles.header}>
@@ -128,20 +174,6 @@ export const SimulatorInfoPanel = observer(() => {
                 </Text>
 
                 <div className={styles.chartContainer}>
-                  {/* <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={history}>
-                      <YAxis hide domain={['dataMin', 'dataMax']} />
-
-                      <Line
-                        type="monotone"
-                        dataKey="value"
-                        strokeWidth={2}
-                        dot={false}
-                        isAnimationActive={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer> */}
-
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
                       data={history}
@@ -179,12 +211,34 @@ export const SimulatorInfoPanel = observer(() => {
       {isPump && (
         <div className={styles.actions}>
           {canRunDiagnostics && (
-            <Button
-              width="full"
-              view="secondary"
-              label="Провести диагностику"
-              onClick={handleRunDiagnostics}
-            />
+            <>
+              {!isDiagnosisOpen ? (
+                <Button
+                  width="full"
+                  view="secondary"
+                  label="Провести диагностику"
+                  onClick={() => setIsDiagnosisOpen(true)}
+                />
+              ) : (
+                <div>
+                  <Select
+                    placeholder="Выберите диагноз"
+                    items={diagnosisOptions}
+                    value={selectedDiagnosis}
+                    onChange={handleDiagnosisChange}
+                    getItemLabel={(item) => item.label}
+                    getItemKey={(item) => item.value}
+                    disabled={isDiagnosisSubmitted}
+                  />
+
+                  {isDiagnosisSubmitted && (
+                    <Text size="s" view="secondary">
+                      Ответ отправлен
+                    </Text>
+                  )}
+                </div>
+              )}
+            </>
           )}
 
           {isRunning ? (
