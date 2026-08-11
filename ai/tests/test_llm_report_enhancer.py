@@ -20,6 +20,58 @@ def base_report() -> dict:
         ],
         "recommendations": ["Исходная рекомендация."],
         "metrics": {"actionCount": 1, "hintCount": 0},
+        "sessionContext": {
+            "completionReason": "critical_limit_reached",
+            "controlledParameters": [
+                {
+                    "parameterId": "LRCA605",
+                    "finalValue": 20,
+                    "minimumValue": 20,
+                    "unit": "%",
+                }
+            ],
+        },
+        "actionAnalysis": {
+            "stages": [
+                {
+                    "stageId": "detection",
+                    "status": "warning",
+                    "completedAtMs": 20_000,
+                    "observations": ["PRA 351 не просмотрен до диагноза"],
+                }
+            ],
+            "timing": {"firstReactionAtMs": 20_000},
+            "sequence": {"diagnosisBeforePumpActions": True},
+            "timeline": [
+                {
+                    "sequence": 1,
+                    "virtualTimeMs": 20_000,
+                    "actionType": "view_signal",
+                    "targetId": "FYQR117",
+                }
+            ],
+            "focusAreas": ["Проверить PRA 351 до диагноза"],
+        },
+        "hintTimeline": [
+            {
+                "hintId": "compare-line-signals",
+                "virtualTimeMs": 15_000,
+                "title": "Сравните связанные сигналы",
+            }
+        ],
+        "journalTimeline": [
+            {
+                "time": "00:20",
+                "description": "Просмотрен параметр FYQR 117",
+            }
+        ],
+        "errorAnalysis": [
+            {
+                "code": "pra_not_checked",
+                "detectedAtMs": 42_000,
+                "consequence": "Не подтверждено влияние Н-1А на линию",
+            }
+        ],
         "provenance": {
             "method": "deterministic_template",
             "llmUsed": False,
@@ -33,7 +85,17 @@ class SuccessfulClient:
         assert "производственные" in system_prompt
         assert "sessionId" not in json.dumps(user_payload)
         assert "actionAnalysis" in user_payload
-        assert "timeline" not in user_payload["actionAnalysis"]
+        assert user_payload["actionAnalysis"]["timeline"][0]["targetId"] == (
+            "FYQR117"
+        )
+        assert user_payload["sessionContext"]["controlledParameters"][0][
+            "parameterId"
+        ] == "LRCA605"
+        assert user_payload["hintTimeline"][0]["hintId"] == (
+            "compare-line-signals"
+        )
+        assert user_payload["journalTimeline"][0]["time"] == "00:20"
+        assert user_payload["errorAnalysis"][0]["code"] == "pra_not_checked"
         return CompletionResult(
             content=json.dumps(
                 {

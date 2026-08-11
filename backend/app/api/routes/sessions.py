@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from app.api.dependencies import get_session_manager
 from app.domain import (
@@ -16,6 +16,7 @@ from app.domain import (
     TrainingSession,
 )
 from app.services import RAGUnavailableError, SessionManager
+from app.services.pdf_report import SessionAIAnalysisPDFBuilder
 
 
 router = APIRouter(prefix="/api/v1/sessions", tags=["sessions"])
@@ -138,6 +139,34 @@ async def get_ai_analysis(
     return manager.get_ai_analysis(session_id)
 
 
+@router.get(
+    "/{session_id}/ai-analysis/report.pdf",
+    response_class=Response,
+    responses={
+        200: {
+            "content": {"application/pdf": {}},
+            "description": "Скачиваемый итоговый ИИ-отчет в формате PDF",
+        }
+    },
+)
+def download_ai_analysis_pdf(
+    session_id: UUID,
+    manager: SessionManager = Depends(get_session_manager),
+) -> Response:
+    """Render an already generated post-session analysis as a PDF file."""
+
+    analysis = manager.get_ai_analysis(session_id)
+    content = SessionAIAnalysisPDFBuilder().build(analysis)
+    return Response(
+        content=content,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": (
+                "attachment; filename="
+                f'"ktk-elou-avt-ai-report-{session_id}.pdf"'
+            )
+        },
+    )
 @router.get(
     "/{session_id}/adaptive-plan",
     response_model=AdaptiveRepetitionPlan,

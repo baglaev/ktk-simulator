@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 
 from app.domain import (
     CreateSessionRequest,
+    JournalEntry,
     ModelSnapshot,
     OperatorAction,
     RecordedAction,
@@ -276,6 +277,10 @@ class SessionManager:
             result = self.get_result(session_id)
             actions = self._repository.list_actions(session_id)
             hints = self._repository.list_hints(session_id)
+            model = self._models.get(session_id)
+            journal: list[JournalEntry] = (
+                model.get_snapshot().journal if model is not None else []
+            )
         analysis = self._ai_analysis_service.build(result, actions, hints)
         # Keep the optional external request outside the global session lock
         # so live simulations in other sessions continue to tick.
@@ -284,6 +289,7 @@ class SessionManager:
             result,
             actions,
             hints,
+            journal,
         )
         with self._lock:
             self._repository.save_ai_analysis(

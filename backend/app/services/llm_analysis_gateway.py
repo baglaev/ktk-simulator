@@ -3,7 +3,13 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from app.domain import RecordedAction, ScenarioHintMessage, SessionAIAnalysis, SessionResult
+from app.domain import (
+    JournalEntry,
+    RecordedAction,
+    ScenarioHintMessage,
+    SessionAIAnalysis,
+    SessionResult,
+)
 
 
 class PostSessionLLMAnalysisGateway:
@@ -18,6 +24,7 @@ class PostSessionLLMAnalysisGateway:
         result: SessionResult,
         actions: list[RecordedAction],
         hints: list[ScenarioHintMessage],
+        journal: list[JournalEntry],
     ) -> SessionAIAnalysis:
         root = str(self._repository_root)
         if root not in sys.path:
@@ -36,6 +43,17 @@ class PostSessionLLMAnalysisGateway:
                 item.model_dump(mode="json", by_alias=True) for item in hints
             ],
         )
+        report["errorAnalysis"] = [
+            item.model_dump(mode="json", by_alias=True)
+            for item in analysis.errors
+        ]
+        report["journalTimeline"] = [
+            {
+                "time": item.time,
+                "description": item.description,
+            }
+            for item in journal[:300]
+        ]
         enhanced = LLMReportEnhancer().enhance(report, actions=action_payloads)
         raw_provenance = enhanced.get("provenance", {})
         provenance_update = {

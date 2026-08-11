@@ -70,13 +70,132 @@ class SessionReportBuilder:
                 "actionCount": len(actions),
                 "hintCount": len(issued_hints),
             },
+            "sessionContext": self._session_context(result),
             "actionAnalysis": action_analysis,
+            "hintTimeline": self._hint_timeline(issued_hints),
             "provenance": {
                 "method": "deterministic_template",
                 "llmUsed": False,
                 "sourceRefs": ["A-18", "учебное допущение"],
             },
         }
+
+    @staticmethod
+    def _session_context(result: Mapping[str, Any]) -> dict[str, Any]:
+        """Select factual result data without session or user identifiers."""
+
+        raw_tasks = result.get("taskExecution", result.get("task_execution", []))
+        tasks = []
+        if isinstance(raw_tasks, Sequence) and not isinstance(
+            raw_tasks, (str, bytes)
+        ):
+            for item in raw_tasks[:20]:
+                if not isinstance(item, Mapping):
+                    continue
+                tasks.append(
+                    {
+                        "taskId": item.get("taskId", item.get("task_id")),
+                        "title": item.get("title"),
+                        "status": item.get("status"),
+                        "completedAtMs": item.get(
+                            "completedAtMs", item.get("completed_at_ms")
+                        ),
+                        "description": item.get("description"),
+                    }
+                )
+
+        raw_parameters = result.get(
+            "controlledParameters",
+            result.get("controlled_parameters", []),
+        )
+        parameters = []
+        if isinstance(raw_parameters, Sequence) and not isinstance(
+            raw_parameters, (str, bytes)
+        ):
+            for item in raw_parameters[:50]:
+                if not isinstance(item, Mapping):
+                    continue
+                parameters.append(
+                    {
+                        "parameterId": item.get(
+                            "parameterId", item.get("parameter_id")
+                        ),
+                        "name": item.get("name"),
+                        "finalValue": item.get(
+                            "finalValue", item.get("final_value")
+                        ),
+                        "minimumValue": item.get(
+                            "minimumValue", item.get("minimum_value")
+                        ),
+                        "unit": item.get("unit"),
+                        "status": item.get("status"),
+                    }
+                )
+
+        raw_critical = result.get(
+            "criticalFailureReasons",
+            result.get("critical_failure_reasons", []),
+        )
+        critical_reasons = (
+            [str(item) for item in raw_critical[:20]]
+            if isinstance(raw_critical, Sequence)
+            and not isinstance(raw_critical, (str, bytes))
+            else []
+        )
+        return {
+            "outcome": result.get("outcome"),
+            "resultStatus": result.get("status", result.get("resultStatus")),
+            "mode": result.get("mode"),
+            "completionReason": result.get(
+                "completionReason", result.get("completion_reason")
+            ),
+            "elapsedTimeMs": result.get(
+                "elapsedTimeMs", result.get("elapsed_time_ms")
+            ),
+            "totalScore": result.get("totalScore", result.get("total_score")),
+            "taskExecution": tasks,
+            "controlledParameters": parameters,
+            "criticalFailureReasons": critical_reasons,
+        }
+
+    @staticmethod
+    def _hint_timeline(
+        issued_hints: Sequence[Mapping[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Build a bounded, anonymized timeline of hints actually issued."""
+
+        timeline: list[dict[str, Any]] = []
+        for item in issued_hints[:50]:
+            if not isinstance(item, Mapping):
+                continue
+            raw_evidence = item.get("evidence", [])
+            evidence = []
+            if isinstance(raw_evidence, Sequence) and not isinstance(
+                raw_evidence, (str, bytes)
+            ):
+                for fact in raw_evidence[:10]:
+                    if not isinstance(fact, Mapping):
+                        continue
+                    evidence.append(
+                        {
+                            "kind": fact.get("kind"),
+                            "refId": fact.get("refId", fact.get("ref_id")),
+                            "fact": fact.get("fact"),
+                        }
+                    )
+            timeline.append(
+                {
+                    "hintId": item.get("hintId", item.get("hint_id")),
+                    "virtualTimeMs": item.get(
+                        "virtualTimeMs", item.get("virtual_time_ms")
+                    ),
+                    "level": item.get("level"),
+                    "title": item.get("title"),
+                    "message": item.get("message"),
+                    "evidence": evidence,
+                }
+            )
+        return timeline
 
     @staticmethod
     def _extract_error_codes(result: Mapping[str, Any]) -> list[str]:
