@@ -18,6 +18,8 @@ class ScenarioStore {
 
   constructor() {
     makeAutoObservable(this);
+
+    this.sessionId = localStorage.getItem('sessionId');
   }
 
   setMode = (mode: ScenarioMode) => {
@@ -64,6 +66,7 @@ class ScenarioStore {
       this.sessionId = data.sessionId;
     });
 
+    localStorage.setItem('sessionId', data.sessionId);
     return data.sessionId;
   };
 

@@ -8,9 +8,23 @@ import { ParametrsControlled } from './ParametrsControlled';
 import { RecordedComments } from './RecordedComments';
 import { Button } from '@consta/uikit/Button';
 import { useNavigate } from 'react-router-dom';
+import { observer } from 'mobx-react-lite';
+import { resultStore } from '../../model/result.store';
 
-export const SimulatorSummary = () => {
+export const SimulatorSummary = observer(() => {
   const navigate = useNavigate();
+
+  const { result } = resultStore;
+
+  if (!result) {
+    return (
+      <section className={styles.section}>
+        <Text>Результат сценария не загружен</Text>
+      </section>
+    );
+  }
+
+  const isPassed = result.outcome === 'passed';
 
   return (
     <section className={styles.section}>
@@ -20,19 +34,29 @@ export const SimulatorSummary = () => {
         summaryEnabled
       />
       <div className={styles.titleContainer}>
-        <IconCheck size="l" view="warning" />
-        <Text size="2xl" className={styles.title} view="warning">
-          Пройден с замечанями
-        </Text>
+        <IconCheck size="l" view={isPassed ? 'success' : 'alert'} />
+
+        <div>
+          <Text size="2xl" className={styles.title} view={isPassed ? 'success' : 'alert'}>
+            {isPassed ? 'Сценарий пройден' : 'Сценарий не пройден'}
+          </Text>
+
+          <Text view="secondary">{result.summary}</Text>
+        </div>
       </div>
       <div className={styles.summaryPoints}>
-        <SummaryPoints />
+        <SummaryPoints
+          totalScore={result.totalScore}
+          maxScore={result.maxScore}
+          elapsedTimeMs={result.elapsedTimeMs}
+          mode={result.mode}
+        />
       </div>
       <div className={styles.columnsSection}>
-        <TasksDoneContainer />
-        <ParametrsControlled />
+        <TasksDoneContainer tasks={result.taskExecution} />
+        <ParametrsControlled parameters={result.controlledParameters} />
       </div>
-      <RecordedComments />
+      <RecordedComments remarks={result.remarks} />
 
       <div className={styles.buttonsContainer}>
         <Button label="На главную" view="secondary" size="l" onClick={() => navigate('/')} />
@@ -46,6 +70,6 @@ export const SimulatorSummary = () => {
       </div>
     </section>
   );
-};
+});
 
 SimulatorSummary.displayName = 'SimulatorSummary';

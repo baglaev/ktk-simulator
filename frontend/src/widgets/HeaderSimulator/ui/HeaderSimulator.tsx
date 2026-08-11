@@ -9,6 +9,8 @@ import { simulatorStore } from '@/features/simulator/SimulatorSchema/model/simul
 import { useNavigate } from 'react-router-dom';
 import { authStore } from '@/features/auth/model/auth.api.store';
 import { IconExit } from '@consta/icons/IconExit';
+import { scenarioStore } from '@/pages/ScenarioPreparation/model/scenario.store';
+import { resultStore } from '@/features/summary/model/result.store';
 
 interface Props {
   pageName: string;
@@ -32,6 +34,23 @@ export const HeaderSimulator = observer((props: Props) => {
     });
   };
 
+  const isScenarioCompleted = simulatorStore.scenarioState.status === 'completed';
+
+  const handleFinishScenario = async () => {
+    if (!scenarioStore.sessionId) {
+      console.error('sessionId отсутствует');
+      return;
+    }
+
+    try {
+      await resultStore.fetchResult(scenarioStore.sessionId);
+
+      navigate('/summary-results');
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <header className={styles.header}>
       <div className={styles.titleContainer}>
@@ -51,7 +70,13 @@ export const HeaderSimulator = observer((props: Props) => {
 
             <Text>{simulatorStore.scenarioStatusText}</Text>
           </div>
-          <Button label="Завершить сценарий" view="secondary" />
+          <Button
+            label="Завершить сценарий"
+            view="secondary"
+            disabled={!isScenarioCompleted || resultStore.isLoading}
+            loading={resultStore.isLoading}
+            onClick={handleFinishScenario}
+          />
         </div>
       )}
 

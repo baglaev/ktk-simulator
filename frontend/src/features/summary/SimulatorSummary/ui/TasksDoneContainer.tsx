@@ -1,51 +1,55 @@
 import { Text } from '@consta/uikit/Text';
-import styles from './SimulatorSummary.module.css';
-import { IconInfo } from '@consta/icons/IconInfo';
 import { Badge } from '@consta/uikit/Badge';
+import { IconInfo } from '@consta/icons/IconInfo';
 
-export const TasksDoneContainer = () => {
+import styles from './SimulatorSummary.module.css';
+import type { TaskExecutionItem } from '../../model/result.types';
+
+interface Props {
+  tasks: TaskExecutionItem[];
+}
+
+export const TasksDoneContainer = ({ tasks }: Props) => {
   return (
     <section className={styles.tasksDoneContainer}>
       <Text size="l" className={styles.title}>
-        Выполнение задачи
+        Выполнение задач
       </Text>
 
       <div className={styles.taskItemsContainer}>
-        <div className={styles.taskItem}>
-          <div className={styles.taskName}>
-            <IconInfo size="s" />
-            <Text>Источник отклонения</Text>
-          </div>
-          <div className={styles.taskStatusContainer}>
-            <Text>Н1-А, определенно верно</Text>
-            <Badge status="success" size="xs" form="round" />
-          </div>
-        </div>
+        {tasks.map((task) => (
+          <div key={task.taskId} className={styles.taskItem}>
+            <div className={styles.taskName}>
+              <IconInfo size="s" />
 
-        <div className={styles.taskItem}>
-          <div className={styles.taskName}>
-            <IconInfo size="s" />
-            <Text>Источник отклонения</Text>
-          </div>
-          <div className={styles.taskStatusContainer}>
-            <Text>Н1-А, определенно верно</Text>
-            <Badge status="success" size="xs" form="round" />
-          </div>
-        </div>
+              <div>
+                <Text>{task.title}</Text>
 
-        <div className={styles.taskItem}>
-          <div className={styles.taskName}>
-            <IconInfo size="s" />
-            <Text>Источник отклонения</Text>
+                <Text size="xs" view="secondary">
+                  {task.description}
+                </Text>
+              </div>
+            </div>
+
+            <Badge
+              label={
+                task.status === 'success'
+                  ? 'Выполнено'
+                  : task.status === 'warning'
+                    ? 'С замечанием'
+                    : 'Не выполнено'
+              }
+              status={
+                task.status === 'success'
+                  ? 'success'
+                  : task.status === 'warning'
+                    ? 'warning'
+                    : 'error'
+              }
+            />
           </div>
-          <div className={styles.taskStatusContainer}>
-            <Text>Н1-А, определенно верно</Text>
-            <Badge status="success" size="xs" form="round" />
-          </div>
-        </div>
+        ))}
       </div>
     </section>
   );
 };
-
-TasksDoneContainer.displayName = 'TasksDoneContainer';

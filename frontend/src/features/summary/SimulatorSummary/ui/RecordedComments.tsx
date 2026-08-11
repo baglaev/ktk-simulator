@@ -1,22 +1,41 @@
 import { Text } from '@consta/uikit/Text';
-import styles from './SimulatorSummary.module.css';
 import { Badge } from '@consta/uikit/Badge';
 
-export const RecordedComments = () => {
+import styles from './SimulatorSummary.module.css';
+import type { ResultRemark } from '../../model/result.types';
+
+interface Props {
+  remarks: ResultRemark[];
+}
+
+export const RecordedComments = ({ remarks }: Props) => {
   return (
     <section className={styles.recordedComments}>
-      <Text>Зафиксированные замечания</Text>
-      <div className={styles.commentsItem}>
-        <Badge status="warning" size="xs" form="round" />
-        <Text>Позднее начало диагностики</Text>
-      </div>
+      <Text size="l">Зафиксированные замечания</Text>
 
-      <div className={styles.commentsItem}>
-        <Badge status="warning" size="xs" form="round" />
-        <Text>Позднее начало диагностики</Text>
-      </div>
+      {remarks.map((remark) => (
+        <div key={remark.code} className={styles.commentsItem}>
+          <Badge
+            status={
+              remark.status === 'success'
+                ? 'success'
+                : remark.status === 'warning'
+                  ? 'warning'
+                  : 'error'
+            }
+            size="xs"
+            form="round"
+          />
+
+          <div>
+            <Text weight="semibold">{remark.title}</Text>
+
+            <Text size="s" view="secondary">
+              {remark.description}
+            </Text>
+          </div>
+        </div>
+      ))}
     </section>
   );
 };
-
-RecordedComments.displayName = 'RecordedComments';
