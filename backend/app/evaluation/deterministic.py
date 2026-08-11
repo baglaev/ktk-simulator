@@ -462,13 +462,18 @@ _ERROR_DESCRIPTIONS = {
     ActionErrorCode.LRCA_RECOVERY_NOT_CONFIRMED: "Восстановление LRCA 605 не подтверждено.",
     ActionErrorCode.COMPLETED_BEFORE_STABLE: "Сценарий завершён до стабилизации.",
     ActionErrorCode.E15_SAFETY_LIMIT_REACHED: "LRCA 605 достиг учебной критической границы.",
-    ActionErrorCode.WRONG_DIAGNOSIS_REASON: "Выбрана неверная причина неисправности.",
+    ActionErrorCode.WRONG_DIAGNOSIS_REASON: "Выбран неверный вариант диагностики.",
     ActionErrorCode.FAULT_NOT_DETECTED: "Неисправность Н-1А не выявлена.",
     ActionErrorCode.SWITCH_BEFORE_DIAGNOSIS: "Переключение начато до корректного диагноза.",
 }
 
 
 def _correct_diagnosis(action: RecordedAction) -> bool:
+    if "diagnosis" in action.parameters:
+        return (
+            action.target_id == "eq-n1a"
+            and action.parameters.get("diagnosis") == "1"
+        )
     return (
         action.target_id == "eq-n1a"
         and action.parameters.get("conclusion")
@@ -478,6 +483,11 @@ def _correct_diagnosis(action: RecordedAction) -> bool:
 
 
 def _identifies_fault(action: RecordedAction) -> bool:
+    if "diagnosis" in action.parameters:
+        return (
+            action.target_id == "eq-n1a"
+            and action.parameters.get("diagnosis") == "1"
+        )
     return (
         action.target_id == "eq-n1a"
         and action.parameters.get("conclusion")

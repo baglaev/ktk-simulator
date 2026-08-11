@@ -68,7 +68,7 @@ def test_websocket_contract_executes_complete_frontend_user_path() -> None:
         action(
             "submit_diagnosis",
             "eq-n1a",
-            {"conclusion": "fault_detected", "reason": "bearing_wear"},
+            {"diagnosis": "1"},
         )
         action("start_pump", "eq-n1b")
         action("stop_pump", "eq-n1a")
@@ -123,10 +123,7 @@ def test_diagnosis_payload_is_validated_by_api_contract() -> None:
             {
                 "actionType": "submit_diagnosis",
                 "targetId": "eq-n1a",
-                "parameters": {
-                    "conclusion": "made-up",
-                    "reason": "unknown",
-                },
+                "parameters": {"diagnosis": "2"},
             }
         )
         response = websocket.receive_json()

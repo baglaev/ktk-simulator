@@ -403,6 +403,21 @@ class N1AProcessModel:
                         "failureReason": self._failure_reason,
                     }
                 )
+            if component_id == "eq-t1-t11":
+                composition = next(
+                    (
+                        item.value
+                        for item in definition.specifications
+                        if item.parameter_id == "block-composition"
+                    ),
+                    [],
+                )
+                state.update(
+                    {
+                        "detailsTitle": "Состав блока",
+                        "composition": composition,
+                    }
+                )
             result.append(
                 ComponentState(
                     component_id=component_id,
@@ -545,6 +560,13 @@ class N1AProcessModel:
             signal = self._signal_definitions.get(action.target_id)
             target_name = signal.tag if signal is not None else action.target_id
         if action.action_type is ActionType.SUBMIT_DIAGNOSIS:
+            if "diagnosis" in action.parameters:
+                result = (
+                    "верный"
+                    if _is_correct_action_diagnosis(action)
+                    else "неверный"
+                )
+                return f"Диагноз {target_name}: {result}"
             conclusion = DiagnosisConclusion(action.parameters["conclusion"])
             if conclusion is DiagnosisConclusion.NO_FAULT:
                 return (
@@ -637,19 +659,25 @@ class N1AProcessModel:
         )
 
         if action.action_type is ActionType.SUBMIT_DIAGNOSIS:
-            conclusion = DiagnosisConclusion(action.parameters["conclusion"])
-            reason_value = action.parameters.get("reason")
-            reason = (
-                DiagnosisReason(reason_value)
-                if reason_value is not None
-                else None
-            )
             if action.target_id != "eq-n1a":
                 errors.add(ActionErrorCode.HEALTHY_PUMP_SELECTED)
-            if conclusion is not DiagnosisConclusion.FAULT_DETECTED:
-                errors.add(ActionErrorCode.FAULT_NOT_DETECTED)
-            if reason is not DiagnosisReason.BEARING_WEAR:
-                errors.add(ActionErrorCode.WRONG_DIAGNOSIS_REASON)
+            if "diagnosis" in action.parameters:
+                if not _is_correct_action_diagnosis(action):
+                    errors.add(ActionErrorCode.WRONG_DIAGNOSIS_REASON)
+            else:
+                conclusion = DiagnosisConclusion(
+                    action.parameters["conclusion"]
+                )
+                reason_value = action.parameters.get("reason")
+                reason = (
+                    DiagnosisReason(reason_value)
+                    if reason_value is not None
+                    else None
+                )
+                if conclusion is not DiagnosisConclusion.FAULT_DETECTED:
+                    errors.add(ActionErrorCode.FAULT_NOT_DETECTED)
+                if reason is not DiagnosisReason.BEARING_WEAR:
+                    errors.add(ActionErrorCode.WRONG_DIAGNOSIS_REASON)
             if self._elapsed_time_ms > 80_000:
                 errors.add(ActionErrorCode.DIAGNOSIS_TOO_LATE)
             if "PRA351" not in viewed:
@@ -727,7 +755,7 @@ class N1AProcessModel:
             )
             return _low_value_status(value, 80, 95)
         if component_id == "eq-t1-t11":
-            return _low_value_status(float(raw_values["T1T11.FLOW"]), 70, 95)
+            return _low_value_status(float(raw_values["FYQR117"]), 70, 95)
         if component_id == "eq-elou":
             value = min(
                 float(raw_values["ELOU.STAGE1.LEVEL"]),
@@ -804,17 +832,6 @@ class N1AProcessModel:
         if self._profile.component_ids != list(_UI_IDS):
             raise ValueError(
                 "frontend component list or order differs from contract v3"
-            )
-        components_with_parameters = {
-            item.equipment_id for item in self._scenario.signals
-        }
-        missing_parameters = set(self._profile.component_ids) - (
-            components_with_parameters
-        )
-        if missing_parameters:
-            raise ValueError(
-                "frontend components without parameters: "
-                f"{sorted(missing_parameters)}"
             )
         configured_signal_ids = {
             item.signal_id for item in self._profile.numeric_trajectories
@@ -933,6 +950,11 @@ _DIAGNOSIS_REASONS = {
 
 
 def _is_correct_action_diagnosis(action: OperatorAction) -> bool:
+    if "diagnosis" in action.parameters:
+        return (
+            action.target_id == "eq-n1a"
+            and action.parameters.get("diagnosis") == "1"
+        )
     return (
         action.target_id == "eq-n1a"
         and action.parameters.get("conclusion")
@@ -942,6 +964,11 @@ def _is_correct_action_diagnosis(action: OperatorAction) -> bool:
 
 
 def _is_correct_diagnosis(action: RecordedAction) -> bool:
+    if "diagnosis" in action.parameters:
+        return (
+            action.target_id == "eq-n1a"
+            and action.parameters.get("diagnosis") == "1"
+        )
     return (
         action.target_id == "eq-n1a"
         and action.parameters.get("conclusion")

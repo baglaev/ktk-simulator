@@ -115,8 +115,6 @@
     {"signalId": "COMPAX.N1V.DISPLACEMENT", "keyframes": [{"timeMs": 0, "value": 35}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
     {"signalId": "COMPAX.N1V.CURRENT", "keyframes": [{"timeMs": 0, "value": 100}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
 
-    {"signalId": "T1T11.FLOW", "keyframes": [{"timeMs": 0, "value": 100}, {"timeMs": 40000, "value": 93}, {"timeMs": 80000, "value": 62}, {"timeMs": 120000, "value": 34}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
-    {"signalId": "T1T11.TEMPERATURE", "keyframes": [{"timeMs": 0, "value": 100}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
     {"signalId": "ELOU.STAGE1.LEVEL", "keyframes": [{"timeMs": 0, "value": 100}, {"timeMs": 55000, "value": 98}, {"timeMs": 80000, "value": 88}, {"timeMs": 110000, "value": 77}, {"timeMs": 120000, "value": 72}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
     {"signalId": "ELOU.STAGE2.LEVEL", "keyframes": [{"timeMs": 0, "value": 100}, {"timeMs": 70000, "value": 98}, {"timeMs": 80000, "value": 94}, {"timeMs": 110000, "value": 86}, {"timeMs": 120000, "value": 81}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
 
@@ -195,7 +193,7 @@
     {"componentId": "eq-n1b", "keyframes": [{"timeMs": 0, "status": "success"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-15"}},
     {"componentId": "eq-n1v", "keyframes": [{"timeMs": 0, "status": "success"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
     {"componentId": "eq-n1-discharge", "keyframes": [{"timeMs": 0, "status": "success"}, {"timeMs": 40000, "status": "warning"}, {"timeMs": 80000, "status": "alert"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-03"}},
-    {"componentId": "eq-t1-t11", "keyframes": [{"timeMs": 0, "status": "success"}, {"timeMs": 40000, "status": "warning"}, {"timeMs": 80000, "status": "alert"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
+    {"componentId": "eq-t1-t11", "keyframes": [{"timeMs": 0, "status": "success"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
     {"componentId": "eq-elou", "keyframes": [{"timeMs": 0, "status": "success"}, {"timeMs": 55000, "status": "warning"}, {"timeMs": 110000, "status": "alert"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-16"}},
     {"componentId": "eq-e15", "keyframes": [{"timeMs": 0, "status": "success"}, {"timeMs": 80000, "status": "warning"}, {"timeMs": 110000, "status": "alert"}], "provenance": {"origin": "educational_assumption", "assumptionId": "A-04"}}
   ],

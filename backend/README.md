@@ -368,7 +368,7 @@ UUID действия, серверное время, версию состоя�
 | `open_equipment_card` | оборудование, например `eq-n1a` | нет |
 | `view_signal` | сигнал, например `PRA351` | нет |
 | `run_diagnostics` | только `eq-n1a` | нет |
-| `submit_diagnosis` | `eq-n1a` | `conclusion`, иногда `reason` |
+| `submit_diagnosis` | `eq-n1a` | `diagnosis`: `"1"` или `"0"` |
 | `start_pump` | учебный насос, например `eq-n1b` | нет |
 | `stop_pump` | учебный насос, например `eq-n1a` | нет |
 
@@ -377,8 +377,9 @@ MVP не требует их для успешного пути.
 
 ### Форма диагностики
 
-Источник вариантов для frontend — поле `diagnosisForm` в model-definition.
-Правильный ответ там намеренно не раскрывается.
+Frontend отображает варианты диагностики и передаёт backend только результат
+проверки выбранного варианта: строку `"1"`, если вариант верный, или `"0"`,
+если вариант неверный.
 
 Открытие формы:
 
@@ -386,34 +387,55 @@ MVP не требует их для успешного пути.
 {"actionType": "run_diagnostics", "targetId": "eq-n1a"}
 ```
 
-Выявлена неисправность — `reason` обязателен:
+Верный вариант:
 
 ```json
 {
   "actionType": "submit_diagnosis",
   "targetId": "eq-n1a",
-  "parameters": {
-    "conclusion": "fault_detected",
-    "reason": "bearing_wear"
+  "parameters": {"diagnosis": "1"}
+}
+```
+
+Неверный вариант:
+
+```json
+{
+  "actionType": "submit_diagnosis",
+  "targetId": "eq-n1a",
+  "parameters": {"diagnosis": "0"}
+}
+```
+
+Другие значения и дополнительные поля для нового формата отклоняются. Старый
+формат `conclusion`/`reason` временно принимается только для обратной
+совместимости с уже сохранёнными действиями.
+
+### Группа теплообменников Т-1–Т-11
+
+Компонент `eq-t1-t11` не содержит искусственных live-показателей расхода и
+температуры. В `state` каждого `telemetry.snapshot` и `telemetry.update`
+передаётся подтверждённый источником состав группы:
+
+```json
+{
+  "componentId": "eq-t1-t11",
+  "tag": "Т-1–Т-11",
+  "name": "Группа теплообменников Т-1–Т-11",
+  "parameters": [],
+  "state": {
+    "detailsTitle": "Состав блока",
+    "composition": [
+      "Т-1/1, Т-1/2, Т-1/3, Т-2, Т-3/1, Т-3/2",
+      "Т-4/1, Т-4/2, Т-5, Т-6/1, Т-6/2 и Т-7/1",
+      "Т-7/2, Т-8, Т-9/1, Т-9/2, Т-10/1, Т-10/2, Т-11"
+    ]
   }
 }
 ```
 
-Допустимые причины: `bearing_wear`, `cavitation`, `electrical_overload`,
-`suction_supply_disruption`, `compax_sensor_fault`.
-
-Неисправность не выявлена — `reason` не передаётся:
-
-```json
-{
-  "actionType": "submit_diagnosis",
-  "targetId": "eq-n1a",
-  "parameters": {"conclusion": "no_fault"}
-}
-```
-
-Значения `0`/`1` не используются: строковые коды устойчивее, понятнее в
-журнале и не требуют помнить смысл числа.
+Frontend должен показывать `state.detailsTitle` и строки
+`state.composition` вместо графиков параметров этого компонента.
 
 ### Сообщения backend
 

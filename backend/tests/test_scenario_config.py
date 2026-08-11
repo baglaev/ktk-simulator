@@ -18,7 +18,7 @@ def test_n1a_scenario_catalog_is_valid_and_complete_for_mvp() -> None:
     assert scenario.scenario_id == "MVP-SC-01"
     assert len(scenario.equipment) == 22
     assert len(scenario.connections) == 15
-    assert len(scenario.signals) == 41
+    assert len(scenario.signals) == 39
 
     equipment_tags = {item.tag for item in scenario.equipment}
     assert {
@@ -28,7 +28,7 @@ def test_n1a_scenario_catalog_is_valid_and_complete_for_mvp() -> None:
         "Н-1А",
         "Н-1Б",
         "Н-1В",
-        "Т-1-Т-11",
+        "Т-1–Т-11",
         "Э-1",
         "Э-2",
         "Э-3",
@@ -44,11 +44,26 @@ def test_n1a_scenario_catalog_is_valid_and_complete_for_mvp() -> None:
     assert {
         "COMPAX.N1V.TEMPERATURE",
         "COMPAX.N1V.VELOCITY",
-        "T1T11.FLOW",
-        "T1T11.TEMPERATURE",
         "ELOU.STAGE1.LEVEL",
         "ELOU.STAGE2.LEVEL",
     }.issubset(signal_ids)
+    assert "T1T11.FLOW" not in signal_ids
+    assert "T1T11.TEMPERATURE" not in signal_ids
+
+    heat_exchangers = next(
+        item for item in scenario.equipment if item.equipment_id == "eq-t1-t11"
+    )
+    assert heat_exchangers.name == "Группа теплообменников Т-1–Т-11"
+    composition = next(
+        item
+        for item in heat_exchangers.specifications
+        if item.parameter_id == "block-composition"
+    )
+    assert composition.value == [
+        "Т-1/1, Т-1/2, Т-1/3, Т-2, Т-3/1, Т-3/2",
+        "Т-4/1, Т-4/2, Т-5, Т-6/1, Т-6/2 и Т-7/1",
+        "Т-7/2, Т-8, Т-9/1, Т-9/2, Т-10/1, Т-10/2, Т-11",
+    ]
 
 
 def test_n1a_passport_values_are_source_backed() -> None:

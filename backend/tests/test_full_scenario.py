@@ -71,11 +71,7 @@ def _perform_switch(
         session_id,
         ActionType.SUBMIT_DIAGNOSIS,
         "eq-n1a",
-        (
-            {"conclusion": "fault_detected", "reason": "bearing_wear"}
-            if correct_diagnosis
-            else {"conclusion": "no_fault"}
-        ),
+        {"diagnosis": "1" if correct_diagnosis else "0"},
     )
     _action(manager, session_id, ActionType.START_PUMP, "eq-n1b")
     _action(manager, session_id, ActionType.STOP_PUMP, "eq-n1a")
@@ -135,7 +131,9 @@ def test_wrong_diagnosis_does_not_block_physical_recovery() -> None:
 
     assert result.outcome.value == "failed"
     assert result.total_score < 100
-    assert "fault_not_detected" in {item.value for item in result.error_codes}
+    assert "wrong_diagnosis_reason" in {
+        item.value for item in result.error_codes
+    }
     assert "switch_before_diagnosis" in {item.value for item in result.error_codes}
 
 

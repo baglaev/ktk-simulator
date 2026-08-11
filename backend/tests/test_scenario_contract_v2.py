@@ -24,33 +24,57 @@ def _session(manager: SessionManager, mode: TrainingMode = TrainingMode.TRAINING
     return created.session_id
 
 
-def test_no_fault_diagnosis_omits_reason_and_fault_requires_reason() -> None:
+def test_diagnosis_accepts_only_binary_frontend_result() -> None:
     accepted = ScenarioActionRequest.model_validate(
         {
             "actionType": "submit_diagnosis",
             "targetId": "eq-n1a",
-            "parameters": {"conclusion": "no_fault"},
+            "parameters": {"diagnosis": "1"},
         }
     )
-    assert accepted.parameters == {"conclusion": "no_fault"}
+    assert accepted.parameters == {"diagnosis": "1"}
 
-    with pytest.raises(ValidationError, match="reason is required"):
+    incorrect = ScenarioActionRequest.model_validate(
+        {
+            "actionType": "submit_diagnosis",
+            "targetId": "eq-n1a",
+            "parameters": {"diagnosis": "0"},
+        }
+    )
+    assert incorrect.parameters == {"diagnosis": "0"}
+
+    with pytest.raises(ValidationError, match="must be '0' or '1'"):
         ScenarioActionRequest.model_validate(
             {
                 "actionType": "submit_diagnosis",
                 "targetId": "eq-n1a",
-                "parameters": {"conclusion": "fault_detected"},
+                "parameters": {"diagnosis": "2"},
             }
         )
 
-    with pytest.raises(ValidationError, match="must be omitted"):
+    with pytest.raises(ValidationError, match="no other parameters"):
         ScenarioActionRequest.model_validate(
             {
                 "actionType": "submit_diagnosis",
                 "targetId": "eq-n1a",
-                "parameters": {"conclusion": "no_fault", "reason": "bearing_wear"},
+                "parameters": {"diagnosis": "1", "reason": "bearing_wear"},
             }
         )
+
+
+def test_legacy_diagnosis_payload_remains_accepted() -> None:
+    accepted = ScenarioActionRequest.model_validate(
+        {
+            "actionType": "submit_diagnosis",
+            "targetId": "eq-n1a",
+            "parameters": {
+                "conclusion": "fault_detected",
+                "reason": "bearing_wear",
+            },
+        }
+    )
+
+    assert accepted.parameters["reason"] == "bearing_wear"
 
 
 def test_training_mode_emits_hint_and_control_mode_does_not() -> None:

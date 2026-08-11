@@ -182,8 +182,13 @@ class ScenarioHintService:
         return any(
             item.action_type is ActionType.SUBMIT_DIAGNOSIS
             and item.target_id == "eq-n1a"
-            and item.parameters.get("conclusion") == "fault_detected"
-            and item.parameters.get("reason") == "bearing_wear"
+            and (
+                item.parameters.get("diagnosis") == "1"
+                or (
+                    item.parameters.get("conclusion") == "fault_detected"
+                    and item.parameters.get("reason") == "bearing_wear"
+                )
+            )
             for item in actions
         )
 

@@ -53,7 +53,7 @@ def test_initial_snapshot_contains_complete_model_state() -> None:
     assert snapshot.scenario_version == "0.4.0"
     assert snapshot.model_version == "0.4.0"
     assert len(snapshot.components) == 8
-    assert len(parameters) == 22
+    assert len(parameters) == 20
     assert all(type(parameter.value) is int for parameter in parameters.values())
     assert type(snapshot.timing.progress_percent) is int
     assert parameters["PRA351"].value == 100
@@ -64,6 +64,17 @@ def test_initial_snapshot_contains_complete_model_state() -> None:
     assert component_map(snapshot)["eq-n1v"].operating_state.value == "running"
     assert component_map(snapshot)["eq-n1b"].operating_state.value == "stopped"
     assert component_map(snapshot)["eq-n1b"].parameters == []
+    heat_exchangers = component_map(snapshot)["eq-t1-t11"]
+    assert heat_exchangers.name == "Группа теплообменников Т-1–Т-11"
+    assert heat_exchangers.parameters == []
+    assert heat_exchangers.state == {
+        "detailsTitle": "Состав блока",
+        "composition": [
+            "Т-1/1, Т-1/2, Т-1/3, Т-2, Т-3/1, Т-3/2",
+            "Т-4/1, Т-4/2, Т-5, Т-6/1, Т-6/2 и Т-7/1",
+            "Т-7/2, Т-8, Т-9/1, Т-9/2, Т-10/1, Т-10/2, Т-11",
+        ],
+    }
     assert n1a.status is GeneralStatus.SUCCESS
     assert n1a.state == {"faultSeverityPercent": 0}
     assert type(n1a.state["faultSeverityPercent"]) is int

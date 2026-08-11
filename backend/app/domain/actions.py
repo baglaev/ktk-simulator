@@ -104,6 +104,16 @@ def _validate_action_payload(
     if action_type is ActionType.SUBMIT_DIAGNOSIS:
         if not target_id:
             raise ValueError("targetId is required for submit_diagnosis")
+        if "diagnosis" in parameters:
+            if set(parameters) != {"diagnosis"}:
+                raise ValueError(
+                    "submit_diagnosis with diagnosis accepts no other parameters"
+                )
+            if parameters["diagnosis"] not in {"0", "1"}:
+                raise ValueError("diagnosis must be '0' or '1'")
+            return
+
+        # Compatibility with already integrated clients and archived actions.
         try:
             conclusion = DiagnosisConclusion(parameters.get("conclusion"))
         except (TypeError, ValueError) as error:
